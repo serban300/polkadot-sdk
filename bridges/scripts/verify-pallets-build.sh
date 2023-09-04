@@ -100,6 +100,12 @@ rm -f $BRIDGES_FOLDER/Dockerfile
 # let's fix Cargo.toml a bit (it'll be helpful if we are in the bridges repo)
 if [[ ! -f "Cargo.toml" ]]; then
 	cat > Cargo.toml <<-CARGO_TOML
+  [workspace.package]
+  authors = ["Parity Technologies <admin@parity.io>"]
+  edition = "2021"
+  repository = "https://github.com/paritytech/polkadot-sdk.git"
+  license = "GPL-3.0-only"
+
 	[workspace]
 	resolver = "2"
 
