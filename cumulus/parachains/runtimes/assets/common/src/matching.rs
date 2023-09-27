@@ -174,6 +174,84 @@ impl<LocationAssetFilters: Get<sp_std::vec::Vec<LocationWithAssetFilter>>>
 	}
 }
 
+pub struct ConcreteAssetsMatchingFilter<LocationAssetFilters>(
+	sp_std::marker::PhantomData<LocationAssetFilters>,
+);
+impl<LocationAssetFilters: Get<sp_std::vec::Vec<LocationWithAssetFilter>>>
+	Contains<(MultiLocation, sp_std::vec::Vec<MultiAsset>)>
+	for ConcreteAssetsMatchingFilter<LocationAssetFilters>
+{
+	fn contains((dest, assets): &(MultiLocation, sp_std::vec::Vec<MultiAsset>)) -> bool {
+		let mut was_item_checked = false;
+		for (allowed_dest, asset_filter) in LocationAssetFilters::get().iter() {
+			if !allowed_dest.eq(dest) {
+				continue
+			}
+
+			// check all assets
+			was_item_checked = true;
+			for asset in assets {
+				match &asset.id {
+					Concrete(location) => {
+						if !asset_filter.matches(location) {
+							// if asset does not match filter, disallow it
+							return false
+						}
+					},
+					_ => return false,
+				};
+			}
+		}
+
+		was_item_checked
+	}
+}
+
+pub struct SupportedRemoteAssets<Exporters, Allow>(sp_std::marker::PhantomData<(Exporters, Allow)>);
+impl<Exporters, Allow>
+	ContainsPair<(MultiLocation, sp_std::vec::Vec<MultiAsset>), (NetworkId, InteriorMultiLocation)>
+	for SupportedRemoteAssets<Exporters, Allow>
+where
+	Exporters: ExporterFor,
+	Allow: Contains<(MultiLocation, sp_std::vec::Vec<MultiAsset>)>,
+{
+	fn contains(
+		dest_and_assets: &(MultiLocation, sp_std::vec::Vec<MultiAsset>),
+		remote: &(NetworkId, InteriorMultiLocation),
+	) -> bool {
+		let (network, remote_dest) = remote;
+
+		if Exporters::exporter_for(network, remote_dest, &Xcm::default()).is_some() {
+			Allow::contains(dest_and_assets)
+		} else {
+			// no exporter means that we exclude by default
+			false
+		}
+	}
+}
+
+pub struct SupportedLocalAndRemoteAssets<UniversalLocation, Local, Remote>(
+	sp_std::marker::PhantomData<(UniversalLocation, Local, Remote)>,
+);
+impl<UniversalLocation, Local, Remote> Contains<(MultiLocation, sp_std::vec::Vec<MultiAsset>)>
+	for SupportedLocalAndRemoteAssets<UniversalLocation, Local, Remote>
+where
+	UniversalLocation: Get<InteriorMultiLocation>,
+	Local: Contains<(MultiLocation, sp_std::vec::Vec<MultiAsset>)>,
+	Remote: ContainsPair<
+		(MultiLocation, sp_std::vec::Vec<MultiAsset>),
+		(NetworkId, InteriorMultiLocation),
+	>,
+{
+	fn contains(dest_and_assets: &(MultiLocation, sp_std::vec::Vec<MultiAsset>)) -> bool {
+		// check if the destination is remote
+		match ensure_is_remote(UniversalLocation::get(), dest_and_assets.0) {
+			Ok(remote) => Remote::contains(dest_and_assets, &remote),
+			Err(_) => Local::contains(dest_and_assets),
+		}
+	}
+}
+
 /// Adapter for `Contains<(MultiLocation, sp_std::vec::Vec<MultiAsset>)>` which returns `true`
 /// iff `Exporters` contains exporter for **remote** `MultiLocation` _and_
 ///`assets` also pass`Filter`, otherwise returns `false`.

@@ -28,7 +28,7 @@ use assets_common::{
 };
 use frame_support::{
 	match_types, parameter_types,
-	traits::{ConstU32, Contains, Everything, EverythingBut, Get, Nothing, PalletInfoAccess},
+	traits::{ConstU32, Contains, Everything, Get, Nothing, PalletInfoAccess},
 };
 use frame_system::EnsureRoot;
 use pallet_xcm::XcmPassthrough;
@@ -643,7 +643,7 @@ impl pallet_xcm::Config for Runtime {
 	type XcmTeleportFilter = Everything;
 	// Allow reserve based transfer to everywhere except for bridging, here we strictly check what
 	// assets are allowed.
-	type XcmReserveTransferFilter = EverythingBut<bridging::DisallowForReserveTransfer>;
+	type XcmReserveTransferFilter = bridging::SupportedReserveTransferAssets;
 	type Weigher = WeightInfoBounds<
 		crate::weights::xcm::AssetHubRococoXcmWeight<RuntimeCall>,
 		RuntimeCall,
@@ -926,6 +926,23 @@ pub mod bridging {
 			}
 		}
 	}
+
+	pub type SupportedReserveTransferAssets = SupportedLocalAndRemoteAssets<
+		UniversalLocation,
+		// Accept all local assets
+		Everything,
+		// Accept specific Remote assets
+		(
+			SupportedRemoteAssets<
+				to_wococo::FilteredNetworkExportTable,
+				ConcreteAssetsMatchingFilter<to_wococo::AllowedReserveTransferAssetsLocations>,
+			>,
+			SupportedRemoteAssets<
+				to_rococo::FilteredNetworkExportTable,
+				ConcreteAssetsMatchingFilter<to_rococo::AllowedReserveTransferAssetsLocations>,
+			>,
+		),
+	>;
 
 	/// Filter out those assets which are not allowed for bridged reserve based transfer.
 	/// Filter is made of (asset, location) and used by
