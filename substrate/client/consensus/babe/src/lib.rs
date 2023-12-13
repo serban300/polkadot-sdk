@@ -1145,7 +1145,7 @@ where
 		let info = self.client.info();
 		let number = *block.header.number();
 
-		if info.block_gap.map_or(false, |(s, e)| s <= number && number <= e) || block.with_state() {
+		if info.block_gap_contains(number) || block.with_state() {
 			// Verification for imported blocks is skipped in two cases:
 			// 1. When importing blocks below the last finalized block during network initial
 			//    synchronization.
@@ -1419,9 +1419,7 @@ where
 		// Skip babe logic if block already in chain or importing blocks during initial sync,
 		// otherwise the check for epoch changes will error because trying to re-import an
 		// epoch change or because of missing epoch data in the tree, respectivelly.
-		if info.block_gap.map_or(false, |(s, e)| s <= number && number <= e) ||
-			block_status == BlockStatus::InChain
-		{
+		if info.block_gap_contains(number) || block_status == BlockStatus::InChain {
 			// When re-importing existing block strip away intermediates.
 			// In case of initial sync intermediates should not be present...
 			let _ = block.remove_intermediate::<BabeIntermediate<Block>>(INTERMEDIATE_KEY);

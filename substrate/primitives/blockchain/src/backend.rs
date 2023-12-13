@@ -278,6 +278,13 @@ pub struct Info<Block: BlockT> {
 	pub block_gap: Option<(NumberFor<Block>, NumberFor<Block>)>,
 }
 
+impl<Block: BlockT> Info<Block> {
+	pub fn block_gap_contains(&self, block_num: NumberFor<Block>) -> bool {
+		self.block_gap
+			.map_or(false, |(start, end)| start <= block_num && block_num <= end)
+	}
+}
+
 /// Block status.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BlockStatus {
