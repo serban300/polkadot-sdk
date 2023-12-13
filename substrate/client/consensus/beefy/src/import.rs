@@ -135,6 +135,7 @@ where
 	) -> Result<ImportResult, Self::Error> {
 		let hash = block.post_hash();
 		let number = *block.header.number();
+		let info = self.client.info();
 
 		let beefy_encoded = block.justifications.as_mut().and_then(|just| {
 			let encoded = just.get(BEEFY_ENGINE_ID).cloned();
@@ -146,6 +147,13 @@ where
 
 		// Run inner block import.
 		let inner_import_result = self.inner.import_block(block).await?;
+
+		// The block is imported as part of gap sync (post warp sync).
+		// The voter doesn't need to process it now.
+		// It will be detected and processed as part of the voter state init.
+		if info.block_gap_contains(number) {
+			return Ok(inner_import_result);
+		}
 
 		match (beefy_encoded, &inner_import_result) {
 			(Some(encoded), ImportResult::Imported(_)) => {
