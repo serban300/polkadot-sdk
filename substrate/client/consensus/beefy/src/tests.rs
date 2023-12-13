@@ -83,6 +83,7 @@ const ALTERNATE_BAD_MMR_ROOT: MmrRootHash = MmrRootHash::repeat_byte(0x13);
 type BeefyBlockImport = crate::BeefyBlockImport<
 	Block,
 	substrate_test_runtime_client::Backend,
+	PeersFullClient,
 	TestApi,
 	BlockImportAdapter<PeersClient>,
 >;
@@ -214,7 +215,7 @@ impl TestNetFactory for BeefyTestNet {
 		let api = Arc::new(TestApi::new(self.beefy_genesis, &validator_set, GOOD_MMR_ROOT));
 		let inner = BlockImportAdapter::new(client.clone());
 		let (block_import, voter_links, rpc_links) =
-			beefy_block_import_and_links(inner, client.as_backend(), api, None);
+			beefy_block_import_and_links(inner, client.as_backend(), client.as_client(), api, None);
 		let peer_data = PeerData {
 			beefy_rpc_links: Mutex::new(Some(rpc_links)),
 			beefy_voter_links: Mutex::new(Some(voter_links)),

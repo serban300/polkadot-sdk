@@ -130,15 +130,17 @@ pub struct BeefyRPCLinks<B: Block> {
 }
 
 /// Make block importer and link half necessary to tie the background voter to it.
-pub fn beefy_block_import_and_links<B, BE, RuntimeApi, I>(
+pub fn beefy_block_import_and_links<B, BE, C, RuntimeApi, I>(
 	wrapped_block_import: I,
 	backend: Arc<BE>,
+	client: Arc<C>,
 	runtime: Arc<RuntimeApi>,
 	prometheus_registry: Option<Registry>,
-) -> (BeefyBlockImport<B, BE, RuntimeApi, I>, BeefyVoterLinks<B>, BeefyRPCLinks<B>)
+) -> (BeefyBlockImport<B, BE, C, RuntimeApi, I>, BeefyVoterLinks<B>, BeefyRPCLinks<B>)
 where
 	B: Block,
 	BE: Backend<B>,
+	C: HeaderBackend<B>,
 	I: BlockImport<B, Error = ConsensusError> + Send + Sync,
 	RuntimeApi: ProvideRuntimeApi<B> + Send + Sync,
 	RuntimeApi::Api: BeefyApi<B, AuthorityId>,
@@ -157,6 +159,7 @@ where
 	// BlockImport
 	let import = BeefyBlockImport::new(
 		backend,
+		client,
 		runtime,
 		wrapped_block_import,
 		to_voter_justif_sender,

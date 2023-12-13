@@ -30,6 +30,7 @@ use sp_runtime::{
 
 use sc_client_api::backend::Backend;
 use sc_consensus::{BlockCheckParams, BlockImport, BlockImportParams, ImportResult};
+use sp_blockchain::HeaderBackend;
 
 use crate::{
 	communication::notification::BeefyVersionedFinalityProofSender,
@@ -45,18 +46,20 @@ use crate::{
 /// Wraps a `inner: BlockImport` and ultimately defers to it.
 ///
 /// When using BEEFY, the block import worker should be using this block import object.
-pub struct BeefyBlockImport<Block: BlockT, Backend, RuntimeApi, I> {
+pub struct BeefyBlockImport<Block: BlockT, Backend, Client, RuntimeApi, I> {
 	backend: Arc<Backend>,
+	client: Arc<Client>,
 	runtime: Arc<RuntimeApi>,
 	inner: I,
 	justification_sender: BeefyVersionedFinalityProofSender<Block>,
 	metrics: Option<BlockImportMetrics>,
 }
 
-impl<Block: BlockT, BE, Runtime, I: Clone> Clone for BeefyBlockImport<Block, BE, Runtime, I> {
+impl<Block: BlockT, BE, C, Runtime, I: Clone> Clone for BeefyBlockImport<Block, BE, C, Runtime, I> {
 	fn clone(&self) -> Self {
 		BeefyBlockImport {
 			backend: self.backend.clone(),
+			client: self.client.clone(),
 			runtime: self.runtime.clone(),
 			inner: self.inner.clone(),
 			justification_sender: self.justification_sender.clone(),
@@ -65,20 +68,21 @@ impl<Block: BlockT, BE, Runtime, I: Clone> Clone for BeefyBlockImport<Block, BE,
 	}
 }
 
-impl<Block: BlockT, BE, Runtime, I> BeefyBlockImport<Block, BE, Runtime, I> {
+impl<Block: BlockT, BE, C, Runtime, I> BeefyBlockImport<Block, BE, C, Runtime, I> {
 	/// Create a new BeefyBlockImport.
 	pub fn new(
 		backend: Arc<BE>,
+		client: Arc<C>,
 		runtime: Arc<Runtime>,
 		inner: I,
 		justification_sender: BeefyVersionedFinalityProofSender<Block>,
 		metrics: Option<BlockImportMetrics>,
-	) -> BeefyBlockImport<Block, BE, Runtime, I> {
-		BeefyBlockImport { backend, runtime, inner, justification_sender, metrics }
+	) -> BeefyBlockImport<Block, BE, C, Runtime, I> {
+		BeefyBlockImport { backend, client, runtime, inner, justification_sender, metrics }
 	}
 }
 
-impl<Block, BE, Runtime, I> BeefyBlockImport<Block, BE, Runtime, I>
+impl<Block, BE, C, Runtime, I> BeefyBlockImport<Block, BE, C, Runtime, I>
 where
 	Block: BlockT,
 	BE: Backend<Block>,
@@ -114,10 +118,11 @@ where
 }
 
 #[async_trait::async_trait]
-impl<Block, BE, Runtime, I> BlockImport<Block> for BeefyBlockImport<Block, BE, Runtime, I>
+impl<Block, BE, C, Runtime, I> BlockImport<Block> for BeefyBlockImport<Block, BE, C, Runtime, I>
 where
 	Block: BlockT,
 	BE: Backend<Block>,
+	C: HeaderBackend<Block>,
 	I: BlockImport<Block, Error = ConsensusError> + Send + Sync,
 	Runtime: ProvideRuntimeApi<Block> + Send + Sync,
 	Runtime::Api: BeefyApi<Block, AuthorityId>,

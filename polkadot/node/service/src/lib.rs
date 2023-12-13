@@ -391,7 +391,7 @@ type FullGrandpaBlockImport<ChainSelection = FullSelectChain> =
 	grandpa::GrandpaBlockImport<FullBackend, Block, FullClient, ChainSelection>;
 #[cfg(feature = "full-node")]
 type FullBeefyBlockImport<InnerBlockImport> =
-	beefy::import::BeefyBlockImport<Block, FullBackend, FullClient, InnerBlockImport>;
+	beefy::import::BeefyBlockImport<Block, FullBackend, FullClient, FullClient, InnerBlockImport>;
 
 #[cfg(feature = "full-node")]
 struct Basics {
@@ -526,6 +526,7 @@ where
 		beefy::beefy_block_import_and_links(
 			grandpa_block_import,
 			backend.clone(),
+			client.clone(),
 			client.clone(),
 			config.prometheus_registry().cloned(),
 		);
