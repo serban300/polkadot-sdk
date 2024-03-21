@@ -193,18 +193,13 @@ pub mod pallet {
 
 			let authority_set = <CurrentAuthoritySet<T, I>>::get();
 			let unused_proof_size = authority_set.unused_proof_size();
-			let set_id = authority_set.set_id;
-			let authority_set: AuthoritySet = authority_set.into();
-			verify_justification::<T, I>(&justification, hash, number, authority_set)?;
+			// let set_id = authority_set.set_id;
+			// let authority_set: AuthoritySet = authority_set.into();
+			// verify_justification::<T, I>(&justification, hash, number, authority_set)?;
 
-			let maybe_new_authority_set =
-				try_enact_authority_change::<T, I>(&finality_target, set_id)?;
-			let may_refund_call_fee = maybe_new_authority_set.is_some() &&
-				// if we have seen too many mandatory headers in this block, we don't want to refund
-				Self::free_mandatory_headers_remaining() > 0 &&
-				// if arguments out of expected bounds, we don't want to refund
-				submit_finality_proof_info_from_args::<T, I>(&finality_target, &justification)
-					.fits_limits();
+			// let maybe_new_authority_set =
+			// 	try_enact_authority_change::<T, I>(&finality_target, set_id)?;
+			let may_refund_call_fee = false;
 			if may_refund_call_fee {
 				FreeMandatoryHeadersRemaining::<T, I>::mutate(|count| {
 					*count = count.saturating_sub(1)
@@ -243,7 +238,7 @@ pub mod pallet {
 				hash,
 				grandpa_info: StoredHeaderGrandpaInfo {
 					finality_proof: justification,
-					new_verification_context: maybe_new_authority_set,
+					new_verification_context: None,
 				},
 			});
 
