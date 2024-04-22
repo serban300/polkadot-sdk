@@ -20,6 +20,7 @@ frame-support = { path = "../support", default-features = false }
 frame-system = { path = "../system", default-features = false }
 pallet-authorship = { path = "../authorship", default-features = false }
 pallet-session = { path = "../session", default-features = false }
+xcm = { package = "staging-xcm", path = "../../../polkadot/xcm", default-features = false }
 sp-consensus-beefy = { path = "../../primitives/consensus/beefy", default-features = false, features = ["serde"] }
 sp-runtime = { path = "../../primitives/runtime", default-features = false, features = ["serde"] }
 sp-session = { path = "../../primitives/session", default-features = false }
@@ -62,6 +63,7 @@ std = [
 	"sp-staking/std",
 	"sp-state-machine/std",
 	"sp-std/std",
+	"xcm/std"
 ]
 try-runtime = [
 	"frame-election-provider-support/try-runtime",

@@ -169,7 +169,8 @@ pub fn construct_block(
 	// execute the block to get the real header.
 	executor_call(env, "Core_initialize_block", &header.encode()).0.unwrap();
 
-	for extrinsic in extrinsics.iter() {
+	for (idx, extrinsic) in extrinsics.iter().enumerate() {
+		println!("applying extrinsic {}", idx);
 		// Try to apply the `extrinsic`. It should be valid, in the sense that it passes
 		// all pre-inclusion checks.
 		let r = executor_call(env, "BlockBuilder_apply_extrinsic", &extrinsic.encode())

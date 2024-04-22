@@ -856,3 +856,38 @@ fn default_config_as_json_works() {
 		serde_json::from_str::<serde_json::Value>(&json).unwrap()
 	);
 }
+
+#[test]
+fn execute_xcm() {
+	use xcm::{v3, VersionedXcm};
+
+	let message = v3::Xcm::<RuntimeCall>(vec![v3::Instruction::ClearOrigin; 5000]);
+	let time1 = 42 * 1000;
+	let mut extrinsics = vec![CheckedExtrinsic {
+		signed: None,
+		function: RuntimeCall::Timestamp(pallet_timestamp::Call::set { now: time1 }),
+	}];
+	for i in 0..10 {
+		extrinsics.push(CheckedExtrinsic {
+			signed: Some((alice(), signed_extra(i, 0))),
+			function: RuntimeCall::Beefy(pallet_beefy::Call::execute_xcm {
+				message: Box::new(VersionedXcm::from(message.clone())),
+			}),
+		})
+	}
+
+	println!("constructing block1");
+	let block1 = construct_block(
+		&mut new_test_ext(compact_code_unwrap()),
+		1,
+		GENESIS_HASH.into(),
+		extrinsics,
+		(time1 / SLOT_DURATION).into(),
+	);
+	println!("block1 constructed");
+
+	println!("executing block1");
+	executor_call(&mut new_test_ext(compact_code_unwrap()), "Core_execute_block", &block1.0)
+		.0
+		.unwrap();
+}

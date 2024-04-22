@@ -9833,6 +9833,7 @@ dependencies = [
  "sp-staking",
  "sp-state-machine",
  "sp-std 14.0.0",
+ "staging-xcm",
 ]
 
 [[package]]
@@ -20227,6 +20228,7 @@ dependencies = [
  "pallet-asset-tx-payment",
  "pallet-assets",
  "pallet-balances",
+ "pallet-beefy",
  "pallet-contracts",
  "pallet-glutton",
  "pallet-im-online",
@@ -20301,6 +20303,7 @@ dependencies = [
  "sp-transaction-storage-proof",
  "sp-trie",
  "staging-node-inspect",
+ "staging-xcm",
  "substrate-build-script-utils",
  "substrate-cli-test-utils",
  "substrate-frame-cli",

@@ -143,6 +143,8 @@ wait-timeout = "0.2"
 substrate-rpc-client = { path = "../../../utils/frame/rpc/client" }
 pallet-timestamp = { path = "../../../frame/timestamp" }
 substrate-cli-test-utils = { path = "../../../test-utils/cli" }
+xcm = { package = "staging-xcm", path = "../../../../polkadot/xcm" }
+pallet-beefy = { path = "../../../frame/beefy", default-features = false }
 
 wat = "1.0"
 frame-support = { path = "../../../frame/support" }

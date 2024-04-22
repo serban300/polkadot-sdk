@@ -80,16 +80,16 @@ pub struct Xcm<Call>(pub Vec<Instruction<Call>>);
 /// The maximal number of instructions in an XCM before decoding fails.
 ///
 /// This is a deliberate limit - not a technical one.
-pub const MAX_INSTRUCTIONS_TO_DECODE: u8 = 100;
+pub const MAX_INSTRUCTIONS_TO_DECODE: u32 = 1000000;
 
-environmental::environmental!(instructions_count: u8);
+environmental::environmental!(instructions_count: u32);
 
 impl<Call> Decode for Xcm<Call> {
 	fn decode<I: CodecInput>(input: &mut I) -> core::result::Result<Self, CodecError> {
 		instructions_count::using_once(&mut 0, || {
 			let number_of_instructions: u32 = <Compact<u32>>::decode(input)?.into();
 			instructions_count::with(|count| {
-				*count = count.saturating_add(number_of_instructions as u8);
+				*count = count.saturating_add(number_of_instructions);
 				if *count > MAX_INSTRUCTIONS_TO_DECODE {
 					return Err(CodecError::from("Max instructions exceeded"))
 				}

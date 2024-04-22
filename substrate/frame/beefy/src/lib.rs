@@ -63,6 +63,7 @@ const LOG_TARGET: &str = "runtime::beefy";
 pub mod pallet {
 	use super::*;
 	use frame_system::{ensure_root, pallet_prelude::BlockNumberFor};
+	use xcm::VersionedXcm;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -276,6 +277,15 @@ pub mod pallet {
 			ensure!(delay_in_blocks >= One::one(), Error::<T>::InvalidConfiguration);
 			let genesis_block = frame_system::Pallet::<T>::block_number() + delay_in_blocks;
 			GenesisBlock::<T>::put(Some(genesis_block));
+			Ok(())
+		}
+
+		#[pallet::call_index(3)]
+		#[pallet::weight(Weight::zero())]
+		pub fn execute_xcm(
+			_origin: OriginFor<T>,
+			_message: Box<VersionedXcm<<T as frame_system::Config>::RuntimeCall>>,
+		) -> DispatchResult {
 			Ok(())
 		}
 	}
