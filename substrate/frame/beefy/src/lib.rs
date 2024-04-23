@@ -22,9 +22,10 @@ use codec::{Encode, MaxEncodedLen};
 use frame_support::{
 	dispatch::{DispatchResultWithPostInfo, Pays},
 	pallet_prelude::*,
+	parameter_types,
 	traits::{Get, OneSessionHandler},
 	weights::Weight,
-	BoundedSlice, BoundedVec, Parameter,
+	BoundedSlice, BoundedVec, Parameter, WithMaxSize,
 };
 use frame_system::{
 	ensure_none, ensure_signed,
@@ -64,6 +65,10 @@ pub mod pallet {
 	use super::*;
 	use frame_system::{ensure_root, pallet_prelude::BlockNumberFor};
 	use xcm::VersionedXcm;
+
+	parameter_types! {
+		pub const MaxXcmEncodedSizeUsize: usize = xcm::MAX_XCM_ENCODED_SIZE as usize;
+	}
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -296,6 +301,15 @@ pub mod pallet {
 				&mut &encoded_message[..],
 			)
 			.unwrap();
+			Ok(())
+		}
+
+		#[pallet::call_index(5)]
+		#[pallet::weight(Weight::zero())]
+		pub fn execute_xcm_with_max_size(
+			_origin: OriginFor<T>,
+			_message: Box<WithMaxSize<VersionedXcm<()>, MaxXcmEncodedSizeUsize>>,
+		) -> DispatchResult {
 			Ok(())
 		}
 	}

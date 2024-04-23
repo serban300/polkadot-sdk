@@ -20,6 +20,7 @@ use frame_support::{
 	dispatch::{DispatchClass, DispatchInfo, GetDispatchInfo},
 	traits::Currency,
 	weights::Weight,
+	WithMaxSize,
 };
 use frame_system::{self, AccountInfo, EventRecord, Phase};
 use sp_core::{storage::well_known_keys, traits::Externalities};
@@ -909,7 +910,7 @@ fn execute_xcm_blob() {
 		signed: None,
 		function: RuntimeCall::Timestamp(pallet_timestamp::Call::set { now: time1 }),
 	}];
-	for i in 0..300 {
+	for i in 0..800 {
 		extrinsics.push(CheckedExtrinsic {
 			signed: Some((alice(), signed_extra(i, 0))),
 			function: RuntimeCall::Beefy(pallet_beefy::Call::execute_blob {
@@ -920,7 +921,7 @@ fn execute_xcm_blob() {
 
 	println!("constructing block1");
 	let block1 = construct_block(
-		&mut TestExternalities::new_with_code(compact_code_unwrap(), storage),
+		&mut TestExternalities::new_with_code(compact_code_unwrap(), storage.clone()),
 		1,
 		GENESIS_HASH.into(),
 		extrinsics,
@@ -929,7 +930,59 @@ fn execute_xcm_blob() {
 	println!("block1 constructed");
 
 	println!("executing block1");
-	executor_call(&mut new_test_ext(compact_code_unwrap()), "Core_execute_block", &block1.0)
-		.0
+	executor_call(
+		&mut TestExternalities::new_with_code(compact_code_unwrap(), storage),
+		"Core_execute_block",
+		&block1.0,
+	)
+	.0
+	.unwrap();
+}
+
+#[test]
+fn execute_xcm_with_max_size() {
+	use xcm::{v3, VersionedXcm};
+
+	let mut storage = node_testing::genesis::config().build_storage().unwrap();
+	pallet_balances::GenesisConfig::<Runtime> { balances: vec![(alice(), 1000000000 * DOLLARS)] }
+		.assimilate_storage(&mut storage)
 		.unwrap();
+
+	let message = WithMaxSize::new(VersionedXcm::from(v3::Xcm::<()>(vec![
+			v3::Instruction::ClearOrigin;
+			5000
+		])))
+	.unwrap();
+	let time1 = 42 * 1000;
+	let mut extrinsics = vec![CheckedExtrinsic {
+		signed: None,
+		function: RuntimeCall::Timestamp(pallet_timestamp::Call::set { now: time1 }),
+	}];
+	for i in 0..10 {
+		extrinsics.push(CheckedExtrinsic {
+			signed: Some((alice(), signed_extra(i, 0))),
+			function: RuntimeCall::Beefy(pallet_beefy::Call::execute_xcm_with_max_size {
+				message: Box::new(message.clone()),
+			}),
+		})
+	}
+
+	println!("constructing block1");
+	let block1 = construct_block(
+		&mut TestExternalities::new_with_code(compact_code_unwrap(), storage.clone()),
+		1,
+		GENESIS_HASH.into(),
+		extrinsics,
+		(time1 / SLOT_DURATION).into(),
+	);
+	println!("block1 constructed");
+
+	println!("executing block1");
+	executor_call(
+		&mut TestExternalities::new_with_code(compact_code_unwrap(), storage),
+		"Core_execute_block",
+		&block1.0,
+	)
+	.0
+	.unwrap();
 }
