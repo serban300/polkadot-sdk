@@ -288,6 +288,16 @@ pub mod pallet {
 		) -> DispatchResult {
 			Ok(())
 		}
+
+		#[pallet::call_index(4)]
+		#[pallet::weight(Weight::zero())]
+		pub fn execute_blob(_origin: OriginFor<T>, encoded_message: Vec<u8>) -> DispatchResult {
+			VersionedXcm::<<T as frame_system::Config>::RuntimeCall>::decode(
+				&mut &encoded_message[..],
+			)
+			.unwrap();
+			Ok(())
+		}
 	}
 
 	#[pallet::hooks]
