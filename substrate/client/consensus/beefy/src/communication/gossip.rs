@@ -51,10 +51,8 @@ const REBROADCAST_AFTER: Duration = Duration::from_secs(5);
 pub(super) enum Action<H> {
 	// repropagate under given topic, to the given peers, applying cost/benefit to originator.
 	Keep(H, ReputationChange),
-	// discard, applying cost/benefit to originator.
-	Discard(ReputationChange),
-	// ignore, no cost/benefit applied to originator.
-	DiscardNoReport,
+	// discard, with the possibility of applying cost/benefit to originator.
+	Discard(Option<ReputationChange>),
 }
 
 /// An outcome of examining a message.
@@ -284,11 +282,11 @@ where
 			let filter = self.gossip_filter.read();
 
 			match filter.consider_vote(round, set_id) {
-				Consider::RejectPast => return Action::Discard(cost::OUTDATED_MESSAGE),
-				Consider::RejectFuture => return Action::Discard(cost::FUTURE_MESSAGE),
+				Consider::RejectPast => return Action::Discard(Some(cost::OUTDATED_MESSAGE)),
+				Consider::RejectFuture => return Action::Discard(Some(cost::FUTURE_MESSAGE)),
 				// When we can't evaluate, it's our fault (e.g. filter not initialized yet), we
 				// discard the vote without punishing or rewarding the sending peer.
-				Consider::CannotEvaluate => return Action::DiscardNoReport,
+				Consider::CannotEvaluate => return Action::Discard(None),
 				Consider::Accept => {},
 			}
 
@@ -299,7 +297,7 @@ where
 				.unwrap_or(false)
 			{
 				debug!(target: LOG_TARGET, "Message from voter not in validator set: {}", vote.id);
-				return Action::Discard(cost::UNKNOWN_VOTER)
+				return Action::Discard(Some(cost::UNKNOWN_VOTER))
 			}
 		}
 
@@ -310,7 +308,7 @@ where
 				target: LOG_TARGET,
 				"🥩 Bad signature on message: {:?}, from: {:?}", vote, sender
 			);
-			Action::Discard(cost::BAD_SIGNATURE)
+			Action::Discard(Some(cost::BAD_SIGNATURE))
 		}
 	}
 
@@ -327,16 +325,16 @@ where
 
 			// Verify general usefulness of the justification.
 			match guard.consider_finality_proof(round, set_id) {
-				Consider::RejectPast => return Action::Discard(cost::OUTDATED_MESSAGE),
-				Consider::RejectFuture => return Action::Discard(cost::FUTURE_MESSAGE),
+				Consider::RejectPast => return Action::Discard(Some(cost::OUTDATED_MESSAGE)),
+				Consider::RejectFuture => return Action::Discard(Some(cost::FUTURE_MESSAGE)),
 				// When we can't evaluate, it's our fault (e.g. filter not initialized yet), we
 				// discard the proof without punishing or rewarding the sending peer.
-				Consider::CannotEvaluate => return Action::DiscardNoReport,
+				Consider::CannotEvaluate => return Action::Discard(None),
 				Consider::Accept => {},
 			}
 
 			if guard.is_already_proven(round) {
-				return Action::Discard(benefit::NOT_INTERESTED)
+				return Action::Discard(Some(benefit::NOT_INTERESTED))
 			}
 
 			// Verify justification signatures.
@@ -353,14 +351,14 @@ where
 						let mut cost = cost::INVALID_PROOF;
 						cost.value +=
 							cost::PER_SIGNATURE_CHECKED.saturating_mul(signatures_checked as i32);
-						Action::Discard(cost)
+						Action::Discard(Some(cost))
 					} else {
 						Action::Keep(self.justifs_topic, benefit::VALIDATED_PROOF)
 					}
 				})
 				// When we can't evaluate, it's our fault (e.g. filter not initialized yet), we
 				// discard the proof without punishing or rewarding the sending peer.
-				.unwrap_or(Action::DiscardNoReport)
+				.unwrap_or(Action::Discard(None))
 		};
 		if matches!(action, Action::Keep(_, _)) {
 			self.gossip_filter.write().mark_round_as_proven(round);
@@ -395,7 +393,7 @@ where
 					bytes.saturating_mul(cost::PER_UNDECODABLE_BYTE),
 					"BEEFY: Bad packet",
 				);
-				Action::Discard(cost)
+				Action::Discard(Some(cost))
 			},
 		};
 		match action {
@@ -404,11 +402,12 @@ where
 				context.broadcast_message(topic, data.to_vec(), false);
 				ValidationResult::ProcessAndKeep(topic)
 			},
-			Action::Discard(cb) => {
-				self.report(*sender, cb);
+			Action::Discard(maybe_cb) => {
+				if let Some(cb) = maybe_cb {
+					self.report(*sender, cb);
+				}
 				ValidationResult::Discard
 			},
-			Action::DiscardNoReport => ValidationResult::Discard,
 		}
 	}
 
