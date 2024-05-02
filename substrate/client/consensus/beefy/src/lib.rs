@@ -68,7 +68,7 @@ pub mod justification;
 
 use crate::{
 	communication::gossip::GossipValidator,
-	fisherman::Fisherman,
+	equivocation::Fisherman,
 	justification::BeefyVersionedFinalityProof,
 	keystore::BeefyKeystore,
 	metrics::VoterMetrics,
@@ -81,7 +81,7 @@ pub use communication::beefy_protocol_name::{
 };
 use sp_runtime::generic::OpaqueDigestItemId;
 
-mod fisherman;
+mod equivocation;
 #[cfg(test)]
 mod tests;
 mod utils;
