@@ -29,12 +29,13 @@ use crate::{
 	metric_inc, metric_set,
 	metrics::VoterMetrics,
 	round::{Rounds, VoteImportResult},
+	utils::BeefyBackend,
 	BeefyComms, BeefyVoterLinks, LOG_TARGET,
 };
 use codec::{Codec, Decode, DecodeAll, Encode};
 use futures::{stream::Fuse, FutureExt, StreamExt};
 use log::{debug, error, info, trace, warn};
-use sc_client_api::{Backend, FinalityNotification, FinalityNotifications, HeaderBackend};
+use sc_client_api::{FinalityNotification, FinalityNotifications, HeaderBackend};
 use sc_utils::notification::NotificationReceiver;
 use sp_api::ProvideRuntimeApi;
 use sp_arithmetic::traits::{AtLeast32Bit, Saturating};
@@ -403,7 +404,7 @@ pub(crate) struct BeefyWorker<B: Block, BE, P, RuntimeApi, S, N> {
 impl<B, BE, P, R, S, N> BeefyWorker<B, BE, P, R, S, N>
 where
 	B: Block + Codec,
-	BE: Backend<B>,
+	BE: BeefyBackend<B>,
 	P: PayloadProvider<B>,
 	S: SyncOracle,
 	R: ProvideRuntimeApi<B>,
@@ -714,33 +715,18 @@ where
 		let target_header = if target_number == self.best_grandpa_block() {
 			self.persisted_state.voting_oracle.best_grandpa_block_header.clone()
 		} else {
-			let hash = self
-				.backend
-				.blockchain()
-				.expect_block_hash_from_id(&BlockId::Number(target_number))
-				.map_err(|err| {
-					let err_msg = format!(
-						"Couldn't get hash for block #{:?} (error: {:?}), skipping vote..",
-						target_number, err
-					);
-					Error::Backend(err_msg)
-				})?;
-
-			self.backend.blockchain().expect_header(hash).map_err(|err| {
-				let err_msg = format!(
-					"Couldn't get header for block #{:?} ({:?}) (error: {:?}), skipping vote..",
-					target_number, hash, err
-				);
-				Error::Backend(err_msg)
-			})?
+			self.backend
+				.expect_header_from_number(target_number)
+				.map_err(|e| Error::Backend(format!("{}. Skipping vote..", e)))?
 		};
 		let target_hash = target_header.hash();
 
-		let payload = if let Some(hash) = self.payload_provider.payload(&target_header) {
-			hash
-		} else {
-			warn!(target: LOG_TARGET, "🥩 No MMR root digest found for: {:?}", target_hash);
-			return Ok(())
+		let payload = match self.payload_provider.payload(&target_header) {
+			Some(payload) => payload,
+			None => {
+				warn!(target: LOG_TARGET, "🥩 No MMR root digest found for: {:?}", target_hash);
+				return Ok(())
+			},
 		};
 
 		let rounds = self.persisted_state.voting_oracle.active_rounds_mut()?;

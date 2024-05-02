@@ -35,12 +35,12 @@ use futures::{stream::Fuse, FutureExt, StreamExt};
 use log::{debug, error, info, warn};
 use parking_lot::Mutex;
 use prometheus::Registry;
-use sc_client_api::{Backend, BlockBackend, BlockchainEvents, FinalityNotifications, Finalizer};
+use sc_client_api::{Backend, BlockBackend, FinalityNotifications};
 use sc_consensus::BlockImport;
 use sc_network::{NetworkRequest, NotificationService, ProtocolName};
 use sc_network_gossip::{GossipEngine, Network as GossipNetwork, Syncing as GossipSyncing};
 use sp_api::ProvideRuntimeApi;
-use sp_blockchain::{Backend as BlockchainBackend, HeaderBackend};
+use sp_blockchain::Backend as BlockchainBackend;
 use sp_consensus::{Error as ConsensusError, SyncOracle};
 use sp_consensus_beefy::{
 	ecdsa_crypto::AuthorityId, BeefyApi, ConsensusLog, PayloadProvider, ValidatorSet,
@@ -73,6 +73,7 @@ use crate::{
 	keystore::BeefyKeystore,
 	metrics::VoterMetrics,
 	round::Rounds,
+	utils::{BeefyBackend, Client},
 	worker::{BeefyWorker, PersistedState},
 };
 pub use communication::beefy_protocol_name::{
@@ -83,37 +84,11 @@ use sp_runtime::generic::OpaqueDigestItemId;
 mod fisherman;
 #[cfg(test)]
 mod tests;
+mod utils;
 
 const LOG_TARGET: &str = "beefy";
 
 const HEADER_SYNC_DELAY: Duration = Duration::from_secs(60);
-
-/// A convenience BEEFY client trait that defines all the type bounds a BEEFY client
-/// has to satisfy. Ideally that should actually be a trait alias. Unfortunately as
-/// of today, Rust does not allow a type alias to be used as a trait bound. Tracking
-/// issue is <https://github.com/rust-lang/rust/issues/41517>.
-pub trait Client<B, BE>:
-	BlockchainEvents<B> + HeaderBackend<B> + Finalizer<B, BE> + Send + Sync
-where
-	B: Block,
-	BE: Backend<B>,
-{
-	// empty
-}
-
-impl<B, BE, T> Client<B, BE> for T
-where
-	B: Block,
-	BE: Backend<B>,
-	T: BlockchainEvents<B>
-		+ HeaderBackend<B>
-		+ Finalizer<B, BE>
-		+ ProvideRuntimeApi<B>
-		+ Send
-		+ Sync,
-{
-	// empty
-}
 
 /// Links between the block importer, the background voter and the RPC layer,
 /// to be used by the voter.
@@ -253,7 +228,7 @@ pub(crate) struct BeefyWorkerBuilder<B: Block, BE, RuntimeApi> {
 impl<B, BE, R> BeefyWorkerBuilder<B, BE, R>
 where
 	B: Block + codec::Codec,
-	BE: Backend<B>,
+	BE: BeefyBackend<B>,
 	R: ProvideRuntimeApi<B>,
 	R::Api: BeefyApi<B, AuthorityId>,
 {
@@ -486,7 +461,7 @@ pub async fn start_beefy_gadget<B, BE, C, N, P, R, S>(
 	beefy_params: BeefyParams<B, BE, C, N, P, R, S>,
 ) where
 	B: Block,
-	BE: Backend<B>,
+	BE: BeefyBackend<B>,
 	C: Client<B, BE> + BlockBackend<B>,
 	P: PayloadProvider<B> + Clone,
 	R: ProvideRuntimeApi<B>,
