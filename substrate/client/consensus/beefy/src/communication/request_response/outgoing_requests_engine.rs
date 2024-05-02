@@ -27,7 +27,7 @@ use sc_network::{
 	NetworkRequest, ProtocolName,
 };
 use sc_network_types::PeerId;
-use sp_consensus_beefy::{ecdsa_crypto::AuthorityId, ValidatorSet};
+use sp_consensus_beefy::{ecdsa_crypto::AuthorityId, PayloadProvider, ValidatorSet};
 use sp_runtime::traits::{Block, NumberFor};
 use std::{collections::VecDeque, result::Result, sync::Arc};
 
@@ -40,7 +40,7 @@ use crate::{
 	justification::{decode_and_verify_finality_proof, BeefyVersionedFinalityProof},
 	metric_inc,
 	metrics::{register_metrics, OnDemandOutgoingRequestsMetrics},
-	KnownPeers,
+	BeefyBackend, KnownPeers,
 };
 
 /// Response type received from network.
@@ -69,7 +69,10 @@ pub(crate) enum ResponseInfo<B: Block> {
 	PeerReport(PeerReport),
 }
 
-pub struct OnDemandJustificationsEngine<B: Block> {
+pub struct OnDemandJustificationsEngine<B: Block, BE, P> {
+	backend: Arc<BE>,
+	payload_provider: P,
+
 	network: Arc<dyn NetworkRequest + Send + Sync>,
 	protocol_name: ProtocolName,
 
@@ -80,8 +83,14 @@ pub struct OnDemandJustificationsEngine<B: Block> {
 	metrics: Option<OnDemandOutgoingRequestsMetrics>,
 }
 
-impl<B: Block> OnDemandJustificationsEngine<B> {
+impl<B: Block, BE, P> OnDemandJustificationsEngine<B, BE, P>
+where
+	BE: BeefyBackend<B>,
+	P: PayloadProvider<B>,
+{
 	pub fn new(
+		backend: Arc<BE>,
+		payload_provider: P,
 		network: Arc<dyn NetworkRequest + Send + Sync>,
 		protocol_name: ProtocolName,
 		live_peers: Arc<Mutex<KnownPeers<B>>>,
@@ -89,6 +98,8 @@ impl<B: Block> OnDemandJustificationsEngine<B> {
 	) -> Self {
 		let metrics = register_metrics(prometheus_registry);
 		Self {
+			backend,
+			payload_provider,
 			network,
 			protocol_name,
 			live_peers,

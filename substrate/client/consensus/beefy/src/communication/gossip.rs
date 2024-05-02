@@ -34,11 +34,11 @@ use crate::{
 		proof_block_num_and_set_id, verify_with_validator_set, BeefyVersionedFinalityProof,
 	},
 	keystore::BeefyKeystore,
-	LOG_TARGET,
+	BeefyBackend, LOG_TARGET,
 };
 use sp_consensus_beefy::{
 	ecdsa_crypto::{AuthorityId, Signature},
-	ValidatorSet, ValidatorSetId, VoteMessage,
+	PayloadProvider, ValidatorSet, ValidatorSetId, VoteMessage,
 };
 
 // Timeout for rebroadcasting messages.
@@ -218,10 +218,12 @@ impl<B: Block> Filter<B> {
 /// rejected/expired.
 ///
 ///All messaging is handled in a single BEEFY global topic.
-pub(crate) struct GossipValidator<B, N>
+pub(crate) struct GossipValidator<B, BE, P, N>
 where
 	B: Block,
 {
+	backend: Arc<BE>,
+	payload_provider: P,
 	votes_topic: B::Hash,
 	justifs_topic: B::Hash,
 	gossip_filter: RwLock<Filter<B>>,
@@ -230,12 +232,21 @@ where
 	network: Arc<N>,
 }
 
-impl<B, N> GossipValidator<B, N>
+impl<B, BE, P, N> GossipValidator<B, BE, P, N>
 where
 	B: Block,
+	BE: BeefyBackend<B>,
+	P: PayloadProvider<B>,
 {
-	pub(crate) fn new(known_peers: Arc<Mutex<KnownPeers<B>>>, network: Arc<N>) -> Self {
+	pub(crate) fn new(
+		backend: Arc<BE>,
+		payload_provider: P,
+		known_peers: Arc<Mutex<KnownPeers<B>>>,
+		network: Arc<N>,
+	) -> Self {
 		Self {
+			backend,
+			payload_provider,
 			votes_topic: votes_topic::<B>(),
 			justifs_topic: proofs_topic::<B>(),
 			gossip_filter: RwLock::new(Filter::new()),
@@ -258,9 +269,11 @@ where
 	}
 }
 
-impl<B, N> GossipValidator<B, N>
+impl<B, BE, P, N> GossipValidator<B, BE, P, N>
 where
 	B: Block,
+	BE: BeefyBackend<B>,
+	P: PayloadProvider<B>,
 	N: NetworkPeers,
 {
 	fn report(&self, who: PeerId, cost_benefit: ReputationChange) {
@@ -367,9 +380,11 @@ where
 	}
 }
 
-impl<B, N> Validator<B> for GossipValidator<B, N>
+impl<B, BE, P, N> Validator<B> for GossipValidator<B, BE, P, N>
 where
 	B: Block,
+	BE: BeefyBackend<B>,
+	P: PayloadProvider<B> + Send + Sync,
 	N: NetworkPeers + Send + Sync,
 {
 	fn peer_disconnected(&self, _context: &mut dyn ValidatorContext<B>, who: &PeerId) {
@@ -485,12 +500,16 @@ where
 #[cfg(test)]
 pub(crate) mod tests {
 	use super::*;
-	use crate::{communication::peers::PeerReport, keystore::BeefyKeystore};
-	use sc_network_test::Block;
+	use crate::{
+		communication::peers::PeerReport,
+		keystore::BeefyKeystore,
+		tests::{BeefyTestNet, TestApi},
+	};
+	use sc_network_test::{Block, TestNetFactory};
 	use sp_application_crypto::key_types::BEEFY as BEEFY_KEY_TYPE;
 	use sp_consensus_beefy::{
-		ecdsa_crypto::Signature, known_payloads, test_utils::Keyring, Commitment, MmrRootHash,
-		Payload, SignedCommitment, VoteMessage,
+		ecdsa_crypto::Signature, known_payloads, mmr::MmrRootProvider, test_utils::Keyring,
+		Commitment, MmrRootHash, Payload, SignedCommitment, VoteMessage,
 	};
 	use sp_keystore::{testing::MemoryKeystore, Keystore};
 
@@ -649,14 +668,20 @@ pub(crate) mod tests {
 		BeefyVersionedFinalityProof::<Block>::V1(SignedCommitment { commitment, signatures })
 	}
 
-	#[test]
-	fn should_validate_messages() {
+	#[tokio::test]
+	async fn should_validate_messages() {
 		let keys = vec![Keyring::<AuthorityId>::Alice.public()];
 		let validator_set = ValidatorSet::<AuthorityId>::new(keys.clone(), 0).unwrap();
 
 		let (network, mut report_stream) = TestNetwork::new();
+		let mut net = BeefyTestNet::new(1);
+		let backend = net.peer(0).client().as_backend();
+		let api = Arc::new(TestApi::with_validator_set(&validator_set));
+		let payload_provider = MmrRootProvider::new(api.clone());
 
-		let gv = GossipValidator::<Block, _>::new(
+		let gv = GossipValidator::new(
+			backend.clone(),
+			payload_provider,
 			Arc::new(Mutex::new(KnownPeers::new())),
 			Arc::new(network),
 		);
@@ -768,11 +793,17 @@ pub(crate) mod tests {
 		assert_eq!(report_stream.try_next().unwrap().unwrap(), expected_report);
 	}
 
-	#[test]
-	fn messages_allowed_and_expired() {
+	#[tokio::test]
+	async fn messages_allowed_and_expired() {
 		let keys = vec![Keyring::Alice.public()];
 		let validator_set = ValidatorSet::<AuthorityId>::new(keys.clone(), 0).unwrap();
-		let gv = GossipValidator::<Block, _>::new(
+		let mut net = BeefyTestNet::new(1);
+		let backend = net.peer(0).client().as_backend();
+		let api = Arc::new(TestApi::with_validator_set(&validator_set));
+		let payload_provider = MmrRootProvider::new(api.clone());
+		let gv = GossipValidator::new(
+			backend.clone(),
+			payload_provider,
 			Arc::new(Mutex::new(KnownPeers::new())),
 			Arc::new(TestNetwork::new().0),
 		);
@@ -848,11 +879,17 @@ pub(crate) mod tests {
 		assert!(!expired(topic, &mut encoded_proof));
 	}
 
-	#[test]
-	fn messages_rebroadcast() {
+	#[tokio::test]
+	async fn messages_rebroadcast() {
 		let keys = vec![Keyring::Alice.public()];
 		let validator_set = ValidatorSet::<AuthorityId>::new(keys.clone(), 0).unwrap();
-		let gv = GossipValidator::<Block, _>::new(
+		let mut net = BeefyTestNet::new(1);
+		let backend = net.peer(0).client().as_backend();
+		let api = Arc::new(TestApi::with_validator_set(&validator_set));
+		let payload_provider = MmrRootProvider::new(api.clone());
+		let gv = GossipValidator::new(
+			backend.clone(),
+			payload_provider,
 			Arc::new(Mutex::new(KnownPeers::new())),
 			Arc::new(TestNetwork::new().0),
 		);

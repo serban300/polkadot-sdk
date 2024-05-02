@@ -384,7 +384,7 @@ pub(crate) struct BeefyWorker<B: Block, BE, P, RuntimeApi, S, N> {
 	pub fisherman: Arc<Fisherman<B, BE, RuntimeApi>>,
 
 	// communication (created once, but returned and reused if worker is restarted/reinitialized)
-	pub comms: BeefyComms<B, N>,
+	pub comms: BeefyComms<B, BE, P, N>,
 
 	// channels
 	/// Links between the block importer, the background voter and the RPC layer.
@@ -813,7 +813,7 @@ where
 		mut self,
 		block_import_justif: &mut Fuse<NotificationReceiver<BeefyVersionedFinalityProof<B>>>,
 		finality_notifications: &mut Fuse<FinalityNotifications<B>>,
-	) -> (Error, BeefyComms<B, N>) {
+	) -> (Error, BeefyComms<B, BE, P, N>) {
 		info!(
 			target: LOG_TARGET,
 			"🥩 run BEEFY worker, best grandpa: #{:?}.",
@@ -1060,14 +1060,19 @@ pub(crate) mod tests {
 		let backend = peer.client().as_backend();
 		let beefy_genesis = 1;
 		let api = Arc::new(TestApi::with_validator_set(&genesis_validator_set));
+		let payload_provider = MmrRootProvider::new(api.clone());
 		let network = peer.network_service().clone();
 		let sync = peer.sync_service().clone();
 		let notification_service = peer
 			.take_notification_service(&crate::tests::beefy_gossip_proto_name())
 			.unwrap();
 		let known_peers = Arc::new(Mutex::new(KnownPeers::new()));
-		let gossip_validator =
-			GossipValidator::new(known_peers.clone(), Arc::new(TestNetwork::new().0));
+		let gossip_validator = GossipValidator::new(
+			backend.clone(),
+			payload_provider.clone(),
+			known_peers.clone(),
+			Arc::new(TestNetwork::new().0),
+		);
 		let gossip_validator = Arc::new(gossip_validator);
 		let gossip_engine = GossipEngine::new(
 			network.clone(),
@@ -1079,6 +1084,8 @@ pub(crate) mod tests {
 		);
 		let metrics = None;
 		let on_demand_justifications = OnDemandJustificationsEngine::new(
+			backend.clone(),
+			payload_provider.clone(),
 			network.clone(),
 			"/beefy/justifs/1".into(),
 			known_peers,
@@ -1099,7 +1106,6 @@ pub(crate) mod tests {
 			beefy_genesis,
 		)
 		.unwrap();
-		let payload_provider = MmrRootProvider::new(api.clone());
 		let comms = BeefyComms { gossip_engine, gossip_validator, on_demand_justifications };
 		let key_store: Arc<BeefyKeystore<AuthorityId>> = Arc::new(Some(keystore).into());
 		BeefyWorker {

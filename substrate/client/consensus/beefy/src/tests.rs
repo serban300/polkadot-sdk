@@ -396,7 +396,7 @@ fn initialize_beefy<API>(
 	min_block_delta: u32,
 ) -> impl Future<Output = ()>
 where
-	API: ProvideRuntimeApi<Block> + Sync + Send,
+	API: ProvideRuntimeApi<Block> + Sync + Send + 'static,
 	API::Api: BeefyApi<Block, AuthorityId> + MmrApi<Block, MmrRootHash, NumberFor<Block>>,
 {
 	let tasks = FuturesUnordered::new();
@@ -1449,13 +1449,20 @@ async fn gossipped_finality_proofs() {
 	let min_block_delta = 1;
 
 	let mut net = BeefyTestNet::new(3);
+	let backend = net.peer(0).client().as_backend();
 	let api = Arc::new(TestApi::with_validator_set(&validator_set));
+	let payload_provider = MmrRootProvider::new(api.clone());
 	let beefy_peers = peers.iter().enumerate().map(|(id, key)| (id, key, api.clone())).collect();
 
 	let charlie = &mut net.peers[2];
 	let known_peers = Arc::new(Mutex::new(KnownPeers::<Block>::new()));
 	// Charlie will run just the gossip engine and not the full voter.
-	let gossip_validator = GossipValidator::new(known_peers, Arc::new(TestNetwork::new().0));
+	let gossip_validator = GossipValidator::new(
+		backend.clone(),
+		payload_provider,
+		known_peers,
+		Arc::new(TestNetwork::new().0),
+	);
 	let charlie_gossip_validator = Arc::new(gossip_validator);
 	charlie_gossip_validator.update_filter(GossipFilterCfg::<Block> {
 		start: 1,

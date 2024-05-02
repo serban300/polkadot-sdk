@@ -203,10 +203,10 @@ pub struct BeefyParams<B: Block, BE, C, N, P, R, S> {
 /// Helper object holding BEEFY worker communication/gossip components.
 ///
 /// These are created once, but will be reused if worker is restarted/reinitialized.
-pub(crate) struct BeefyComms<B: Block, N> {
+pub(crate) struct BeefyComms<B: Block, BE, P, N> {
 	pub gossip_engine: GossipEngine<B>,
-	pub gossip_validator: Arc<GossipValidator<B, N>>,
-	pub on_demand_justifications: OnDemandJustificationsEngine<B>,
+	pub gossip_validator: Arc<GossipValidator<B, BE, P, N>>,
+	pub on_demand_justifications: OnDemandJustificationsEngine<B, BE, P>,
 }
 
 /// Helper builder object for building [worker::BeefyWorker].
@@ -238,16 +238,19 @@ where
 	/// persisted state in AUX DB and latest chain information/progress.
 	///
 	/// Returns a sane `BeefyWorkerBuilder` that can build the `BeefyWorker`.
-	pub async fn async_initialize<N>(
+	pub async fn async_initialize<P, N>(
 		backend: Arc<BE>,
 		runtime: Arc<R>,
 		key_store: BeefyKeystore<AuthorityId>,
 		metrics: Option<VoterMetrics>,
 		min_block_delta: u32,
-		gossip_validator: Arc<GossipValidator<B, N>>,
+		gossip_validator: Arc<GossipValidator<B, BE, P, N>>,
 		finality_notifications: &mut Fuse<FinalityNotifications<B>>,
 		is_authority: bool,
-	) -> Result<Self, Error> {
+	) -> Result<Self, Error>
+	where
+		P: PayloadProvider<B>,
+	{
 		// Wait for BEEFY pallet to be active before starting voter.
 		let (beefy_genesis, best_grandpa) =
 			wait_for_runtime_pallet(&*runtime, finality_notifications).await?;
@@ -276,7 +279,7 @@ where
 		self,
 		payload_provider: P,
 		sync: Arc<S>,
-		comms: BeefyComms<B, N>,
+		comms: BeefyComms<B, BE, P, N>,
 		links: BeefyVoterLinks<B>,
 		pending_justifications: BTreeMap<NumberFor<B>, BeefyVersionedFinalityProof<B>>,
 		is_authority: bool,
@@ -461,9 +464,9 @@ pub async fn start_beefy_gadget<B, BE, C, N, P, R, S>(
 	beefy_params: BeefyParams<B, BE, C, N, P, R, S>,
 ) where
 	B: Block,
-	BE: BeefyBackend<B>,
+	BE: BeefyBackend<B> + 'static,
 	C: Client<B, BE> + BlockBackend<B>,
-	P: PayloadProvider<B> + Clone,
+	P: PayloadProvider<B> + Clone + Send + Sync + 'static,
 	R: ProvideRuntimeApi<B>,
 	R::Api: BeefyApi<B, AuthorityId>,
 	N: GossipNetwork<B> + NetworkRequest + Send + Sync + 'static,
@@ -502,8 +505,12 @@ pub async fn start_beefy_gadget<B, BE, C, N, P, R, S>(
 	let known_peers = Arc::new(Mutex::new(KnownPeers::new()));
 	// Default votes filter is to discard everything.
 	// Validator is updated later with correct starting round and set id.
-	let gossip_validator =
-		communication::gossip::GossipValidator::new(known_peers.clone(), network.clone());
+	let gossip_validator = communication::gossip::GossipValidator::new(
+		backend.clone(),
+		payload_provider.clone(),
+		known_peers.clone(),
+		network.clone(),
+	);
 	let gossip_validator = Arc::new(gossip_validator);
 	let gossip_engine = GossipEngine::new(
 		network.clone(),
@@ -517,6 +524,8 @@ pub async fn start_beefy_gadget<B, BE, C, N, P, R, S>(
 	// The `GossipValidator` adds and removes known peers based on valid votes and network
 	// events.
 	let on_demand_justifications = OnDemandJustificationsEngine::new(
+		backend.clone(),
+		payload_provider.clone(),
 		network.clone(),
 		justifications_protocol_name.clone(),
 		known_peers,
