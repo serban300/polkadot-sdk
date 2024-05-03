@@ -19,10 +19,18 @@
 use sc_client_api::{Backend, BlockchainEvents, Finalizer};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
+use sp_consensus_beefy::{Payload, PayloadProvider};
 use sp_runtime::{
 	generic::BlockId,
 	traits::{Block, NumberFor},
 };
+
+pub enum PayloadCheckResult {
+	Empty,
+	Invalid,
+	NotFound(String),
+	Valid,
+}
 
 pub trait BeefyBackend<B>: Backend<B>
 where
@@ -37,6 +45,34 @@ where
 		self.blockchain().expect_header(hash).map_err(|err| {
 			format!("Couldn't get header for block #{:?} ({:?}) (error: {:?}).", number, hash, err)
 		})
+	}
+
+	fn expect_payload_from_number<P: PayloadProvider<B>>(
+		&self,
+		payload_provider: &P,
+		number: NumberFor<B>,
+	) -> Result<Option<Payload>, String> {
+		let header = self.expect_header_from_number(number)?;
+		Ok(payload_provider.payload(&header))
+	}
+
+	#[allow(private_interfaces)]
+	fn check_payload<P: PayloadProvider<B>>(
+		&self,
+		payload_provider: &P,
+		round: NumberFor<B>,
+		payload: &Payload,
+	) -> PayloadCheckResult {
+		match self.expect_payload_from_number(payload_provider, round) {
+			Ok(Some(canonical_payload)) => {
+				if &canonical_payload != payload {
+					return PayloadCheckResult::Invalid;
+				}
+				PayloadCheckResult::Valid
+			},
+			Ok(None) => PayloadCheckResult::Empty,
+			Err(e) => PayloadCheckResult::NotFound(e),
+		}
 	}
 }
 

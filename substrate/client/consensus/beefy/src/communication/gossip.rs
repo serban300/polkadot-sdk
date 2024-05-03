@@ -24,21 +24,20 @@ use sc_network_types::PeerId;
 use sp_runtime::traits::{Block, Hash, Header, NumberFor};
 
 use codec::{Decode, DecodeAll, Encode};
-use log::{debug, trace};
+use log::{debug, error, trace, warn};
 use parking_lot::{Mutex, RwLock};
 use wasm_timer::Instant;
 
 use crate::{
 	communication::{benefit, cost, peers::KnownPeers},
-	justification::{
-		proof_block_num_and_set_id, verify_with_validator_set, BeefyVersionedFinalityProof,
-	},
+	justification::{verify_with_validator_set, BeefyVersionedFinalityProof},
 	keystore::BeefyKeystore,
+	utils::PayloadCheckResult,
 	BeefyBackend, LOG_TARGET,
 };
 use sp_consensus_beefy::{
 	ecdsa_crypto::{AuthorityId, Signature},
-	PayloadProvider, ValidatorSet, ValidatorSetId, VoteMessage,
+	Payload, PayloadProvider, ValidatorSet, ValidatorSetId, VoteMessage,
 };
 
 // Timeout for rebroadcasting messages.
@@ -280,6 +279,24 @@ where
 		self.network.report_peer(who, cost_benefit);
 	}
 
+	fn check_payload(
+		&self,
+		round: NumberFor<B>,
+		payload: &Payload,
+	) -> Result<(), Option<ReputationChange>> {
+		match self.backend.check_payload(&self.payload_provider, round, payload) {
+			PayloadCheckResult::Invalid | PayloadCheckResult::Empty => {
+				error!(target: LOG_TARGET, "🥩 Message with invalid payload");
+				return Err(Some(cost::INVALID_PROOF));
+			},
+			PayloadCheckResult::NotFound(_) => {
+				warn!(target: LOG_TARGET, "🥩 Message with uncheckable payload");
+				Err(None)
+			},
+			PayloadCheckResult::Valid => Ok(()),
+		}
+	}
+
 	fn validate_vote(
 		&self,
 		vote: VoteMessage<NumberFor<B>, AuthorityId, Signature>,
@@ -309,8 +326,12 @@ where
 				.map(|set| set.validators().contains(&vote.id))
 				.unwrap_or(false)
 			{
-				debug!(target: LOG_TARGET, "Message from voter not in validator set: {}", vote.id);
+				debug!(target: LOG_TARGET, "🥩 Message from voter not in validator set: {}", vote.id);
 				return Action::Discard(Some(cost::UNKNOWN_VOTER))
+			}
+
+			if let Err(maybe_cb) = self.check_payload(round, &vote.commitment.payload) {
+				return Action::Discard(maybe_cb);
 			}
 		}
 
@@ -330,7 +351,7 @@ where
 		proof: BeefyVersionedFinalityProof<B>,
 		sender: &PeerId,
 	) -> Action<B::Hash> {
-		let (round, set_id) = proof_block_num_and_set_id::<B>(&proof);
+		let (round, set_id) = (*proof.block_num(), *proof.set_id());
 		self.known_peers.lock().note_vote_for(*sender, round);
 
 		let action = {
@@ -348,6 +369,10 @@ where
 
 			if guard.is_already_proven(round) {
 				return Action::Discard(Some(benefit::NOT_INTERESTED))
+			}
+
+			if let Err(maybe_cb) = self.check_payload(round, proof.payload()) {
+				return Action::Discard(maybe_cb);
 			}
 
 			// Verify justification signatures.
@@ -437,7 +462,7 @@ where
 				expired
 			},
 			Ok(GossipMessage::FinalityProof(proof)) => {
-				let (round, set_id) = proof_block_num_and_set_id::<B>(&proof);
+				let (round, set_id) = (*proof.block_num(), *proof.set_id());
 				let expired = filter.consider_finality_proof(round, set_id) != Consider::Accept;
 				trace!(
 					target: LOG_TARGET,
@@ -481,7 +506,7 @@ where
 					allowed
 				},
 				Ok(GossipMessage::FinalityProof(proof)) => {
-					let (round, set_id) = proof_block_num_and_set_id::<B>(&proof);
+					let (round, set_id) = (*proof.block_num(), *proof.set_id());
 					let allowed = filter.consider_finality_proof(round, set_id) == Consider::Accept;
 					trace!(
 						target: LOG_TARGET,

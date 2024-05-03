@@ -18,9 +18,9 @@
 
 //! Generating request logic for request/response protocol for syncing BEEFY justifications.
 
-use codec::Encode;
+use codec::{DecodeAll, Encode};
 use futures::channel::{oneshot, oneshot::Canceled};
-use log::{debug, warn};
+use log::{debug, error, warn};
 use parking_lot::Mutex;
 use sc_network::{
 	request_responses::{IfDisconnected, RequestFailure},
@@ -37,9 +37,10 @@ use crate::{
 		peers::PeerReport,
 		request_response::{Error, JustificationRequest, BEEFY_SYNC_LOG_TARGET},
 	},
-	justification::{decode_and_verify_finality_proof, BeefyVersionedFinalityProof},
+	justification::{verify_with_validator_set, BeefyVersionedFinalityProof},
 	metric_inc,
 	metrics::{register_metrics, OnDemandOutgoingRequestsMetrics},
+	utils::PayloadCheckResult,
 	BeefyBackend, KnownPeers,
 };
 
@@ -182,13 +183,46 @@ where
 		}
 	}
 
+	fn decode_and_verify_finality_proof(
+		&self,
+		encoded_finality_proof: &[u8],
+		target_number: NumberFor<B>,
+		validator_set: &ValidatorSet<AuthorityId>,
+	) -> Result<BeefyVersionedFinalityProof<B>, (String, u32)> {
+		let proof = <BeefyVersionedFinalityProof<B>>::decode_all(&mut &*encoded_finality_proof)
+			.map_err(|e| (e.to_string(), 0))?;
+
+		match self
+			.backend
+			.check_payload(&self.payload_provider, target_number, proof.payload())
+		{
+			PayloadCheckResult::Invalid | PayloadCheckResult::Empty => {
+				error!(
+					target: BEEFY_SYNC_LOG_TARGET,
+					"🥩 on demand justifications engine received proof with invalid payload",
+				);
+				return Err(("Invalid payload".to_string(), 0));
+			},
+			PayloadCheckResult::NotFound(_) => {
+				// If this is not an archive node, it's possible that we don't have the payload
+				// in the db. So move on, even if the canonical payload couldn't be found.
+			},
+			PayloadCheckResult::Valid => {},
+		}
+
+		verify_with_validator_set::<B>(target_number, validator_set, &proof)
+			.map_err(|(e, signatures_checked)| (e.to_string(), signatures_checked))?;
+
+		Ok(proof)
+	}
+
 	fn process_response(
 		&mut self,
 		peer: &PeerId,
 		req_info: &RequestInfo<B>,
 		response: Result<Response, Canceled>,
 	) -> Result<BeefyVersionedFinalityProof<B>, Error> {
-		response
+		let (encoded_finality_proof, _) = response
 			.map_err(|e| {
 				debug!(
 					target: BEEFY_SYNC_LOG_TARGET,
@@ -197,7 +231,7 @@ where
 				Error::ResponseError
 			})?
 			.map_err(|e| {
-				debug!(
+				warn!(
 					target: BEEFY_SYNC_LOG_TARGET,
 					"🥩 for on demand justification #{:?}, peer {:?} error: {:?}",
 					req_info.block,
@@ -216,26 +250,24 @@ where
 						Error::ResponseError
 					},
 				}
-			})
-			.and_then(|(encoded, _)| {
-				decode_and_verify_finality_proof::<B>(
-					&encoded[..],
-					req_info.block,
-					&req_info.active_set,
-				)
-				.map_err(|(err, signatures_checked)| {
-					metric_inc!(self.metrics, beefy_on_demand_justification_invalid_proof);
-					debug!(
-						target: BEEFY_SYNC_LOG_TARGET,
-						"🥩 for on demand justification #{:?}, peer {:?} responded with invalid proof: {:?}",
-						req_info.block, peer, err
-					);
-					let mut cost = cost::INVALID_PROOF;
-					cost.value +=
-						cost::PER_SIGNATURE_CHECKED.saturating_mul(signatures_checked as i32);
-					Error::InvalidResponse(PeerReport { who: *peer, cost_benefit: cost })
-				})
-			})
+			})?;
+
+		self.decode_and_verify_finality_proof(
+			&encoded_finality_proof,
+			req_info.block,
+			&req_info.active_set,
+		)
+		.map_err(|(e, signatures_checked)| {
+			metric_inc!(self.metrics, beefy_on_demand_justification_invalid_proof);
+			debug!(
+				target: BEEFY_SYNC_LOG_TARGET,
+				"🥩 for on demand justification #{:?}, peer {:?} responded with invalid proof: {:?}",
+				req_info.block, peer, e
+			);
+			let mut cost = cost::INVALID_PROOF;
+			cost.value += cost::PER_SIGNATURE_CHECKED.saturating_mul(signatures_checked as i32);
+			Error::InvalidResponse(PeerReport { who: *peer, cost_benefit: cost })
+		})
 	}
 
 	pub(crate) async fn next(&mut self) -> ResponseInfo<B> {

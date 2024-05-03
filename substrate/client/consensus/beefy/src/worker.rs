@@ -219,7 +219,7 @@ impl<B: Block> VoterOracle<B> {
 			// Accept any vote for a GRANDPA finalized block in a better round.
 			Ok((
 				rounds.session_start().max(self.best_beefy_block),
-				(*self.best_grandpa_block_header.number()),
+				*self.best_grandpa_block_header.number(),
 			))
 		} else {
 			// Current session has mandatory not done.
@@ -717,7 +717,7 @@ where
 		} else {
 			self.backend
 				.expect_header_from_number(target_number)
-				.map_err(|e| Error::Backend(format!("{}. Skipping vote..", e)))?
+				.map_err(|e| Error::Backend(format!("🥩 {}. Skipping vote..", e)))?
 		};
 		let target_hash = target_header.hash();
 

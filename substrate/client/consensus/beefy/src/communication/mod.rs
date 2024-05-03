@@ -91,7 +91,7 @@ pub fn beefy_peers_set_config<
 }
 
 // cost scalars for reporting peers.
-mod cost {
+pub mod cost {
 	use sc_network::ReputationChange as Rep;
 	// Message that's for an outdated round.
 	pub(super) const OUTDATED_MESSAGE: Rep = Rep::new(-50, "BEEFY: Past message");
@@ -102,7 +102,9 @@ mod cost {
 	// Message received with vote from voter not in validator set.
 	pub(super) const UNKNOWN_VOTER: Rep = Rep::new(-150, "BEEFY: Unknown voter");
 	// Message containing invalid proof.
-	pub(super) const INVALID_PROOF: Rep = Rep::new(-5000, "BEEFY: Invalid commit");
+	pub const INVALID_PROOF: Rep = Rep::new(-5000, "BEEFY: Invalid commit");
+	// Message for a block that wasn't finalized by GRANDPA.
+	pub const NON_FINALIZED_BLOCK: Rep = Rep::new(-5000, "BEEFY: Invalid payload");
 	// Reputation cost per signature checked for invalid proof.
 	pub(super) const PER_SIGNATURE_CHECKED: i32 = -25;
 	// Reputation cost per byte for un-decodable message.
