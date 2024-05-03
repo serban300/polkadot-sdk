@@ -317,6 +317,29 @@ pub enum VersionedFinalityProof<N, S> {
 	V1(SignedCommitment<N, S>),
 }
 
+impl<N, S> VersionedFinalityProof<N, S> {
+	/// Get the block number that the proof targets.
+	pub fn block_num(&self) -> &N {
+		match self {
+			VersionedFinalityProof::V1(sc) => &sc.commitment.block_number,
+		}
+	}
+
+	/// Get the set id associated with the proof.
+	pub fn set_id(&self) -> &ValidatorSetId {
+		match self {
+			VersionedFinalityProof::V1(sc) => &sc.commitment.validator_set_id,
+		}
+	}
+
+	/// Get the proven MMR digest root.
+	pub fn payload(&self) -> &Payload {
+		match self {
+			VersionedFinalityProof::V1(sc) => &sc.commitment.payload,
+		}
+	}
+}
+
 impl<N: core::fmt::Debug, S> core::fmt::Display for VersionedFinalityProof<N, S> {
 	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
 		match self {

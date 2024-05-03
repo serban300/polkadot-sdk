@@ -717,7 +717,7 @@ where
 		} else {
 			self.backend
 				.expect_header_from_number(target_number)
-				.map_err(|e| Error::Backend(format!("{}. Skipping vote..", e)))?
+				.map_err(|e| Error::Backend(format!("🥩 {}. Skipping vote..", e)))?
 		};
 		let target_hash = target_header.hash();
 

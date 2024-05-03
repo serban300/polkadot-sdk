@@ -20,21 +20,12 @@ use codec::DecodeAll;
 use sp_consensus::Error as ConsensusError;
 use sp_consensus_beefy::{
 	ecdsa_crypto::{AuthorityId, Signature},
-	BeefySignatureHasher, KnownSignature, ValidatorSet, ValidatorSetId, VersionedFinalityProof,
+	BeefySignatureHasher, KnownSignature, ValidatorSet, VersionedFinalityProof,
 };
 use sp_runtime::traits::{Block as BlockT, NumberFor};
 
 /// A finality proof with matching BEEFY authorities' signatures.
 pub type BeefyVersionedFinalityProof<Block> = VersionedFinalityProof<NumberFor<Block>, Signature>;
-
-pub(crate) fn proof_block_num_and_set_id<Block: BlockT>(
-	proof: &BeefyVersionedFinalityProof<Block>,
-) -> (NumberFor<Block>, ValidatorSetId) {
-	match proof {
-		VersionedFinalityProof::V1(sc) =>
-			(sc.commitment.block_number, sc.commitment.validator_set_id),
-	}
-}
 
 /// Decode and verify a Beefy FinalityProof.
 pub(crate) fn decode_and_verify_finality_proof<Block: BlockT>(
