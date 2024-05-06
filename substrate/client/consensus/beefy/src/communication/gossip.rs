@@ -659,26 +659,31 @@ pub(crate) mod tests {
 		beefy_keystore.sign(&who.public(), &commitment.encode()).unwrap()
 	}
 
-	fn dummy_vote(block_number: u64) -> VoteMessage<u64, AuthorityId, Signature> {
+	fn dummy_vote(block_number: u8) -> VoteMessage<u64, AuthorityId, Signature> {
 		let payload = Payload::from_single_entry(
 			known_payloads::MMR_ROOT_ID,
-			MmrRootHash::default().encode(),
+			MmrRootHash::repeat_byte(block_number).as_bytes().to_vec(),
 		);
-		let commitment = Commitment { payload, block_number, validator_set_id: 0 };
+		let commitment =
+			Commitment { payload, block_number: block_number as u64, validator_set_id: 0 };
 		let signature = sign_commitment(&Keyring::Alice, &commitment);
 
 		VoteMessage { commitment, id: Keyring::Alice.public(), signature }
 	}
 
 	pub fn dummy_proof(
-		block_number: u64,
+		block_number: u8,
 		validator_set: &ValidatorSet<AuthorityId>,
 	) -> BeefyVersionedFinalityProof<Block> {
 		let payload = Payload::from_single_entry(
 			known_payloads::MMR_ROOT_ID,
-			MmrRootHash::default().encode(),
+			MmrRootHash::repeat_byte(block_number).as_bytes().to_vec(),
 		);
-		let commitment = Commitment { payload, block_number, validator_set_id: validator_set.id() };
+		let commitment = Commitment {
+			payload,
+			block_number: block_number as u64,
+			validator_set_id: validator_set.id(),
+		};
 		let signatures = validator_set
 			.validators()
 			.iter()
@@ -700,13 +705,14 @@ pub(crate) mod tests {
 
 		let (network, mut report_stream) = TestNetwork::new();
 		let mut net = BeefyTestNet::new(1);
+		net.generate_blocks_and_sync(30, 10, &validator_set, true).await;
 		let backend = net.peer(0).client().as_backend();
 		let api = Arc::new(TestApi::with_validator_set(&validator_set));
 		let payload_provider = MmrRootProvider::new(api.clone());
 
 		let gv = GossipValidator::new(
 			backend.clone(),
-			payload_provider,
+			payload_provider.clone(),
 			Arc::new(Mutex::new(KnownPeers::new())),
 			Arc::new(network),
 		);

@@ -726,7 +726,7 @@ async fn correct_beefy_payload() {
 	tokio::spawn(initialize_beefy(&mut net, bad_peers, min_block_delta));
 
 	// push 12 blocks
-	let hashes = net.generate_blocks_and_sync(12, session_len, &validator_set, false).await;
+	let hashes = net.generate_blocks_and_sync(12, session_len, &validator_set, true).await;
 
 	let net = Arc::new(Mutex::new(net));
 	let peers = peers.into_iter().enumerate();
@@ -744,7 +744,7 @@ async fn correct_beefy_payload() {
 	net.lock().peer(3).client().as_client().finalize_block(hashof11, None).unwrap();
 
 	// verify consensus is _not_ reached
-	let timeout = Some(Duration::from_millis(100));
+	let timeout = Some(Duration::from_millis(500));
 	streams_empty_after_timeout(best_blocks, &net, timeout).await;
 	streams_empty_after_timeout(versioned_finality_proof, &net, None).await;
 
@@ -950,7 +950,7 @@ async fn on_demand_beefy_justification_sync() {
 	let dave_index = 3;
 
 	// push 30 blocks
-	let mut hashes = net.generate_blocks_and_sync(30, session_len, &validator_set, false).await;
+	let mut hashes = net.generate_blocks_and_sync(30, session_len, &validator_set, true).await;
 
 	let fast_peers = fast_peers.into_iter().enumerate();
 	let net = Arc::new(Mutex::new(net));
@@ -1015,7 +1015,7 @@ async fn should_initialize_voter_at_genesis() {
 	let backend = net.peer(0).client().as_backend();
 
 	// push 15 blocks with `AuthorityChange` digests every 10 blocks
-	let hashes = net.generate_blocks_and_sync(15, 10, &validator_set, false).await;
+	let hashes = net.generate_blocks_and_sync(15, 10, &validator_set, true).await;
 	let mut finality = net.peer(0).client().as_client().finality_notification_stream().fuse();
 	// finalize 13 without justifications
 	net.peer(0).client().as_client().finalize_block(hashes[13], None).unwrap();
@@ -1056,7 +1056,7 @@ async fn should_initialize_voter_at_custom_genesis() {
 	let api = TestApi::new(custom_pallet_genesis, &validator_set, GOOD_MMR_ROOT);
 
 	// push 15 blocks with `AuthorityChange` digests every 15 blocks
-	let hashes = net.generate_blocks_and_sync(15, 15, &validator_set, false).await;
+	let hashes = net.generate_blocks_and_sync(15, 15, &validator_set, true).await;
 	let mut finality = net.peer(0).client().as_client().finality_notification_stream().fuse();
 	// finalize 3, 5, 8 without justifications
 	net.peer(0).client().as_client().finalize_block(hashes[3], None).unwrap();
@@ -1123,7 +1123,7 @@ async fn should_initialize_voter_when_last_final_is_session_boundary() {
 	let backend = net.peer(0).client().as_backend();
 
 	// push 15 blocks with `AuthorityChange` digests every 10 blocks
-	let hashes = net.generate_blocks_and_sync(15, 10, &validator_set, false).await;
+	let hashes = net.generate_blocks_and_sync(15, 10, &validator_set, true).await;
 
 	let mut finality = net.peer(0).client().as_client().finality_notification_stream().fuse();
 
@@ -1177,7 +1177,7 @@ async fn should_initialize_voter_at_latest_finalized() {
 	let backend = net.peer(0).client().as_backend();
 
 	// push 15 blocks with `AuthorityChange` digests every 10 blocks
-	let hashes = net.generate_blocks_and_sync(15, 10, &validator_set, false).await;
+	let hashes = net.generate_blocks_and_sync(15, 10, &validator_set, true).await;
 
 	let mut finality = net.peer(0).client().as_client().finality_notification_stream().fuse();
 
@@ -1234,7 +1234,7 @@ async fn should_initialize_voter_at_custom_genesis_when_state_unavailable() {
 	api.validator_set = None;
 
 	// push 30 blocks with `AuthorityChange` digests every 5 blocks
-	let hashes = net.generate_blocks_and_sync(30, 5, &validator_set, false).await;
+	let hashes = net.generate_blocks_and_sync(30, 5, &validator_set, true).await;
 	let mut finality = net.peer(0).client().as_client().finality_notification_stream().fuse();
 	// finalize 30 without justifications
 	net.peer(0).client().as_client().finalize_block(hashes[30], None).unwrap();
@@ -1277,7 +1277,7 @@ async fn should_catch_up_when_loading_saved_voter_state() {
 	let backend = net.peer(0).client().as_backend();
 
 	// push 30 blocks with `AuthorityChange` digests every 10 blocks
-	let hashes = net.generate_blocks_and_sync(30, 10, &validator_set, false).await;
+	let hashes = net.generate_blocks_and_sync(30, 10, &validator_set, true).await;
 	let mut finality = net.peer(0).client().as_client().finality_notification_stream().fuse();
 	// finalize 13 without justifications
 	net.peer(0).client().as_client().finalize_block(hashes[13], None).unwrap();
@@ -1399,7 +1399,7 @@ async fn beefy_reports_equivocations() {
 	tokio::spawn(initialize_beefy(&mut net, vec![bob_prime], min_block_delta));
 
 	// push 42 blocks including `AuthorityChange` digests every 10 blocks.
-	let hashes = net.generate_blocks_and_sync(42, session_len, &validator_set, false).await;
+	let hashes = net.generate_blocks_and_sync(42, session_len, &validator_set, true).await;
 
 	let net = Arc::new(Mutex::new(net));
 
