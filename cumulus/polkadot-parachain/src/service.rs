@@ -15,7 +15,7 @@
 // along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
 
 use codec::Decode;
-use cumulus_client_cli::CollatorOptions;
+use cumulus_client_cli::{CollatorOptions, ExportGenesisHeadCommand};
 use cumulus_client_collator::service::CollatorService;
 use cumulus_client_consensus_aura::collators::lookahead::{self as aura, Params as AuraParams};
 use cumulus_client_consensus_common::ParachainBlockImport as TParachainBlockImport;
@@ -43,12 +43,17 @@ use crate::{
 pub use parachains_common::{AccountId, AuraId, Balance, Block, Hash, Nonce};
 
 use cumulus_client_consensus_relay_chain::Verifier as RelayChainVerifier;
+use frame_benchmarking_cli::BlockCmd;
+#[cfg(any(feature = "runtime-benchmarks"))]
+use frame_benchmarking_cli::StorageCmd;
 use futures::prelude::*;
+use polkadot_primitives::CollatorPair;
 use prometheus_endpoint::Registry;
+use sc_cli::{CheckBlockCmd, ExportBlocksCmd, ExportStateCmd, ImportBlocksCmd, RevertCmd};
 use sc_client_api::Backend as ClientApiBackend;
 use sc_consensus::{
 	import_queue::{BasicQueue, Verifier as VerifierT},
-	BlockImportParams, ImportQueue,
+	BlockImportParams, DefaultImportQueue, ImportQueue,
 };
 use sc_executor::{HeapAllocStrategy, WasmExecutor, DEFAULT_HEAP_ALLOC_STRATEGY};
 use sc_network::{config::FullNetworkConfiguration, service::traits::NetworkBackend, NetworkBlock};
@@ -63,9 +68,7 @@ use sp_runtime::{
 	app_crypto::AppCrypto,
 	traits::{Block as BlockT, Header as HeaderT},
 };
-use std::{marker::PhantomData, sync::Arc, time::Duration};
-
-use polkadot_primitives::CollatorPair;
+use std::{marker::PhantomData, pin::Pin, sync::Arc, time::Duration};
 
 #[cfg(not(feature = "runtime-benchmarks"))]
 type HostFunctions = cumulus_client_service::ParachainHostFunctions;
@@ -76,7 +79,7 @@ type HostFunctions = (
 	frame_benchmarking::benchmarking::HostFunctions,
 );
 
-type ParachainClient<RuntimeApi> = TFullClient<Block, RuntimeApi, WasmExecutor<HostFunctions>>;
+pub type ParachainClient<RuntimeApi> = TFullClient<Block, RuntimeApi, WasmExecutor<HostFunctions>>;
 
 type ParachainBackend = TFullBackend<Block>;
 
@@ -935,5 +938,216 @@ fn warn_if_slow_hardware(hwbench: &sc_sysinfo::HwBench) {
 			https://wiki.polkadot.network/docs/maintain-guides-how-to-validate-polkadot#reference-hardware",
 			err
 		);
+	}
+}
+
+pub trait BuildImportQueue<RuntimeApi> {
+	fn build_import_queue(
+		client: Arc<ParachainClient<RuntimeApi>>,
+		block_import: ParachainBlockImport<RuntimeApi>,
+		config: &Configuration,
+		telemetry_handle: Option<TelemetryHandle>,
+		task_manager: &TaskManager,
+	) -> sc_service::error::Result<DefaultImportQueue<Block>>;
+}
+
+pub struct BuildShellImportQueue<RuntimeApi>(PhantomData<RuntimeApi>);
+
+impl BuildImportQueue<FakeRuntimeApi> for BuildShellImportQueue<FakeRuntimeApi> {
+	fn build_import_queue(
+		client: Arc<ParachainClient<FakeRuntimeApi>>,
+		block_import: ParachainBlockImport<FakeRuntimeApi>,
+		config: &Configuration,
+		telemetry_handle: Option<TelemetryHandle>,
+		task_manager: &TaskManager,
+	) -> sc_service::error::Result<DefaultImportQueue<Block>> {
+		build_shell_import_queue(client, block_import, config, telemetry_handle, task_manager)
+	}
+}
+
+pub struct BuildRelayToAuraImportQueue<RuntimeApi, AuraId>(PhantomData<(RuntimeApi, AuraId)>);
+
+impl<RuntimeApi, AuraId> BuildImportQueue<RuntimeApi>
+	for BuildRelayToAuraImportQueue<RuntimeApi, AuraId>
+where
+	RuntimeApi: ConstructNodeRuntimeApi<Block, ParachainClient<RuntimeApi>>,
+	RuntimeApi::RuntimeApi: AuraRuntimeApi<Block, AuraId>,
+	AuraId: AuraIdT + Sync,
+{
+	fn build_import_queue(
+		client: Arc<ParachainClient<RuntimeApi>>,
+		block_import: ParachainBlockImport<RuntimeApi>,
+		config: &Configuration,
+		telemetry_handle: Option<TelemetryHandle>,
+		task_manager: &TaskManager,
+	) -> sc_service::error::Result<DefaultImportQueue<Block>> {
+		build_relay_to_aura_import_queue::<_, AuraId>(
+			client,
+			block_import,
+			config,
+			telemetry_handle,
+			task_manager,
+		)
+	}
+}
+
+pub struct BuildAuraImportQueue<RuntimeApi>(PhantomData<RuntimeApi>);
+
+impl BuildImportQueue<FakeRuntimeApi> for BuildAuraImportQueue<FakeRuntimeApi> {
+	fn build_import_queue(
+		client: Arc<ParachainClient<FakeRuntimeApi>>,
+		block_import: ParachainBlockImport<FakeRuntimeApi>,
+		config: &Configuration,
+		telemetry_handle: Option<TelemetryHandle>,
+		task_manager: &TaskManager,
+	) -> sc_service::error::Result<DefaultImportQueue<Block>> {
+		build_aura_import_queue(client, block_import, config, telemetry_handle, task_manager)
+	}
+}
+
+pub trait RuntimeSpec {
+	type RuntimeApi: ConstructNodeRuntimeApi<Block, ParachainClient<Self::RuntimeApi>>;
+
+	type BuildImportQueue: BuildImportQueue<Self::RuntimeApi>;
+
+	fn new_partial(config: &Configuration) -> sc_service::error::Result<Service<Self::RuntimeApi>> {
+		new_partial(config, Self::BuildImportQueue::build_import_queue)
+	}
+}
+
+type SyncCmdResult = sc_cli::Result<()>;
+
+type AsyncCmdResult<'a> =
+	sc_cli::Result<(Pin<Box<dyn Future<Output = SyncCmdResult> + 'a>>, TaskManager)>;
+
+pub trait DynRuntimeSpec {
+	fn prepare_check_block_cmd(
+		self: Box<Self>,
+		config: Configuration,
+		cmd: &CheckBlockCmd,
+	) -> AsyncCmdResult<'_>;
+
+	fn prepare_export_blocks_cmd(
+		self: Box<Self>,
+		config: Configuration,
+		cmd: &ExportBlocksCmd,
+	) -> AsyncCmdResult<'_>;
+
+	fn prepare_export_state_cmd(
+		self: Box<Self>,
+		config: Configuration,
+		cmd: &ExportStateCmd,
+	) -> AsyncCmdResult<'_>;
+
+	fn prepare_import_blocks_cmd(
+		self: Box<Self>,
+		config: Configuration,
+		cmd: &ImportBlocksCmd,
+	) -> AsyncCmdResult<'_>;
+
+	fn prepare_revert_cmd(
+		self: Box<Self>,
+		config: Configuration,
+		cmd: &RevertCmd,
+	) -> AsyncCmdResult<'_>;
+
+	fn run_export_genesis_head_cmd(
+		self: Box<Self>,
+		config: Configuration,
+		cmd: &ExportGenesisHeadCommand,
+	) -> SyncCmdResult;
+
+	fn run_benchmark_block_cmd(
+		self: Box<Self>,
+		config: Configuration,
+		cmd: &BlockCmd,
+	) -> SyncCmdResult;
+
+	#[cfg(any(feature = "runtime-benchmarks"))]
+	fn run_benchmark_storage_cmd(
+		self: Box<Self>,
+		config: Configuration,
+		cmd: &StorageCmd,
+	) -> SyncCmdResult;
+}
+
+impl<T> DynRuntimeSpec for T
+where
+	T: RuntimeSpec,
+{
+	fn prepare_check_block_cmd(
+		self: Box<Self>,
+		config: Configuration,
+		cmd: &CheckBlockCmd,
+	) -> AsyncCmdResult<'_> {
+		let partial = Self::new_partial(&config).map_err(sc_cli::Error::Service)?;
+		Ok((Box::pin(cmd.run(partial.client, partial.import_queue)), partial.task_manager))
+	}
+
+	fn prepare_export_blocks_cmd(
+		self: Box<Self>,
+		config: Configuration,
+		cmd: &ExportBlocksCmd,
+	) -> AsyncCmdResult<'_> {
+		let partial = Self::new_partial(&config).map_err(sc_cli::Error::Service)?;
+		Ok((Box::pin(cmd.run(partial.client, config.database)), partial.task_manager))
+	}
+
+	fn prepare_export_state_cmd(
+		self: Box<Self>,
+		config: Configuration,
+		cmd: &ExportStateCmd,
+	) -> AsyncCmdResult<'_> {
+		let partial = Self::new_partial(&config).map_err(sc_cli::Error::Service)?;
+		Ok((Box::pin(cmd.run(partial.client, config.chain_spec)), partial.task_manager))
+	}
+
+	fn prepare_import_blocks_cmd(
+		self: Box<Self>,
+		config: Configuration,
+		cmd: &ImportBlocksCmd,
+	) -> AsyncCmdResult<'_> {
+		let partial = Self::new_partial(&config).map_err(sc_cli::Error::Service)?;
+		Ok((Box::pin(cmd.run(partial.client, partial.import_queue)), partial.task_manager))
+	}
+
+	fn prepare_revert_cmd(
+		self: Box<Self>,
+		config: Configuration,
+		cmd: &RevertCmd,
+	) -> AsyncCmdResult<'_> {
+		let partial = Self::new_partial(&config).map_err(sc_cli::Error::Service)?;
+		Ok((Box::pin(cmd.run(partial.client, partial.backend, None)), partial.task_manager))
+	}
+
+	fn run_export_genesis_head_cmd(
+		self: Box<Self>,
+		config: Configuration,
+		cmd: &ExportGenesisHeadCommand,
+	) -> SyncCmdResult {
+		let partial = Self::new_partial(&config).map_err(sc_cli::Error::Service)?;
+		cmd.run(partial.client)
+	}
+
+	fn run_benchmark_block_cmd(
+		self: Box<Self>,
+		config: Configuration,
+		cmd: &BlockCmd,
+	) -> SyncCmdResult {
+		let partial = Self::new_partial(&config).map_err(sc_cli::Error::Service)?;
+		cmd.run(partial.client)
+	}
+
+	#[cfg(any(feature = "runtime-benchmarks"))]
+	fn run_benchmark_storage_cmd(
+		self: Box<Self>,
+		config: Configuration,
+		cmd: &StorageCmd,
+	) -> SyncCmdResult {
+		let partial = Self::new_partial(&config).map_err(sc_cli::Error::Service)?;
+		let db = partial.backend.expose_db();
+		let storage = partial.backend.expose_storage();
+
+		cmd.run(config, partial.client, db, storage)
 	}
 }

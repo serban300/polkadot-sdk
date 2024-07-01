@@ -18,11 +18,13 @@ use crate::{
 	chain_spec,
 	chain_spec::GenericChainSpec,
 	cli::{Cli, RelayChainCli, Subcommand},
-	common::command::CmdRunner,
 	fake_runtime_api::{
 		asset_hub_polkadot_aura::RuntimeApi as AssetHubPolkadotRuntimeApi, aura::RuntimeApi,
 	},
-	service::{new_partial, Block, Hash},
+	service::{
+		Block, BuildAuraImportQueue, BuildRelayToAuraImportQueue, BuildShellImportQueue,
+		DynRuntimeSpec, Hash, RuntimeSpec,
+	},
 };
 #[cfg(feature = "runtime-benchmarks")]
 use cumulus_client_service::storage_proof_size::HostFunctions as ReclaimHostFunctions;
@@ -383,45 +385,53 @@ impl SubstrateCli for RelayChainCli {
 	}
 }
 
-fn new_partial_from_config(
+struct AssetHubPolkadot;
+
+impl RuntimeSpec for AssetHubPolkadot {
+	type RuntimeApi = AssetHubPolkadotRuntimeApi;
+
+	type BuildImportQueue = BuildRelayToAuraImportQueue<Self::RuntimeApi, AssetHubPolkadotAuraId>;
+}
+
+struct GenericAssetHub;
+
+impl RuntimeSpec for GenericAssetHub {
+	type RuntimeApi = RuntimeApi;
+
+	type BuildImportQueue = BuildRelayToAuraImportQueue<Self::RuntimeApi, AuraId>;
+}
+
+struct ShellRuntime;
+
+impl RuntimeSpec for ShellRuntime {
+	type RuntimeApi = RuntimeApi;
+
+	type BuildImportQueue = BuildShellImportQueue<Self::RuntimeApi>;
+}
+
+struct AuraRuntime;
+
+impl RuntimeSpec for AuraRuntime {
+	type RuntimeApi = RuntimeApi;
+
+	type BuildImportQueue = BuildAuraImportQueue<Self::RuntimeApi>;
+}
+
+fn new_runtime_spec(
 	config: &sc_service::Configuration,
-) -> std::result::Result<Box<dyn CmdRunner<Block>>, sc_cli::Error> {
+) -> std::result::Result<Box<dyn DynRuntimeSpec>, sc_cli::Error> {
 	Ok(match config.chain_spec.runtime()? {
-		Runtime::AssetHubPolkadot => Box::new(
-			new_partial::<AssetHubPolkadotRuntimeApi, _>(
-				config,
-				crate::service::build_relay_to_aura_import_queue::<_, AssetHubPolkadotAuraId>,
-			)
-			.map_err(sc_cli::Error::Service)?,
-		),
+		Runtime::AssetHubPolkadot => Box::new(AssetHubPolkadot),
 		Runtime::AssetHub |
 		Runtime::BridgeHub(_) |
 		Runtime::Collectives |
 		Runtime::Coretime(_) |
-		Runtime::People(_) => Box::new(
-			new_partial::<RuntimeApi, _>(
-				config,
-				crate::service::build_relay_to_aura_import_queue::<_, AuraId>,
-			)
-			.map_err(sc_cli::Error::Service)?,
-		),
-		Runtime::Glutton | Runtime::Shell | Runtime::Seedling => Box::new(
-			new_partial::<RuntimeApi, _>(config, crate::service::build_shell_import_queue)
-				.map_err(sc_cli::Error::Service)?,
-		),
-		Runtime::ContractsRococo | Runtime::Penpal(_) => Box::new(
-			new_partial::<RuntimeApi, _>(config, crate::service::build_aura_import_queue)
-				.map_err(sc_cli::Error::Service)?,
-		),
+		Runtime::People(_) => Box::new(GenericAssetHub),
+		Runtime::Glutton | Runtime::Shell | Runtime::Seedling => Box::new(ShellRuntime),
+		Runtime::ContractsRococo | Runtime::Penpal(_) => Box::new(AuraRuntime),
 		Runtime::Omni(consensus) => match consensus {
-			Consensus::Aura => Box::new(
-				new_partial::<RuntimeApi, _>(config, crate::service::build_aura_import_queue)
-					.map_err(sc_cli::Error::Service)?,
-			),
-			Consensus::Relay => Box::new(
-				new_partial::<RuntimeApi, _>(config, crate::service::build_shell_import_queue)
-					.map_err(sc_cli::Error::Service)?,
-			),
+			Consensus::Aura => Box::new(AuraRuntime),
+			Consensus::Relay => Box::new(ShellRuntime),
 		},
 	})
 }
@@ -438,36 +448,36 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::CheckBlock(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			runner.async_run(|config| {
-				let partials = new_partial_from_config(&config)?;
-				Ok(partials.prepare_check_block_cmd(cmd))
+				let runtime = new_runtime_spec(&config)?;
+				runtime.prepare_check_block_cmd(config, cmd)
 			})
 		},
 		Some(Subcommand::ExportBlocks(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			runner.async_run(|config| {
-				let partials = new_partial_from_config(&config)?;
-				Ok(partials.prepare_export_blocks_cmd(cmd, config))
+				let runtime = new_runtime_spec(&config)?;
+				runtime.prepare_export_blocks_cmd(config, cmd)
 			})
 		},
 		Some(Subcommand::ExportState(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			runner.async_run(|config| {
-				let partials = new_partial_from_config(&config)?;
-				Ok(partials.prepare_export_state_cmd(cmd, config))
+				let runtime = new_runtime_spec(&config)?;
+				runtime.prepare_export_state_cmd(config, cmd)
 			})
 		},
 		Some(Subcommand::ImportBlocks(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			runner.async_run(|config| {
-				let partials = new_partial_from_config(&config)?;
-				Ok(partials.prepare_import_blocks_cmd(cmd))
+				let runtime = new_runtime_spec(&config)?;
+				runtime.prepare_import_blocks_cmd(config, cmd)
 			})
 		},
 		Some(Subcommand::Revert(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			runner.async_run(|config| {
-				let partials = new_partial_from_config(&config)?;
-				Ok(partials.prepare_revert_cmd(cmd))
+				let runtime = new_runtime_spec(&config)?;
+				runtime.prepare_revert_cmd(config, cmd)
 			})
 		},
 		Some(Subcommand::PurgeChain(cmd)) => {
@@ -488,8 +498,8 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::ExportGenesisHead(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			runner.sync_run(|config| {
-				let partials = new_partial_from_config(&config)?;
-				partials.run_export_genesis_head_cmd(cmd)
+				let runtime = new_runtime_spec(&config)?;
+				runtime.run_export_genesis_head_cmd(config, cmd)
 			})
 		},
 		Some(Subcommand::ExportGenesisWasm(cmd)) => {
@@ -511,13 +521,13 @@ pub fn run() -> Result<()> {
 					))
 				}),
 				BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
-					let partials = new_partial_from_config(&config)?;
-					partials.run_benchmark_block_cmd(cmd)
+					let runtime = new_runtime_spec(&config)?;
+					runtime.run_benchmark_block_cmd(config, cmd)
 				}),
 				#[cfg(feature = "runtime-benchmarks")]
 				BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
-					let partials = new_partial_from_config(&config)?;
-					partials.run_benchmark_storage_cmd(cmd, config)
+					let runtime = new_runtime_spec(&config)?;
+					runtime.run_benchmark_storage_cmd(config, cmd)
 				}),
 				BenchmarkCmd::Machine(cmd) =>
 					runner.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone())),
