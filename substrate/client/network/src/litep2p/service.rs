@@ -388,6 +388,10 @@ impl NetworkPeers for Litep2pNetworkService {
 		});
 	}
 
+	fn accept_unreserved_peers_for(&self, _protocol: ProtocolName) -> Result<(), String> {
+		todo!()
+	}
+
 	fn deny_unreserved_peers(&self) {
 		let _ = self.cmd_tx.unbounded_send(NetworkServiceCommand::SetReservedOnly {
 			protocol: self.block_announce_protocol.clone(),

@@ -82,7 +82,7 @@ pub fn beefy_peers_set_config<
 			in_peers: 25,
 			out_peers: 25,
 			reserved_nodes: Vec::new(),
-			non_reserved_mode: sc_network::config::NonReservedPeerMode::Accept,
+			non_reserved_mode: sc_network::config::NonReservedPeerMode::Deny,
 		},
 		metrics,
 		peer_store_handle,

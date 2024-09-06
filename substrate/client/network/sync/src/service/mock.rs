@@ -88,6 +88,7 @@ mockall::mock! {
 		fn peer_reputation(&self, peer_id: &PeerId) -> i32;
 		fn disconnect_peer(&self, peer_id: PeerId, protocol: ProtocolName);
 		fn accept_unreserved_peers(&self);
+		fn accept_unreserved_peers_for(&self, protocol: ProtocolName) -> Result<(), String>;
 		fn deny_unreserved_peers(&self);
 		fn add_reserved_peer(&self, peer: MultiaddrWithPeerId) -> Result<(), String>;
 		fn remove_reserved_peer(&self, peer_id: PeerId);

@@ -367,6 +367,10 @@ pub trait NetworkPeers {
 	/// Connect to unreserved peers and allow unreserved peers to connect for syncing purposes.
 	fn accept_unreserved_peers(&self);
 
+	/// Connect to unreserved peers and allow unreserved peers to connect for syncing purposes
+	/// for a certain protocol.
+	fn accept_unreserved_peers_for(&self, protocol: ProtocolName) -> Result<(), String>;
+
 	/// Disconnect from unreserved peers and deny new unreserved peers to connect for syncing
 	/// purposes.
 	fn deny_unreserved_peers(&self);
@@ -476,6 +480,10 @@ where
 
 	fn accept_unreserved_peers(&self) {
 		T::accept_unreserved_peers(self)
+	}
+
+	fn accept_unreserved_peers_for(&self, protocol: ProtocolName) -> Result<(), String> {
+		T::accept_unreserved_peers_for(self, protocol)
 	}
 
 	fn deny_unreserved_peers(&self) {

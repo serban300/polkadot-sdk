@@ -636,8 +636,7 @@ pub fn notification_service(
 ) -> (ProtocolHandlePair, Box<dyn NotificationService>) {
 	let (cmd_tx, cmd_rx) = mpsc::channel(COMMAND_QUEUE_SIZE);
 
-	let (event_tx, event_rx) =
-		tracing_unbounded(metric_label_for_protocol(&protocol).leak(), 100_000);
+	let (event_tx, event_rx) = tracing_unbounded(metric_label_for_protocol(&protocol).leak(), 500);
 	let subscribers = Arc::new(Mutex::new(vec![event_tx]));
 
 	(

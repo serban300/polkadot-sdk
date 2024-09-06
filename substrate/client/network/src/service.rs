@@ -1053,6 +1053,15 @@ where
 		self.sync_protocol_handle.set_reserved_only(false);
 	}
 
+	fn accept_unreserved_peers_for(&self, protocol: ProtocolName) -> Result<(), String> {
+		let Some(set_id) = self.notification_protocol_ids.get(&protocol) else {
+			return Err(format!("Cannot set reserved peers for unknown protocol: {}", protocol))
+		};
+
+		self.protocol_handles[usize::from(*set_id)].set_reserved_only(false);
+		Ok(())
+	}
+
 	fn deny_unreserved_peers(&self) {
 		self.sync_protocol_handle.set_reserved_only(true);
 	}

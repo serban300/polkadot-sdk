@@ -37,7 +37,7 @@ use parking_lot::Mutex;
 use prometheus_endpoint::Registry;
 use sc_client_api::{Backend, BlockBackend, BlockchainEvents, FinalityNotification, Finalizer};
 use sc_consensus::BlockImport;
-use sc_network::{NetworkRequest, NotificationService, ProtocolName};
+use sc_network::{NetworkPeers, NetworkRequest, NotificationService, ProtocolName};
 use sc_network_gossip::{GossipEngine, Network as GossipNetwork, Syncing as GossipSyncing};
 use sc_utils::mpsc::{tracing_unbounded, TracingUnboundedReceiver};
 use sp_api::ProvideRuntimeApi;
@@ -611,11 +611,11 @@ pub async fn start_beefy_gadget<B, BE, C, N, P, R, S, AuthorityId>(
 					},
 				}
 			},
-			// Pump gossip engine.
-			_ = &mut beefy_comms.gossip_engine => {
-				error!(target: LOG_TARGET, "🥩 Gossip engine has unexpectedly terminated.");
-				return
-			},
+			// // Pump gossip engine.
+			// _ = &mut beefy_comms.gossip_engine => {
+			// 	error!(target: LOG_TARGET, "🥩 Gossip engine has unexpectedly terminated.");
+			// 	return
+			// },
 			_ = &mut transformer => {
 				error!(target: LOG_TARGET, "🥩 Finality notification transformer task has unexpectedly terminated.");
 				return
@@ -630,6 +630,10 @@ pub async fn start_beefy_gadget<B, BE, C, N, P, R, S, AuthorityId>(
 			BTreeMap::new(),
 			is_authority,
 		);
+		if let Err(e) = network.accept_unreserved_peers_for(gossip_protocol_name.clone()) {
+			error!(target: LOG_TARGET, "🥩 Gossip engine has unexpectedly terminated: {}.", e);
+			return
+		}
 
 		futures::select! {
 			result = worker.run(&mut block_import_justif, &mut finality_notifications).fuse() => {
