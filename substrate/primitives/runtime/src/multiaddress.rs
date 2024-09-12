@@ -18,10 +18,19 @@
 //! MultiAddress type is a wrapper for multiple downstream account formats.
 
 use alloc::vec::Vec;
-use codec::{Decode, Encode};
+use codec::{Decode, DecodeWithMemTracking, Encode};
 
 /// A multi-format address wrapper for on-chain accounts.
-#[derive(Encode, Decode, PartialEq, Eq, Clone, crate::RuntimeDebug, scale_info::TypeInfo)]
+#[derive(
+	Encode,
+	Decode,
+	DecodeWithMemTracking,
+	PartialEq,
+	Eq,
+	Clone,
+	crate::RuntimeDebug,
+	scale_info::TypeInfo,
+)]
 #[cfg_attr(feature = "std", derive(Hash))]
 pub enum MultiAddress<AccountId, AccountIndex> {
 	/// It's an account ID (pubkey).
@@ -35,6 +44,15 @@ pub enum MultiAddress<AccountId, AccountIndex> {
 	/// It's a 20 byte representation.
 	Address20([u8; 20]),
 }
+
+// impl<AccountId, AccountIndex> DecodeWithMemTracking for MultiAddress<AccountId, AccountIndex>
+// where
+// 	MultiAddress<AccountId, AccountIndex>: Decode,
+// 	AccountId: DecodeWithMemTracking,
+// 	AccountIndex: codec::HasCompact,
+// 	<AccountIndex as codec::HasCompact>::Type: DecodeWithMemTracking,
+// {
+// }
 
 #[cfg(feature = "std")]
 impl<AccountId, AccountIndex> std::fmt::Display for MultiAddress<AccountId, AccountIndex>

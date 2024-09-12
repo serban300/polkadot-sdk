@@ -24,7 +24,7 @@
 //! Proofs are created with latest substrate trie format (`LayoutV1`), and are not compatible with
 //! proofs using `LayoutV0`.
 
-use crate::{Decode, DispatchError, Encode, MaxEncodedLen, TypeInfo};
+use crate::{Decode, DecodeWithMemTracking, DispatchError, Encode, MaxEncodedLen, TypeInfo};
 #[cfg(feature = "serde")]
 use crate::{Deserialize, Serialize};
 
@@ -37,7 +37,18 @@ use sp_trie::{
 type HashOf<Hashing> = <Hashing as sp_core::Hasher>::Out;
 
 /// A runtime friendly error type for tries.
-#[derive(Eq, PartialEq, Clone, Copy, Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
+#[derive(
+	Eq,
+	PartialEq,
+	Clone,
+	Copy,
+	Encode,
+	Decode,
+	DecodeWithMemTracking,
+	Debug,
+	TypeInfo,
+	MaxEncodedLen,
+)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum TrieError {
 	/* From TrieError */

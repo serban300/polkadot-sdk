@@ -18,7 +18,7 @@
 //! Miscellaneous additional datatypes.
 
 use super::*;
-use codec::{Decode, Encode, EncodeLike, MaxEncodedLen};
+use codec::{Decode, DecodeWithMemTracking, Encode, EncodeLike, MaxEncodedLen};
 use core::fmt::Debug;
 use frame_support::{
 	traits::{schedule::v3::Anon, Bounded},
@@ -213,16 +213,34 @@ pub struct ReferendumStatus<
 }
 
 /// Info regarding a referendum, present or past.
-#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+#[derive(
+	Encode,
+	Decode,
+	DecodeWithMemTracking,
+	Clone,
+	PartialEq,
+	Eq,
+	RuntimeDebug,
+	TypeInfo,
+	MaxEncodedLen,
+)]
 pub enum ReferendumInfo<
-	TrackId: Eq + PartialEq + Debug + Encode + Decode + TypeInfo + Clone,
-	RuntimeOrigin: Eq + PartialEq + Debug + Encode + Decode + TypeInfo + Clone,
-	Moment: Eq + PartialEq + Debug + Encode + Decode + TypeInfo + Clone + EncodeLike,
-	Call: Eq + PartialEq + Debug + Encode + Decode + TypeInfo + Clone,
-	Balance: Eq + PartialEq + Debug + Encode + Decode + TypeInfo + Clone,
-	Tally: Eq + PartialEq + Debug + Encode + Decode + TypeInfo + Clone,
-	AccountId: Eq + PartialEq + Debug + Encode + Decode + TypeInfo + Clone,
-	ScheduleAddress: Eq + PartialEq + Debug + Encode + Decode + TypeInfo + Clone,
+	TrackId: Eq + PartialEq + Debug + Encode + Decode + DecodeWithMemTracking + TypeInfo + Clone,
+	RuntimeOrigin: Eq + PartialEq + Debug + Encode + Decode + DecodeWithMemTracking + TypeInfo + Clone,
+	Moment: Eq
+		+ PartialEq
+		+ Debug
+		+ Encode
+		+ Decode
+		+ DecodeWithMemTracking
+		+ TypeInfo
+		+ Clone
+		+ EncodeLike,
+	Call: Eq + PartialEq + Debug + Encode + Decode + DecodeWithMemTracking + TypeInfo + Clone,
+	Balance: Eq + PartialEq + Debug + Encode + Decode + DecodeWithMemTracking + TypeInfo + Clone,
+	Tally: Eq + PartialEq + Debug + Encode + Decode + DecodeWithMemTracking + TypeInfo + Clone,
+	AccountId: Eq + PartialEq + Debug + Encode + Decode + DecodeWithMemTracking + TypeInfo + Clone,
+	ScheduleAddress: Eq + PartialEq + Debug + Encode + Decode + DecodeWithMemTracking + TypeInfo + Clone,
 > {
 	/// Referendum has been submitted and is being voted on.
 	Ongoing(
@@ -250,14 +268,23 @@ pub enum ReferendumInfo<
 }
 
 impl<
-		TrackId: Eq + PartialEq + Debug + Encode + Decode + TypeInfo + Clone,
-		RuntimeOrigin: Eq + PartialEq + Debug + Encode + Decode + TypeInfo + Clone,
-		Moment: Parameter + Eq + PartialEq + Debug + Encode + Decode + TypeInfo + Clone + EncodeLike,
-		Call: Eq + PartialEq + Debug + Encode + Decode + TypeInfo + Clone,
-		Balance: Eq + PartialEq + Debug + Encode + Decode + TypeInfo + Clone,
-		Tally: Eq + PartialEq + Debug + Encode + Decode + TypeInfo + Clone,
-		AccountId: Eq + PartialEq + Debug + Encode + Decode + TypeInfo + Clone,
-		ScheduleAddress: Eq + PartialEq + Debug + Encode + Decode + TypeInfo + Clone,
+		TrackId: Eq + PartialEq + Debug + Encode + Decode + DecodeWithMemTracking + TypeInfo + Clone,
+		RuntimeOrigin: Eq + PartialEq + Debug + Encode + Decode + DecodeWithMemTracking + TypeInfo + Clone,
+		Moment: Parameter
+			+ Eq
+			+ PartialEq
+			+ Debug
+			+ Encode
+			+ Decode
+			+ DecodeWithMemTracking
+			+ TypeInfo
+			+ Clone
+			+ EncodeLike,
+		Call: Eq + PartialEq + Debug + Encode + Decode + DecodeWithMemTracking + TypeInfo + Clone,
+		Balance: Eq + PartialEq + Debug + Encode + Decode + DecodeWithMemTracking + TypeInfo + Clone,
+		Tally: Eq + PartialEq + Debug + Encode + Decode + DecodeWithMemTracking + TypeInfo + Clone,
+		AccountId: Eq + PartialEq + Debug + Encode + Decode + DecodeWithMemTracking + TypeInfo + Clone,
+		ScheduleAddress: Eq + PartialEq + Debug + Encode + Decode + DecodeWithMemTracking + TypeInfo + Clone,
 	> ReferendumInfo<TrackId, RuntimeOrigin, Moment, Call, Balance, Tally, AccountId, ScheduleAddress>
 {
 	/// Take the Decision Deposit from `self`, if there is one. Returns an `Err` if `self` is not

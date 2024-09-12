@@ -218,10 +218,10 @@ impl<BlockNumber: core::fmt::Debug> core::fmt::Debug for OffchainErr<BlockNumber
 pub type AuthIndex = u32;
 
 /// Heartbeat which is sent/received.
-#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
+#[derive(Encode, Decode, DecodeWithMemTracking, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 pub struct Heartbeat<BlockNumber>
 where
-	BlockNumber: PartialEq + Eq + Decode + Encode,
+	BlockNumber: PartialEq + Eq + Decode + DecodeWithMemTracking + Encode,
 {
 	/// Block number at the time heartbeat is created..
 	pub block_number: BlockNumber,

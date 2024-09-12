@@ -23,7 +23,7 @@ use crate::{
 	SolutionAccuracyOf, SolutionOf, SolutionOrSnapshotSize, Weight,
 };
 use alloc::{boxed::Box, vec::Vec};
-use codec::Encode;
+use codec::{DecodeWithMemTracking, Encode};
 use frame_election_provider_support::{NposSolution, NposSolver, PerThing128, VoteWeight};
 use frame_support::{
 	dispatch::DispatchResult,
@@ -403,6 +403,7 @@ pub trait MinerConfig {
 	type AccountId: Ord + Clone + codec::Codec + core::fmt::Debug;
 	/// The solution that the miner is mining.
 	type Solution: codec::Codec
+		+ DecodeWithMemTracking
 		+ Default
 		+ PartialEq
 		+ Eq

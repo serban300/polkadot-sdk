@@ -18,7 +18,7 @@
 //! Staking FRAME Pallet.
 
 use alloc::vec::Vec;
-use codec::Codec;
+use codec::{Codec, DecodeWithMemTracking};
 use frame_election_provider_support::{
 	ElectionProvider, ElectionProviderBase, SortedListProvider, VoteWeight,
 };
@@ -76,7 +76,7 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	/// Possible operations on the configuration values of this pallet.
-	#[derive(TypeInfo, Debug, Clone, Encode, Decode, PartialEq)]
+	#[derive(TypeInfo, Debug, Clone, Encode, Decode, DecodeWithMemTracking, PartialEq)]
 	pub enum ConfigOp<T: Default + Codec> {
 		/// Don't change.
 		Noop,
@@ -99,6 +99,7 @@ pub mod pallet {
 		/// `From<u64>`.
 		type CurrencyBalance: sp_runtime::traits::AtLeast32BitUnsigned
 			+ codec::FullCodec
+			+ DecodeWithMemTracking
 			+ Copy
 			+ MaybeSerializeDeserialize
 			+ core::fmt::Debug

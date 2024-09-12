@@ -48,6 +48,8 @@ macro_rules! impl_codec_bitflags {
 			}
 		}
 
+		impl DecodeWithMemTracking for $wrapper {}
+
 		impl TypeInfo for $wrapper {
 			type Identity = Self;
 

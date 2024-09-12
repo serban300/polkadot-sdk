@@ -34,12 +34,14 @@ use crate::v3::{
 	WildMultiAsset as NewWildMultiAsset,
 };
 use alloc::{vec, vec::Vec};
-use codec::{self as codec, Decode, Encode};
+use codec::{self as codec, Decode, DecodeWithMemTracking, Encode};
 use core::cmp::Ordering;
 use scale_info::TypeInfo;
 
 /// A general identifier for an instance of a non-fungible asset class.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, Debug, TypeInfo)]
+#[derive(
+	Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, DecodeWithMemTracking, Debug, TypeInfo,
+)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 #[scale_info(replace_segment("staging_xcm", "xcm"))]
 pub enum AssetInstance {
@@ -118,7 +120,9 @@ impl TryFrom<NewAssetInstance> for AssetInstance {
 }
 
 /// Classification of an asset being concrete or abstract.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Encode, Decode, TypeInfo)]
+#[derive(
+	Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Encode, Decode, DecodeWithMemTracking, TypeInfo,
+)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 #[scale_info(replace_segment("staging_xcm", "xcm"))]
 pub enum AssetId {
@@ -185,7 +189,9 @@ impl AssetId {
 
 /// Classification of whether an asset is fungible or not, along with a mandatory amount or
 /// instance.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Encode, Decode, TypeInfo)]
+#[derive(
+	Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Encode, Decode, DecodeWithMemTracking, TypeInfo,
+)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 #[scale_info(replace_segment("staging_xcm", "xcm"))]
 pub enum Fungibility {
@@ -225,7 +231,7 @@ impl TryFrom<NewFungibility> for Fungibility {
 	}
 }
 
-#[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, TypeInfo)]
+#[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, DecodeWithMemTracking, TypeInfo)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 #[scale_info(replace_segment("staging_xcm", "xcm"))]
 pub struct MultiAsset {
@@ -322,6 +328,8 @@ impl Decode for MultiAssets {
 			.map_err(|()| "Out of order".into())
 	}
 }
+
+impl DecodeWithMemTracking for MultiAssets {}
 
 impl TryFrom<NewMultiAssets> for MultiAssets {
 	type Error = ();

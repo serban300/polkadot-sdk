@@ -465,6 +465,7 @@ impl<Id> OnQueueChanged<Id> for () {
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
+	use codec::DecodeWithMemTracking;
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -498,6 +499,7 @@ pub mod pallet {
 			+ Member
 			+ Encode
 			+ Decode
+			+ DecodeWithMemTracking
 			+ MaxEncodedLen
 			+ TypeInfo
 			+ Default;

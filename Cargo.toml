@@ -1443,3 +1443,9 @@ wasmi = { opt-level = 3 }
 x25519-dalek = { opt-level = 3 }
 yamux = { opt-level = 3 }
 zeroize = { opt-level = 3 }
+
+[patch.crates-io]
+parity-scale-codec = { path = "../parity-scale-codec" }
+impl-codec = { path = "../parity-common/primitive-types/impls/codec" }
+bounded-collections = { path = "../bounded-collections/bounded-collections" }
+finality-grandpa = { path = "../finality-grandpa" }

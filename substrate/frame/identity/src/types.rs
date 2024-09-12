@@ -17,7 +17,7 @@
 
 use super::*;
 use alloc::{vec, vec::Vec};
-use codec::{Decode, Encode, MaxEncodedLen};
+use codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
 use core::{fmt::Debug, iter::once, ops::Add};
 use frame_support::{
 	traits::{ConstU32, Get},
@@ -39,7 +39,7 @@ pub type RegistrarIndex = u32;
 /// than 32-bytes then it will be truncated when encoding.
 ///
 /// Can also be `None`.
-#[derive(Clone, Eq, PartialEq, RuntimeDebug, MaxEncodedLen)]
+#[derive(DecodeWithMemTracking, Clone, Eq, PartialEq, RuntimeDebug, MaxEncodedLen)]
 pub enum Data {
 	/// No data here.
 	None,
@@ -190,9 +190,21 @@ impl Default for Data {
 ///
 /// NOTE: Registrars may pay little attention to some fields. Registrars may want to make clear
 /// which fields their attestation is relevant for by off-chain means.
-#[derive(Copy, Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-pub enum Judgement<Balance: Encode + Decode + MaxEncodedLen + Copy + Clone + Debug + Eq + PartialEq>
-{
+#[derive(
+	Copy,
+	Clone,
+	Encode,
+	Decode,
+	DecodeWithMemTracking,
+	Eq,
+	PartialEq,
+	RuntimeDebug,
+	MaxEncodedLen,
+	TypeInfo,
+)]
+pub enum Judgement<
+	Balance: Encode + Decode + DecodeWithMemTracking + MaxEncodedLen + Copy + Clone + Debug + Eq + PartialEq,
+> {
 	/// The default value; no opinion is held.
 	Unknown,
 	/// No judgement is yet in place, but a deposit is reserved as payment for providing one.
@@ -214,8 +226,17 @@ pub enum Judgement<Balance: Encode + Decode + MaxEncodedLen + Copy + Clone + Deb
 	Erroneous,
 }
 
-impl<Balance: Encode + Decode + MaxEncodedLen + Copy + Clone + Debug + Eq + PartialEq>
-	Judgement<Balance>
+impl<
+		Balance: Encode
+			+ Decode
+			+ DecodeWithMemTracking
+			+ MaxEncodedLen
+			+ Copy
+			+ Clone
+			+ Debug
+			+ Eq
+			+ PartialEq,
+	> Judgement<Balance>
 {
 	/// Returns `true` if this judgement is indicative of a deposit being currently held. This means
 	/// it should not be cleared or replaced except by an operation which utilizes the deposit.
@@ -233,10 +254,25 @@ impl<Balance: Encode + Decode + MaxEncodedLen + Copy + Clone + Debug + Eq + Part
 
 /// Information concerning the identity of the controller of an account.
 pub trait IdentityInformationProvider:
-	Encode + Decode + MaxEncodedLen + Clone + Debug + Eq + PartialEq + TypeInfo + Default
+	Encode
+	+ Decode
+	+ DecodeWithMemTracking
+	+ MaxEncodedLen
+	+ Clone
+	+ Debug
+	+ Eq
+	+ PartialEq
+	+ TypeInfo
+	+ Default
 {
 	/// Type capable of holding information on which identity fields are set.
-	type FieldsIdentifier: Member + Encode + Decode + MaxEncodedLen + TypeInfo + Default;
+	type FieldsIdentifier: Member
+		+ Encode
+		+ Decode
+		+ DecodeWithMemTracking
+		+ MaxEncodedLen
+		+ TypeInfo
+		+ Default;
 
 	/// Check if an identity registered information for some given `fields`.
 	fn has_identity(&self, fields: Self::FieldsIdentifier) -> bool;
@@ -255,12 +291,19 @@ pub trait IdentityInformationProvider:
 /// NOTE: This is stored separately primarily to facilitate the addition of extra fields in a
 /// backwards compatible way through a specialized `Decode` impl.
 #[derive(
-	CloneNoBound, Encode, Eq, MaxEncodedLen, PartialEqNoBound, RuntimeDebugNoBound, TypeInfo,
+	CloneNoBound,
+	Encode,
+	DecodeWithMemTracking,
+	Eq,
+	MaxEncodedLen,
+	PartialEqNoBound,
+	RuntimeDebugNoBound,
+	TypeInfo,
 )]
 #[codec(mel_bound())]
 #[scale_info(skip_type_params(MaxJudgements))]
 pub struct Registration<
-	Balance: Encode + Decode + MaxEncodedLen + Copy + Clone + Debug + Eq + PartialEq,
+	Balance: Encode + Decode + DecodeWithMemTracking + MaxEncodedLen + Copy + Clone + Debug + Eq + PartialEq,
 	MaxJudgements: Get<u32>,
 	IdentityInfo: IdentityInformationProvider,
 > {
@@ -276,7 +319,17 @@ pub struct Registration<
 }
 
 impl<
-		Balance: Encode + Decode + MaxEncodedLen + Copy + Clone + Debug + Eq + PartialEq + Zero + Add,
+		Balance: Encode
+			+ Decode
+			+ DecodeWithMemTracking
+			+ MaxEncodedLen
+			+ Copy
+			+ Clone
+			+ Debug
+			+ Eq
+			+ PartialEq
+			+ Zero
+			+ Add,
 		MaxJudgements: Get<u32>,
 		IdentityInfo: IdentityInformationProvider,
 	> Registration<Balance, MaxJudgements, IdentityInfo>
@@ -291,7 +344,15 @@ impl<
 }
 
 impl<
-		Balance: Encode + Decode + MaxEncodedLen + Copy + Clone + Debug + Eq + PartialEq,
+		Balance: Encode
+			+ Decode
+			+ DecodeWithMemTracking
+			+ MaxEncodedLen
+			+ Copy
+			+ Clone
+			+ Debug
+			+ Eq
+			+ PartialEq,
 		MaxJudgements: Get<u32>,
 		IdentityInfo: IdentityInformationProvider,
 	> Decode for Registration<Balance, MaxJudgements, IdentityInfo>

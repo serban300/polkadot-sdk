@@ -20,7 +20,7 @@ pub use polkadot_parachain_primitives::primitives::{
 pub use ringbuffer::{RingBufferMap, RingBufferMapImpl};
 pub use sp_core::U256;
 
-use codec::{Decode, Encode, MaxEncodedLen};
+use codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
 use frame_support::traits::Contains;
 use hex_literal::hex;
 use scale_info::TypeInfo;
@@ -67,7 +67,17 @@ pub const ROC: u128 = 1_000_000_000_000;
 
 /// Identifier for a message channel
 #[derive(
-	Clone, Copy, Encode, Decode, PartialEq, Eq, Default, RuntimeDebug, MaxEncodedLen, TypeInfo,
+	Clone,
+	Copy,
+	Encode,
+	Decode,
+	DecodeWithMemTracking,
+	PartialEq,
+	Eq,
+	Default,
+	RuntimeDebug,
+	MaxEncodedLen,
+	TypeInfo,
 )]
 pub struct ChannelId([u8; 32]);
 

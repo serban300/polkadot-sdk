@@ -24,7 +24,7 @@ use alloc::vec::Vec;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-	codec::{Decode, Encode, Error, Input},
+	codec::{Decode, DecodeWithMemTracking, Encode, Error, Input},
 	scale_info::{
 		build::{Fields, Variants},
 		Path, Type, TypeInfo,
@@ -34,7 +34,9 @@ use crate::{
 use sp_core::RuntimeDebug;
 
 /// Generic header digest.
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo, Default)]
+#[derive(
+	PartialEq, Eq, Clone, Encode, Decode, DecodeWithMemTracking, RuntimeDebug, TypeInfo, Default,
+)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Digest {
 	/// A list of logs in the digest.
@@ -70,7 +72,7 @@ impl Digest {
 
 /// Digest item that is able to encode/decode 'system' digest items and
 /// provide opaque access to other items.
-#[derive(PartialEq, Eq, Clone, RuntimeDebug)]
+#[derive(DecodeWithMemTracking, PartialEq, Eq, Clone, RuntimeDebug)]
 pub enum DigestItem {
 	/// A pre-runtime digest.
 	///

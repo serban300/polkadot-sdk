@@ -25,8 +25,8 @@ use crate::DoubleEncoded;
 use alloc::{vec, vec::Vec};
 use bounded_collections::{parameter_types, BoundedVec};
 use codec::{
-	self, decode_vec_with_len, Compact, Decode, Encode, Error as CodecError, Input as CodecInput,
-	MaxEncodedLen,
+	self, decode_vec_with_len, Compact, Decode, DecodeWithMemTracking, Encode, Error as CodecError,
+	Input as CodecInput, MaxEncodedLen,
 };
 use core::{fmt::Debug, result};
 use derivative::Derivative;
@@ -86,6 +86,8 @@ impl<Call> Decode for Xcm<Call> {
 		})
 	}
 }
+
+impl<Call> DecodeWithMemTracking for Xcm<Call> {}
 
 impl<Call> Xcm<Call> {
 	/// Create an empty instance.
@@ -228,7 +230,9 @@ parameter_types! {
 	pub MaxPalletsInfo: u32 = 64;
 }
 
-#[derive(Clone, Eq, PartialEq, Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
+#[derive(
+	Clone, Eq, PartialEq, Encode, Decode, DecodeWithMemTracking, Debug, TypeInfo, MaxEncodedLen,
+)]
 pub struct PalletInfo {
 	#[codec(compact)]
 	pub index: u32,
@@ -275,7 +279,9 @@ impl PalletInfo {
 }
 
 /// Response data to a query.
-#[derive(Clone, Eq, PartialEq, Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
+#[derive(
+	Clone, Eq, PartialEq, Encode, Decode, DecodeWithMemTracking, Debug, TypeInfo, MaxEncodedLen,
+)]
 pub enum Response {
 	/// No response. Serves as a neutral default.
 	Null,

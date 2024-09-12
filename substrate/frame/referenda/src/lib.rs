@@ -198,6 +198,7 @@ pub mod pallet {
 		type Tally: VoteTally<Self::Votes, TrackIdOf<Self, I>>
 			+ Clone
 			+ Codec
+			+ DecodeWithMemTracking
 			+ Eq
 			+ Debug
 			+ TypeInfo

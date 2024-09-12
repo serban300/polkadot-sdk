@@ -16,7 +16,7 @@
 
 //! Primitives of messages module, that represents lane id.
 
-use codec::{Decode, Encode, Error as CodecError, Input, MaxEncodedLen};
+use codec::{Decode, DecodeWithMemTracking, Encode, Error as CodecError, Input, MaxEncodedLen};
 use frame_support::sp_runtime::Either;
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
@@ -47,6 +47,7 @@ use sp_io::hashing::blake2_256;
 	Clone,
 	Copy,
 	Decode,
+	DecodeWithMemTracking,
 	Encode,
 	Eq,
 	Ord,
@@ -111,7 +112,17 @@ impl TypeId for LaneId {
 }
 
 #[derive(
-	Clone, Copy, Eq, Ord, PartialOrd, PartialEq, TypeInfo, MaxEncodedLen, Serialize, Deserialize,
+	DecodeWithMemTracking,
+	Clone,
+	Copy,
+	Eq,
+	Ord,
+	PartialOrd,
+	PartialEq,
+	TypeInfo,
+	MaxEncodedLen,
+	Serialize,
+	Deserialize,
 )]
 enum InnerLaneId {
 	/// Old format (for backwards compatibility).

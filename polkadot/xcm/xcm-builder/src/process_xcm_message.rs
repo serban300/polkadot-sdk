@@ -16,7 +16,7 @@
 
 //! Implementation of `ProcessMessage` for an `ExecuteXcm` implementation.
 
-use codec::{Decode, FullCodec, MaxEncodedLen};
+use codec::{Decode, DecodeWithMemTracking, FullCodec, MaxEncodedLen};
 use core::{fmt::Debug, marker::PhantomData};
 use frame_support::traits::{ProcessMessage, ProcessMessageError};
 use scale_info::TypeInfo;
@@ -30,7 +30,15 @@ pub struct ProcessXcmMessage<MessageOrigin, XcmExecutor, Call>(
 	PhantomData<(MessageOrigin, XcmExecutor, Call)>,
 );
 impl<
-		MessageOrigin: Into<Location> + FullCodec + MaxEncodedLen + Clone + Eq + PartialEq + TypeInfo + Debug,
+		MessageOrigin: Into<Location>
+			+ FullCodec
+			+ DecodeWithMemTracking
+			+ MaxEncodedLen
+			+ Clone
+			+ Eq
+			+ PartialEq
+			+ TypeInfo
+			+ Debug,
 		XcmExecutor: ExecuteXcm<Call>,
 		Call,
 	> ProcessMessage for ProcessXcmMessage<MessageOrigin, XcmExecutor, Call>

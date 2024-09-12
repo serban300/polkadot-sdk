@@ -63,8 +63,8 @@ use super::{
 use alloc::{vec, vec::Vec};
 use bounded_collections::{ConstU32, WeakBoundedVec};
 use codec::{
-	self, decode_vec_with_len, Compact, Decode, Encode, Error as CodecError, Input as CodecInput,
-	MaxEncodedLen,
+	self, decode_vec_with_len, Compact, Decode, DecodeWithMemTracking, Encode, Error as CodecError,
+	Input as CodecInput, MaxEncodedLen,
 };
 use core::{fmt::Debug, result};
 use derivative::Derivative;
@@ -123,7 +123,19 @@ impl From<NewOriginKind> for OriginKind {
 }
 
 /// A global identifier of an account-bearing consensus system.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
+#[derive(
+	Clone,
+	Eq,
+	PartialEq,
+	Ord,
+	PartialOrd,
+	Encode,
+	Decode,
+	DecodeWithMemTracking,
+	Debug,
+	TypeInfo,
+	MaxEncodedLen,
+)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 #[scale_info(replace_segment("staging_xcm", "xcm"))]
 pub enum NetworkId {
@@ -160,7 +172,19 @@ impl TryFrom<NewNetworkId> for NetworkId {
 }
 
 /// An identifier of a pluralistic body.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
+#[derive(
+	Clone,
+	Eq,
+	PartialEq,
+	Ord,
+	PartialOrd,
+	Encode,
+	Decode,
+	DecodeWithMemTracking,
+	Debug,
+	TypeInfo,
+	MaxEncodedLen,
+)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 #[scale_info(replace_segment("staging_xcm", "xcm"))]
 pub enum BodyId {
@@ -215,7 +239,19 @@ impl From<NewBodyId> for BodyId {
 }
 
 /// A part of a pluralistic body.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
+#[derive(
+	Clone,
+	Eq,
+	PartialEq,
+	Ord,
+	PartialOrd,
+	Encode,
+	Decode,
+	DecodeWithMemTracking,
+	Debug,
+	TypeInfo,
+	MaxEncodedLen,
+)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 #[scale_info(replace_segment("staging_xcm", "xcm"))]
 pub enum BodyPart {
@@ -308,6 +344,8 @@ impl<Call> Decode for Xcm<Call> {
 		})
 	}
 }
+
+impl<Call> DecodeWithMemTracking for Xcm<Call> {}
 
 /// The maximal number of instructions in an XCM before decoding fails.
 ///
@@ -406,7 +444,7 @@ pub mod prelude {
 }
 
 /// Response data to a query.
-#[derive(Clone, Eq, PartialEq, Encode, Decode, Debug, TypeInfo)]
+#[derive(Clone, Eq, PartialEq, Encode, Decode, DecodeWithMemTracking, Debug, TypeInfo)]
 #[scale_info(replace_segment("staging_xcm", "xcm"))]
 pub enum Response {
 	/// No response. Serves as a neutral default.

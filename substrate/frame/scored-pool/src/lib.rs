@@ -155,6 +155,7 @@ pub mod pallet {
 			+ Copy
 			+ Default
 			+ FullCodec
+			+ DecodeWithMemTracking
 			+ MaybeSerializeDeserialize
 			+ Debug
 			+ scale_info::TypeInfo

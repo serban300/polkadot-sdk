@@ -34,7 +34,7 @@ use crate::v3::{
 };
 use alloc::{vec, vec::Vec};
 use bounded_collections::{BoundedVec, ConstU32};
-use codec::{self as codec, Decode, Encode, MaxEncodedLen};
+use codec::{self as codec, Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
 use core::cmp::Ordering;
 use scale_info::TypeInfo;
 
@@ -283,6 +283,7 @@ impl Decode for Fungibility {
 		}
 	}
 }
+impl DecodeWithMemTracking for Fungibility {}
 
 impl Fungibility {
 	pub fn is_kind(&self, w: WildFungibility) -> bool {
@@ -367,6 +368,7 @@ impl TryFrom<OldWildFungibility> for WildFungibility {
 	Debug,
 	Encode,
 	Decode,
+	DecodeWithMemTracking,
 	TypeInfo,
 	MaxEncodedLen,
 	serde::Serialize,
@@ -437,6 +439,7 @@ impl Reanchorable for AssetId {
 	Debug,
 	Encode,
 	Decode,
+	DecodeWithMemTracking,
 	TypeInfo,
 	MaxEncodedLen,
 	serde::Serialize,
@@ -566,6 +569,8 @@ impl Decode for Assets {
 			.map_err(|()| "Out of order".into())
 	}
 }
+
+impl DecodeWithMemTracking for Assets {}
 
 impl TryFrom<OldAssets> for Assets {
 	type Error = ();

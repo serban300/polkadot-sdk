@@ -28,7 +28,7 @@ pub trait GetWeight<W> {
 	fn weight(&self) -> sp_weights::Weight;
 }
 
-#[derive(Copy, Clone, Encode, Decode, Eq, PartialEq, Debug, TypeInfo)]
+#[derive(Copy, Clone, Encode, Decode, DecodeWithMemTracking, Eq, PartialEq, Debug, TypeInfo)]
 #[scale_info(replace_segment("staging_xcm", "xcm"))]
 pub enum Error {
 	// Errors that happen due to instructions being executed. These alone are defined in the

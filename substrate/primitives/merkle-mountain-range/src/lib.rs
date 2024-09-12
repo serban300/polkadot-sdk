@@ -362,7 +362,16 @@ pub struct LeafProof<Hash> {
 }
 
 /// An MMR ancestry proof for a prior mmr root.
-#[derive(codec::Encode, codec::Decode, RuntimeDebug, Clone, PartialEq, Eq, TypeInfo)]
+#[derive(
+	codec::Encode,
+	codec::Decode,
+	codec::DecodeWithMemTracking,
+	RuntimeDebug,
+	Clone,
+	PartialEq,
+	Eq,
+	TypeInfo,
+)]
 pub struct AncestryProof<Hash> {
 	/// Peaks of the ancestor's mmr
 	pub prev_peaks: Vec<Hash>,

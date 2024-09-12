@@ -95,6 +95,7 @@ impl ToTokens for TaskEnumDef {
 					#scrate::PartialEqNoBound,
 					#scrate::pallet_prelude::Encode,
 					#scrate::pallet_prelude::Decode,
+					#scrate::__private::codec::DecodeWithMemTracking,
 					#scrate::pallet_prelude::TypeInfo,
 				)]
 				#[codec(encode_bound())]

@@ -24,7 +24,7 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use codec::{Decode, Encode, MaxEncodedLen};
+use codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
 use core::cmp::Ordering;
 use frame_support::{
 	traits::{EstimateNextSessionRotation, Get, OneSessionHandler},
@@ -126,7 +126,7 @@ pub type BoundedMixnodeFor<T> = BoundedMixnode<
 
 /// A mixnode registration. A registration transaction is formed from one of these plus an
 /// [`AuthoritySignature`].
-#[derive(Clone, Decode, Encode, PartialEq, TypeInfo, RuntimeDebug)]
+#[derive(Clone, Decode, DecodeWithMemTracking, Encode, PartialEq, TypeInfo, RuntimeDebug)]
 pub struct Registration<BlockNumber, BoundedMixnode> {
 	/// Block number at the time of creation. When a registration transaction fails to make it on
 	/// to the chain for whatever reason, we send out another one. We want this one to have a

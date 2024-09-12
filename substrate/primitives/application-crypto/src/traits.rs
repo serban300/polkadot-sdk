@@ -15,7 +15,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use codec::Codec;
+use codec::{Codec, DecodeWithMemTracking};
 use scale_info::TypeInfo;
 
 use alloc::vec::Vec;
@@ -110,7 +110,7 @@ pub trait RuntimeAppPublic: Sized {
 	const ID: KeyTypeId;
 
 	/// The signature that will be generated when signing with the corresponding private key.
-	type Signature: Debug + Eq + PartialEq + Clone + TypeInfo + Codec;
+	type Signature: Debug + Eq + PartialEq + Clone + TypeInfo + Codec + DecodeWithMemTracking;
 
 	/// Returns all public keys for this application in the keystore.
 	fn all() -> crate::Vec<Self>;
@@ -143,6 +143,7 @@ where
 	<T as AppPublic>::Generic: RuntimePublic,
 	<T as AppCrypto>::Signature: TypeInfo
 		+ Codec
+		+ DecodeWithMemTracking
 		+ From<<<T as AppPublic>::Generic as RuntimePublic>::Signature>
 		+ AsRef<<<T as AppPublic>::Generic as RuntimePublic>::Signature>,
 {

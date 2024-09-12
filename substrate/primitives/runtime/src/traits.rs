@@ -27,7 +27,9 @@ use crate::{
 	DispatchResult,
 };
 use alloc::vec::Vec;
-use codec::{Codec, Decode, Encode, EncodeLike, FullCodec, MaxEncodedLen};
+use codec::{
+	Codec, Decode, DecodeWithMemTracking, Encode, EncodeLike, FullCodec, HasCompact, MaxEncodedLen,
+};
 #[doc(hidden)]
 pub use core::{fmt::Debug, marker::PhantomData};
 use impl_trait_for_tuples::impl_for_tuples;
@@ -216,7 +218,7 @@ pub trait Lookup {
 /// context.
 pub trait StaticLookup {
 	/// Type to lookup from.
-	type Source: Codec + Clone + PartialEq + Debug + TypeInfo;
+	type Source: Codec + DecodeWithMemTracking + Clone + PartialEq + Debug + TypeInfo;
 	/// Type to lookup into.
 	type Target;
 	/// Attempt a lookup.
@@ -228,7 +230,9 @@ pub trait StaticLookup {
 /// A lookup implementation returning the input value.
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub struct IdentityLookup<T>(PhantomData<T>);
-impl<T: Codec + Clone + PartialEq + Debug + TypeInfo> StaticLookup for IdentityLookup<T> {
+impl<T: Codec + DecodeWithMemTracking + Clone + PartialEq + Debug + TypeInfo> StaticLookup
+	for IdentityLookup<T>
+{
 	type Source = T;
 	type Target = T;
 	fn lookup(x: T) -> Result<T, LookupError> {
@@ -251,8 +255,8 @@ impl<T> Lookup for IdentityLookup<T> {
 pub struct AccountIdLookup<AccountId, AccountIndex>(PhantomData<(AccountId, AccountIndex)>);
 impl<AccountId, AccountIndex> StaticLookup for AccountIdLookup<AccountId, AccountIndex>
 where
-	AccountId: Codec + Clone + PartialEq + Debug,
-	AccountIndex: Codec + Clone + PartialEq + Debug,
+	AccountId: Codec + DecodeWithMemTracking + Clone + PartialEq + Debug,
+	AccountIndex: Codec + HasCompact + Clone + PartialEq + Debug,
 	crate::MultiAddress<AccountId, AccountIndex>: Codec + StaticTypeInfo,
 {
 	type Source = crate::MultiAddress<AccountId, AccountIndex>;
@@ -996,6 +1000,7 @@ pub trait HashOutput:
 	+ Default
 	+ Encode
 	+ Decode
+	+ DecodeWithMemTracking
 	+ EncodeLike
 	+ MaxEncodedLen
 	+ TypeInfo
@@ -1016,6 +1021,7 @@ impl<T> HashOutput for T where
 		+ Default
 		+ Encode
 		+ Decode
+		+ DecodeWithMemTracking
 		+ EncodeLike
 		+ MaxEncodedLen
 		+ TypeInfo
@@ -1168,6 +1174,7 @@ pub trait BlockNumber:
 	+ TypeInfo
 	+ MaxEncodedLen
 	+ FullCodec
+	+ DecodeWithMemTracking
 {
 }
 
@@ -1185,7 +1192,8 @@ impl<
 			+ Default
 			+ TypeInfo
 			+ MaxEncodedLen
-			+ FullCodec,
+			+ FullCodec
+			+ DecodeWithMemTracking,
 	> BlockNumber for T
 {
 }
@@ -1196,7 +1204,16 @@ impl<
 ///
 /// You can also create a `new` one from those fields.
 pub trait Header:
-	Clone + Send + Sync + Codec + Eq + MaybeSerialize + Debug + TypeInfo + 'static
+	Clone
+	+ Send
+	+ Sync
+	+ Codec
+	+ DecodeWithMemTracking
+	+ Eq
+	+ MaybeSerialize
+	+ Debug
+	+ TypeInfo
+	+ 'static
 {
 	/// Header number.
 	type Number: BlockNumber;
@@ -1477,7 +1494,7 @@ impl Dispatchable for () {
 /// Means by which a transaction may be extended. This type embodies both the data and the logic
 /// that should be additionally associated with the transaction. It should be plain old data.
 pub trait SignedExtension:
-	Codec + Debug + Sync + Send + Clone + Eq + PartialEq + StaticTypeInfo
+	Codec + DecodeWithMemTracking + Debug + Sync + Send + Clone + Eq + PartialEq + StaticTypeInfo
 {
 	/// Unique identifier of this signed extension.
 	///
@@ -2019,6 +2036,7 @@ macro_rules! impl_opaque_keys_inner {
 			Clone, PartialEq, Eq,
 			$crate::codec::Encode,
 			$crate::codec::Decode,
+			$crate::codec::DecodeWithMemTracking,
 			$crate::scale_info::TypeInfo,
 			$crate::RuntimeDebug,
 		)]
@@ -2296,6 +2314,7 @@ pub trait BlockIdTo<Block: self::Block> {
 pub trait BlockNumberProvider {
 	/// Type of `BlockNumber` to provide.
 	type BlockNumber: Codec
+		+ DecodeWithMemTracking
 		+ Clone
 		+ Ord
 		+ Eq

@@ -27,7 +27,7 @@ use bp_runtime::{
 	BasicOperatingMode, BlockNumberOf, Chain, HashOf, HasherOf, HeaderOf, RawStorageProof,
 	StorageProofChecker, StorageProofError, UnderlyingChainProvider,
 };
-use codec::{Codec, Decode, Encode, EncodeLike, MaxEncodedLen};
+use codec::{Codec, Decode, DecodeWithMemTracking, Encode, EncodeLike, MaxEncodedLen};
 use core::{clone::Clone, cmp::Eq, default::Default, fmt::Debug};
 use frame_support::PalletError;
 use scale_info::TypeInfo;
@@ -121,7 +121,17 @@ impl AuthoritySet {
 ///
 /// The bridge needs to know where to start its sync from, and this provides that initial context.
 #[derive(
-	Default, Encode, Decode, RuntimeDebug, PartialEq, Eq, Clone, TypeInfo, Serialize, Deserialize,
+	Default,
+	Encode,
+	Decode,
+	DecodeWithMemTracking,
+	RuntimeDebug,
+	PartialEq,
+	Eq,
+	Clone,
+	TypeInfo,
+	Serialize,
+	Deserialize,
 )]
 pub struct InitializationData<H: HeaderT> {
 	/// The header from which we should start syncing.

@@ -29,7 +29,7 @@ use crate::{
 #[cfg(all(not(feature = "std"), feature = "serde"))]
 use alloc::format;
 use alloc::{vec, vec::Vec};
-use codec::{Compact, Decode, Encode, EncodeLike, Error, Input};
+use codec::{Compact, Decode, DecodeWithMemTracking, Encode, EncodeLike, Error, Input};
 use core::fmt;
 use scale_info::{build::Fields, meta_type, Path, StaticTypeInfo, Type, TypeInfo, TypeParameter};
 use sp_io::hashing::blake2_256;
@@ -306,6 +306,16 @@ where
 
 		Ok(Self { signature, function })
 	}
+}
+
+impl<Address, Call, Signature, Extra> DecodeWithMemTracking
+	for UncheckedExtrinsic<Address, Call, Signature, Extra>
+where
+	Address: DecodeWithMemTracking,
+	Signature: DecodeWithMemTracking,
+	Call: DecodeWithMemTracking,
+	Extra: SignedExtension,
+{
 }
 
 #[docify::export(unchecked_extrinsic_encode_impl)]

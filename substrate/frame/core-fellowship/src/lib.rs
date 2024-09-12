@@ -60,7 +60,7 @@
 extern crate alloc;
 
 use alloc::boxed::Box;
-use codec::{Decode, Encode, MaxEncodedLen};
+use codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
 use core::{fmt::Debug, marker::PhantomData};
 use scale_info::TypeInfo;
 use sp_arithmetic::traits::{Saturating, Zero};
@@ -89,7 +89,18 @@ pub use pallet::*;
 pub use weights::*;
 
 /// The desired outcome for which evidence is presented.
-#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, TypeInfo, MaxEncodedLen, RuntimeDebug)]
+#[derive(
+	Encode,
+	Decode,
+	DecodeWithMemTracking,
+	Eq,
+	PartialEq,
+	Copy,
+	Clone,
+	TypeInfo,
+	MaxEncodedLen,
+	RuntimeDebug,
+)]
 pub enum Wish {
 	/// Member wishes only to retain their current rank.
 	Retention,
@@ -107,6 +118,7 @@ pub type Evidence<T, I> = BoundedVec<u8, <T as Config<I>>::EvidenceSize>;
 #[derive(
 	Encode,
 	Decode,
+	DecodeWithMemTracking,
 	CloneNoBound,
 	EqNoBound,
 	PartialEqNoBound,

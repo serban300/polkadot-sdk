@@ -57,7 +57,14 @@ pub struct NoopMessageProcessor<Origin, const REQUIRED_WEIGHT: u64 = 1>(PhantomD
 impl<Origin, const REQUIRED_WEIGHT: u64> ProcessMessage
 	for NoopMessageProcessor<Origin, REQUIRED_WEIGHT>
 where
-	Origin: codec::FullCodec + MaxEncodedLen + Clone + Eq + PartialEq + TypeInfo + Debug,
+	Origin: codec::FullCodec
+		+ codec::DecodeWithMemTracking
+		+ MaxEncodedLen
+		+ Clone
+		+ Eq
+		+ PartialEq
+		+ TypeInfo
+		+ Debug,
 {
 	type Origin = Origin;
 
