@@ -572,6 +572,8 @@ where
 	where
 		I: Iterator<Item = (&'a T::AccountId, AuthorityId)>,
 	{
+		log::error!("Grandpa: on_genesis_session()");
+
 		let authorities = validators.map(|(_, k)| (k, 1)).collect::<Vec<_>>();
 		Self::initialize(authorities);
 	}
@@ -580,6 +582,8 @@ where
 	where
 		I: Iterator<Item = (&'a T::AccountId, AuthorityId)>,
 	{
+		log::error!("Grandpa: on_new_session()");
+
 		// Always issue a change if `session` says that the validators have changed.
 		// Even if their session keys are the same as before, the underlying economic
 		// identities have changed.
@@ -623,6 +627,8 @@ where
 	}
 
 	fn on_disabled(i: u32) {
+		log::error!("Grandpa: on_disabled()");
+
 		Self::deposit_log(ConsensusLog::OnDisabled(i as u64))
 	}
 }
