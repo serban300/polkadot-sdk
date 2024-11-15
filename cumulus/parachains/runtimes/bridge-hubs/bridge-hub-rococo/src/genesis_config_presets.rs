@@ -65,12 +65,24 @@ fn bridge_hub_rococo_genesis(
 			safe_xcm_version: Some(SAFE_XCM_VERSION),
 			..Default::default()
 		},
+		bridge_polkadot_bulletin_grandpa: BridgePolkadotBulletinGrandpaConfig {
+			owner: bridges_pallet_owner.clone(),
+			..Default::default()
+		},
 		bridge_westend_grandpa: BridgeWestendGrandpaConfig {
 			owner: bridges_pallet_owner.clone(),
 			..Default::default()
 		},
 		bridge_westend_messages: BridgeWestendMessagesConfig {
 			owner: bridges_pallet_owner.clone(),
+			..Default::default()
+		},
+		xcm_over_polkadot_bulletin: XcmOverPolkadotBulletinConfig {
+			opened_bridges: vec![(
+				Location::new(1, [Parachain(1004)]),
+				Junctions::from([GlobalConsensus(NetworkId::PolkadotBulletin).into()]),
+				Some(bp_messages::LegacyLaneId([0, 0, 0, 0])),
+			)],
 			..Default::default()
 		},
 		xcm_over_bridge_hub_westend: XcmOverBridgeHubWestendConfig {
