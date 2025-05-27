@@ -137,16 +137,15 @@ impl<Message: InboundMessage> InboundMessagesCollection<Message> {
 	/// The messages that exceed that limit are hashed.
 	pub fn into_abridged(
 		self,
-		size_limit: &mut usize,
+		_size_limit: &mut usize,
 	) -> AbridgedInboundMessagesCollection<Message> {
 		let mut messages = self.messages;
 
 		let mut split_off_pos = messages.len();
 		for (idx, message) in messages.iter().enumerate() {
-			if *size_limit < message.data().len() {
+			if idx > 0 {
 				break;
 			}
-			*size_limit -= message.data().len();
 
 			split_off_pos = idx + 1;
 		}

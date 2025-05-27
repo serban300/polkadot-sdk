@@ -1,0 +1,75 @@
+[relaychain]
+default_command = "/Users/serban-work/workplace/sources/polkadot-sdk/target/release/polkadot"
+chain = "rococo-local"
+
+[[relaychain.nodes]]
+name = "alice"
+validator = true
+rpc_port = 9000
+args = ["-lparachain::prospective-parachains=debug"]
+
+[[relaychain.nodes]]
+name = "bob"
+validator = true
+
+[[relaychain.nodes]]
+name = "charlie"
+validator = true
+
+[[relaychain.nodes]]
+name = "dave"
+validator = true
+
+[[relaychain.nodes]]
+name = "eve"
+validator = true
+
+[[parachains]]
+id = 2000
+chain = "asset-hub-rococo-local"
+cumulus_based = true
+
+	# run charlie as parachain collator
+	[[parachains.collators]]
+	name = "alice"
+	validator = true
+	rpc_port = 10000
+	command = "/Users/serban-work/workplace/sources/polkadot-sdk/target/release/polkadot-parachain"
+	args = ["--force-authoring"]
+
+[[parachains]]
+id = 2001
+chain = "bridge-hub-rococo-local"
+cumulus_based = true
+
+	[[parachains.collators]]
+	name = "bob"
+	validator = true
+	rpc_port = 10001
+	command = "/Users/serban-work/workplace/sources/polkadot-sdk/target/release/polkadot-parachain"
+	args = ["--force-authoring"]
+
+[[parachains]]
+id = 2002
+chain = "bridge-hub-rococo-local"
+cumulus_based = true
+
+	[[parachains.collators]]
+	name = "charlie"
+	validator = true
+	rpc_port = 10002
+	command = "/Users/serban-work/workplace/sources/polkadot-sdk/target/release/polkadot-parachain"
+	args = ["--force-authoring"]
+
+[[parachains]]
+id = 2003
+chain = "bridge-hub-rococo-local"
+cumulus_based = true
+
+	[[parachains.collators]]
+	name = "dave"
+	validator = true
+	rpc_port = 10003
+	command = "/Users/serban-work/workplace/sources/polkadot-sdk/target/release/polkadot-parachain"
+	args = ["--force-authoring"]
+
