@@ -3074,14 +3074,13 @@ impl<T: Config> Pallet<T> {
 
 		// Should only get messages from this call since we cleared previous ones.
 		let forwarded_xcms =
-			Self::convert_forwarded_xcms(result_xcms_version, Router::get_messages()).inspect_err(
-				|error| {
+			Self::convert_forwarded_xcms(result_xcms_version, Router::take_messages())
+				.inspect_err(|error| {
 					tracing::error!(
 						target: "xcm::DryRunApi::dry_run_call",
 						?error, "Forwarded xcms version conversion failed with error"
 					);
-				},
-			)?;
+				})?;
 		let events: Vec<<Runtime as frame_system::Config>::RuntimeEvent> =
 			frame_system::Pallet::<Runtime>::read_events_no_consensus()
 				.map(|record| record.event.clone())
@@ -3135,7 +3134,7 @@ impl<T: Config> Pallet<T> {
 			Weight::MAX, // Max limit available for execution.
 			Weight::zero(),
 		);
-		let forwarded_xcms = Self::convert_forwarded_xcms(xcm_version, Router::get_messages())
+		let forwarded_xcms = Self::convert_forwarded_xcms(xcm_version, Router::take_messages())
 			.inspect_err(|error| {
 				tracing::error!(
 					target: "xcm::DryRunApi::dry_run_xcm",
