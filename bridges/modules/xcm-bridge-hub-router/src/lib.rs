@@ -424,8 +424,8 @@ where
 		ViaBridgeHubExporter::<T, I>::clear_messages()
 	}
 
-	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
-		ViaBridgeHubExporter::<T, I>::get_messages()
+	fn take_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
+		ViaBridgeHubExporter::<T, I>::take_messages()
 	}
 }
 
@@ -744,7 +744,7 @@ mod tests {
 				(Parent, Parent, GlobalConsensus(BridgedNetworkId::get()), Parachain(1000)).into(),
 				vec![ClearOrigin].into()
 			));
-			assert_eq!(XcmBridgeHubRouter::get_messages(), vec![]);
+			assert_eq!(XcmBridgeHubRouter::take_messages(), vec![]);
 		});
 	}
 }

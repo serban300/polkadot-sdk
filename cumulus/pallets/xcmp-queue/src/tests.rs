@@ -1022,7 +1022,7 @@ fn get_messages_works() {
 		ParachainSystem::open_outbound_hrmp_channel_for_benchmarks_or_tests(other_sibling_para_id);
 		assert_ok!(send_xcm::<XcmpQueue>(other_destination.clone(), message.clone()));
 		assert_ok!(send_xcm::<XcmpQueue>(other_destination.clone(), message));
-		let queued_messages = XcmpQueue::get_messages();
+		let queued_messages = XcmpQueue::take_messages();
 		assert_eq!(
 			queued_messages,
 			vec![

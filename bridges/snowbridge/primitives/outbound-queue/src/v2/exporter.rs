@@ -41,7 +41,7 @@ impl<Halted: ExportPausedQuery, InnerExporter: SendXcm + InspectMessageQueues> I
 		InnerExporter::clear_messages();
 	}
 
-	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
-		InnerExporter::get_messages()
+	fn take_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
+		InnerExporter::take_messages()
 	}
 }

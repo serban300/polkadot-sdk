@@ -1750,10 +1750,10 @@ impl<T: Config> InspectMessageQueues for Pallet<T> {
 		PendingUpwardMessages::<T>::kill();
 	}
 
-	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
+	fn take_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
 		use xcm::prelude::*;
 
-		let messages: Vec<VersionedXcm<()>> = PendingUpwardMessages::<T>::get()
+		let messages: Vec<VersionedXcm<()>> = PendingUpwardMessages::<T>::take()
 			.iter()
 			.map(|encoded_message| {
 				VersionedXcm::<()>::decode_all_with_depth_limit(

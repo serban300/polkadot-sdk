@@ -104,7 +104,7 @@ pub struct TestToBridgeHubSender;
 
 impl TestToBridgeHubSender {
 	pub fn is_message_sent() -> bool {
-		!Self::get_messages().is_empty()
+		!Self::take_messages().is_empty()
 	}
 }
 
@@ -135,19 +135,17 @@ impl InspectMessageQueues for TestToBridgeHubSender {
 		SENT_XCM.with(|q| q.borrow_mut().clear());
 	}
 
-	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
-		SENT_XCM.with(|q| {
-			(*q.borrow())
-				.clone()
-				.iter()
-				.map(|(location, message)| {
-					(
-						VersionedLocation::from(location.clone()),
-						vec![VersionedXcm::from(message.clone())],
-					)
-				})
-				.collect()
-		})
+	fn take_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
+		SENT_XCM
+			.take()
+			.iter()
+			.map(|(location, message)| {
+				(
+					VersionedLocation::from(location.clone()),
+					vec![VersionedXcm::from(message.clone())],
+				)
+			})
+			.collect()
 	}
 }
 

@@ -134,19 +134,19 @@ impl InspectMessageQueues for TestXcmSender {
 		SENT_XCM.with(|q| q.borrow_mut().clear());
 	}
 
-	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
-		SENT_XCM.with(|q| {
-			(*q.borrow())
-				.clone()
-				.iter()
-				.map(|(location, message)| {
-					(
-						VersionedLocation::from(location.clone()),
-						vec![VersionedXcm::from(message.clone())],
-					)
-				})
-				.collect()
-		})
+	fn take_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
+		let messages = SENT_XCM
+			.take()
+			.iter()
+			.map(|(location, message)| {
+				(
+					VersionedLocation::from(location.clone()),
+					vec![VersionedXcm::from(message.clone())],
+				)
+			})
+			.collect();
+
+		messages
 	}
 }
 

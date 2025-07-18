@@ -118,8 +118,8 @@ impl<T: UpwardMessageSender + InspectMessageQueues, W, P> InspectMessageQueues
 		T::clear_messages();
 	}
 
-	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
-		T::get_messages()
+	fn take_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
+		T::take_messages()
 	}
 }
 

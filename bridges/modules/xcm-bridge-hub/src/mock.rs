@@ -314,7 +314,7 @@ impl InspectMessageQueues for ExecuteXcmOverSendXcm {
 		todo!()
 	}
 
-	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
+	fn take_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
 		todo!()
 	}
 }

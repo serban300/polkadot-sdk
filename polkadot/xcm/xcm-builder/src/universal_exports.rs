@@ -338,8 +338,8 @@ impl<Bridges, Router: InspectMessageQueues, UniversalLocation> InspectMessageQue
 		Router::clear_messages();
 	}
 
-	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
-		Router::get_messages()
+	fn take_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
+		Router::take_messages()
 	}
 }
 
@@ -461,8 +461,8 @@ impl<Bridges, Router: InspectMessageQueues, UniversalLocation> InspectMessageQue
 		Router::clear_messages();
 	}
 
-	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
-		Router::get_messages()
+	fn take_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
+		Router::take_messages()
 	}
 }
 

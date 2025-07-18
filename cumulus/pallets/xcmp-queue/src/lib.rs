@@ -1117,10 +1117,10 @@ impl<T: Config> InspectMessageQueues for Pallet<T> {
 		});
 	}
 
-	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
+	fn take_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
 		use xcm::prelude::*;
 
-		OutboundXcmpMessages::<T>::iter()
+		let messages = OutboundXcmpMessages::<T>::iter()
 			.map(|(para_id, _, messages)| {
 				let mut data = &messages[..];
 				let decoded_format = XcmpMessageFormat::decode(&mut data).unwrap();
@@ -1142,7 +1142,11 @@ impl<T: Config> InspectMessageQueues for Pallet<T> {
 					decoded_messages,
 				)
 			})
-			.collect()
+			.collect();
+
+		Self::clear_messages();
+
+		messages
 	}
 }
 

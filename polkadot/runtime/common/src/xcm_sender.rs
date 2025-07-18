@@ -159,8 +159,8 @@ impl<T: dmp::Config, W, P> InspectMessageQueues for ChildParachainRouter<T, W, P
 		let _ = dmp::DownwardMessageQueues::<T>::clear(u32::MAX, None);
 	}
 
-	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
-		dmp::DownwardMessageQueues::<T>::iter()
+	fn take_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
+		let messages = dmp::DownwardMessageQueues::<T>::iter()
 			.map(|(para_id, messages)| {
 				let decoded_messages: Vec<VersionedXcm<()>> = messages
 					.iter()
@@ -182,7 +182,11 @@ impl<T: dmp::Config, W, P> InspectMessageQueues for ChildParachainRouter<T, W, P
 					decoded_messages,
 				)
 			})
-			.collect()
+			.collect();
+
+		Self::clear_messages();
+
+		messages
 	}
 }
 
