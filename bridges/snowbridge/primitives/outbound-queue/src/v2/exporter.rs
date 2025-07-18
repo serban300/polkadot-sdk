@@ -34,14 +34,14 @@ impl<PausedQuery: ExportPausedQuery, InnerExporter: SendXcm> SendXcm
 	}
 }
 
-impl<Halted: ExportPausedQuery, InnerExporter: SendXcm> InspectMessageQueues
+impl<Halted: ExportPausedQuery, InnerExporter: SendXcm + InspectMessageQueues> InspectMessageQueues
 	for PausableExporter<Halted, InnerExporter>
 {
-	fn clear_messages() {}
+	fn clear_messages() {
+		InnerExporter::clear_messages();
+	}
 
-	/// This router needs to implement `InspectMessageQueues` but doesn't have to
-	/// return any messages, since it just reuses the inner router.
 	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
-		Vec::new()
+		InnerExporter::get_messages()
 	}
 }
