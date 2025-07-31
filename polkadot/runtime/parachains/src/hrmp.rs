@@ -27,7 +27,8 @@ use codec::{Decode, Encode};
 use core::{fmt, mem};
 use frame_support::{pallet_prelude::*, traits::ReservableCurrency, DefaultNoBound};
 use frame_system::pallet_prelude::*;
-use polkadot_parachain_primitives::primitives::{HorizontalMessages, IsSystem};
+use polkadot_core_primitives::InboundMessageId;
+use polkadot_parachain_primitives::primitives::{HorizontalMessages, Id, IsSystem};
 use polkadot_primitives::{
 	Balance, Hash, HrmpChannelId, Id as ParaId, InboundHrmpMessage, OutboundHrmpMessage,
 	SessionIndex,
@@ -1419,14 +1420,13 @@ impl<T: Config> Pallet<T> {
 			// Note that having the latest entry greater than the current block number is a logical
 			// error.
 			let mut recipient_digest = HrmpChannelDigests::<T>::get(&channel_id.recipient);
-			if let Some(cur_block_digest) = recipient_digest
-				.last_mut()
-				.filter(|(block_no, _)| *block_no == now)
-				.map(|(_, ref mut d)| d)
-			{
-				cur_block_digest.push(sender);
-			} else {
-				recipient_digest.push((now, vec![sender]));
+			match recipient_digest.last_mut() {
+				Some((block_num, current_block_digest)) if *block_num == now => {
+					current_block_digest.push(sender);
+				},
+				_ => {
+					recipient_digest.push((now, vec![sender]));
+				},
 			}
 			HrmpChannelDigests::<T>::insert(&channel_id.recipient, recipient_digest);
 		}
@@ -1669,6 +1669,37 @@ impl<T: Config> Pallet<T> {
 	pub(crate) fn inbound_hrmp_channels_contents(
 		recipient: ParaId,
 	) -> BTreeMap<ParaId, Vec<InboundHrmpMessage<BlockNumberFor<T>>>> {
+		//HERE
+		let sender_set = HrmpIngressChannelsIndex::<T>::get(&recipient);
+
+		let mut inbound_hrmp_channels_contents = BTreeMap::new();
+		for sender in sender_set {
+			let channel_contents =
+				HrmpChannelContents::<T>::get(&HrmpChannelId { sender, recipient });
+			inbound_hrmp_channels_contents.insert(sender, channel_contents);
+		}
+
+		inbound_hrmp_channels_contents
+	}
+
+	/// Returns contents of all channels addressed to the given recipient. Channels that have no
+	/// messages in them are also included.
+	pub(crate) fn abridged_inbound_hrmp_channels_contents(
+		recipient: ParaId,
+		last_processed_msg: InboundMessageId,
+		size_limit: usize,
+	) -> BTreeMap<ParaId, Vec<InboundHrmpMessage<BlockNumberFor<T>>>> {
+		let mut digest = HrmpChannelDigests::<T>::get(&recipient);
+		for (block_num, senders) in &mut digest {
+			senders.sort();
+
+			for sender in senders {
+				let channel_contents =
+					HrmpChannelContents::<T>::get(&HrmpChannelId { sender: *sender, recipient });
+			}
+		}
+
+		//HERE
 		let sender_set = HrmpIngressChannelsIndex::<T>::get(&recipient);
 
 		let mut inbound_hrmp_channels_contents = BTreeMap::new();

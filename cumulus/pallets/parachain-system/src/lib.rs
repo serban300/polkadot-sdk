@@ -36,6 +36,7 @@ use cumulus_primitives_core::{
 	relay_chain::{
 		self,
 		vstaging::{ClaimQueueOffset, CoreSelector, DEFAULT_CLAIM_QUEUE_OFFSET},
+		InboundMessageId,
 	},
 	AbridgedHostConfiguration, ChannelInfo, ChannelStatus, CollationInfo, GetChannelInfo,
 	ListChannelInfos, MessageSendError, OutboundHrmpMessage, ParaId, PersistedValidationData,
@@ -52,7 +53,7 @@ use frame_support::{
 use frame_system::{ensure_none, ensure_root, pallet_prelude::HeaderFor};
 use parachain_inherent::{
 	deconstruct_parachain_inherent_data, AbridgedInboundDownwardMessages,
-	AbridgedInboundHrmpMessages, BasicParachainInherentData, InboundMessageId, InboundMessagesData,
+	AbridgedInboundHrmpMessages, BasicParachainInherentData, InboundMessagesData,
 };
 use polkadot_parachain_primitives::primitives::RelayChainBlockNumber;
 use polkadot_runtime_parachains::{FeeTracker, GetMinFeeFactor};
