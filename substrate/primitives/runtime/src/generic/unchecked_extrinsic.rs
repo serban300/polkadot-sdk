@@ -280,7 +280,9 @@ where
 	}
 }
 
-impl<Address, Call, Signature, Extension> UncheckedExtrinsic<Address, Call, Signature, Extension> {
+impl<Address, Call, Signature, Extension, const MAX_CALL_SIZE: usize>
+	UncheckedExtrinsic<Address, Call, Signature, Extension, MAX_CALL_SIZE>
+{
 	/// New instance of a bare (ne unsigned) extrinsic. This could be used for an inherent or an
 	/// old-school "unsigned transaction" (which are new being deprecated in favour of general
 	/// transactions).
@@ -328,6 +330,17 @@ impl<Address, Call, Signature, Extension> UncheckedExtrinsic<Address, Call, Sign
 	/// New instance of an new-school unsigned transaction.
 	pub fn new_transaction(function: Call, tx_ext: Extension) -> Self {
 		Self::from_parts(function, Preamble::General(EXTENSION_VERSION, tx_ext))
+	}
+
+	fn encode_without_prefix(&self) -> Vec<u8>
+	where
+		Preamble<Address, Signature, Extension>: Encode,
+		Call: Encode,
+	{
+		let mut tmp = self.preamble.encode();
+		self.function.encode_to(&mut tmp);
+
+		tmp
 	}
 }
 
@@ -471,8 +484,7 @@ where
 	Extension: Encode,
 {
 	fn encode(&self) -> Vec<u8> {
-		let mut tmp = self.preamble.encode();
-		self.function.encode_to(&mut tmp);
+		let tmp = self.encode_without_prefix();
 
 		let compact_len = codec::Compact::<u32>(tmp.len() as u32);
 
@@ -583,16 +595,11 @@ where
 impl<Address, Call, Signature, Extension>
 	From<UncheckedExtrinsic<Address, Call, Signature, Extension>> for OpaqueExtrinsic
 where
-	Address: Encode,
-	Signature: Encode,
+	Preamble<Address, Signature, Extension>: Encode,
 	Call: Encode,
-	Extension: Encode,
 {
 	fn from(extrinsic: UncheckedExtrinsic<Address, Call, Signature, Extension>) -> Self {
-		Self::from_bytes(extrinsic.encode().as_slice()).expect(
-			"both OpaqueExtrinsic and UncheckedExtrinsic have encoding that is compatible with \
-				raw Vec<u8> encoding; qed",
-		)
+		Self::from_bytes(extrinsic.encode_without_prefix())
 	}
 }
 

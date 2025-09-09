@@ -975,8 +975,13 @@ macro_rules! assert_eq_error_rate_float {
 pub struct OpaqueExtrinsic(Vec<u8>);
 
 impl OpaqueExtrinsic {
+	/// Create a new instance of `OpaqueExtrinsic` from a `Vec<u8>`.
+	pub fn from_bytes(bytes: Vec<u8>) -> Self {
+		Self(bytes)
+	}
+
 	/// Convert an encoded extrinsic to an `OpaqueExtrinsic`.
-	pub fn from_bytes(mut bytes: &[u8]) -> Result<Self, codec::Error> {
+	pub fn try_from_encoded_extrinsic(mut bytes: &[u8]) -> Result<Self, codec::Error> {
 		Self::decode(&mut bytes)
 	}
 }
