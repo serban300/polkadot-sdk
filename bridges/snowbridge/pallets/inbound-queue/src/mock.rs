@@ -142,11 +142,11 @@ impl<T: snowbridge_pallet_ethereum_client::Config> BenchmarkHelper<T> for Test {
 pub struct MockXcmSender;
 
 impl SendXcm for MockXcmSender {
-	type Ticket = Xcm<()>;
+	type Ticket = Xcm<OpaqueCall>;
 
 	fn validate(
 		dest: &mut Option<Location>,
-		xcm: &mut Option<Xcm<()>>,
+		xcm: &mut Option<Xcm<OpaqueCall>>,
 	) -> SendResult<Self::Ticket> {
 		if let Some(location) = dest {
 			match location.unpack() {

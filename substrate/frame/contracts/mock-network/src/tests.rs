@@ -75,7 +75,7 @@ fn test_xcm_execute() {
 		let beneficiary = AccountId32 { network: None, id: BOB.clone().into() };
 
 		// The XCM used to transfer funds to Bob.
-		let message: Xcm<()> = Xcm::builder_unsafe()
+		let message: Xcm<OpaqueCall> = Xcm::builder_unsafe()
 			.withdraw_asset(assets.clone())
 			.deposit_asset(assets, beneficiary)
 			.build();
@@ -108,7 +108,7 @@ fn test_xcm_execute_incomplete() {
 		let beneficiary = AccountId32 { network: None, id: BOB.clone().into() };
 
 		// The XCM used to transfer funds to Bob.
-		let message: Xcm<()> = Xcm::builder_unsafe()
+		let message: Xcm<OpaqueCall> = Xcm::builder_unsafe()
 			.withdraw_asset(assets.clone())
 			// This will fail as the contract does not have enough balance to complete both
 			// withdrawals.
@@ -175,7 +175,7 @@ fn test_xcm_send() {
 		let assets: Asset = (Here, amount).into();
 		let beneficiary = AccountId32 { network: None, id: ALICE.clone().into() };
 
-		let message: Xcm<()> = Xcm::builder()
+		let message: Xcm<OpaqueCall> = Xcm::builder()
 			.withdraw_asset(assets.clone())
 			.buy_execution((Here, fee), Unlimited)
 			.deposit_asset(assets, beneficiary)

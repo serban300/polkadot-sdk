@@ -704,12 +704,11 @@ impl<T: Config> Pallet<T> {
 
 		let input_data = &mut &data[..];
 		let mut input = codec::CountedInput::new(input_data);
-		VersionedXcm::<()>::decode_with_depth_limit(MAX_XCM_DECODE_DEPTH, &mut input).map_err(
-			|error| {
+		VersionedXcm::<OpaqueCall>::decode_with_depth_limit(MAX_XCM_DECODE_DEPTH, &mut input)
+			.map_err(|error| {
 				tracing::debug!(target: LOG_TARGET, ?error, "Failed to decode XCM with depth limit");
 				()
-			},
-		)?;
+			})?;
 		let (xcm_data, remaining_data) = data.split_at(input.count() as usize);
 		*data = remaining_data;
 
@@ -1152,12 +1151,12 @@ impl<T: Config> XcmpMessageSource for Pallet<T> {
 
 /// Xcm sender for sending to a sibling parachain.
 impl<T: Config> SendXcm for Pallet<T> {
-	type Ticket = (ParaId, VersionedXcm<()>);
+	type Ticket = (ParaId, VersionedXcm<OpaqueCall>);
 
 	fn validate(
 		dest: &mut Option<Location>,
-		msg: &mut Option<Xcm<()>>,
-	) -> SendResult<(ParaId, VersionedXcm<()>)> {
+		msg: &mut Option<Xcm<OpaqueCall>>,
+	) -> SendResult<(ParaId, VersionedXcm<OpaqueCall>)> {
 		let d = dest.take().ok_or(SendError::MissingArgument)?;
 
 		match d.unpack() {
@@ -1183,7 +1182,7 @@ impl<T: Config> SendXcm for Pallet<T> {
 		}
 	}
 
-	fn deliver((id, xcm): (ParaId, VersionedXcm<()>)) -> Result<XcmHash, SendError> {
+	fn deliver((id, xcm): (ParaId, VersionedXcm<OpaqueCall>)) -> Result<XcmHash, SendError> {
 		let hash = xcm.using_encoded(sp_io::hashing::blake2_256);
 
 		match Self::send_fragment(id, XcmpMessageFormat::ConcatenatedVersionedXcm, xcm) {
@@ -1211,7 +1210,7 @@ impl<T: Config> InspectMessageQueues for Pallet<T> {
 		});
 	}
 
-	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
+	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<OpaqueCall>>)> {
 		use xcm::prelude::*;
 
 		OutboundXcmpMessages::<T>::iter()
@@ -1233,7 +1232,7 @@ impl<T: Config> InspectMessageQueues for Pallet<T> {
 						},
 					}
 					.unwrap();
-					let decoded_message = VersionedXcm::<()>::decode_with_depth_limit(
+					let decoded_message = VersionedXcm::<OpaqueCall>::decode_with_depth_limit(
 						MAX_XCM_DECODE_DEPTH,
 						&mut &message_bytes[..],
 					)

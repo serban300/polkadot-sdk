@@ -189,7 +189,7 @@ fn test_set_operating_mode_root_only() {
 fn test_xcm_send_failure() {
 	crate::test::new_tester().execute_with(|| {
 		set_sender_override(
-			|dest: &mut Option<Location>, xcm: &mut Option<Xcm<()>>| {
+			|dest: &mut Option<Location>, xcm: &mut Option<Xcm<OpaqueCall>>| {
 				if let Some(location) = dest {
 					match location.unpack() {
 						(_, [Parachain(1001)]) => return Err(SendError::NotApplicable),

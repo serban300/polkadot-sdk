@@ -178,7 +178,7 @@ fn bidirectional_teleport_foreign_asset_between_penpal_and_asset_hub() {
 			RefundSurplus,
 			DepositAsset { assets: Wild(All), beneficiary: receiver.clone().into() },
 		]);
-		let xcm = Xcm::<()>(vec![
+		let xcm = Xcm::<OpaqueCall>(vec![
 			WithdrawAsset(assets.clone().into()),
 			SetFeesMode { jit_withdraw: true },
 			InitiateTransfer {
@@ -225,7 +225,7 @@ fn bidirectional_teleport_foreign_asset_between_penpal_and_asset_hub() {
 		foreign_issuance_on!(AssetHubWestend, foreign_asset_location_on_ah.clone());
 	// reserve-transferring the asset fails
 	PenpalA::execute_with(|| {
-		let xcm = Xcm::<()>(vec![
+		let xcm = Xcm::<OpaqueCall>(vec![
 			WithdrawAsset(assets.clone().into()),
 			SetFeesMode { jit_withdraw: true },
 			InitiateTransfer {
@@ -286,7 +286,7 @@ fn bidirectional_teleport_foreign_asset_between_penpal_and_asset_hub() {
 			DepositAsset { assets: Wild(All), beneficiary: sender.clone().into() },
 		]);
 		// reserve-transferring the asset back to penpal fails
-		let xcm = Xcm::<()>(vec![
+		let xcm = Xcm::<OpaqueCall>(vec![
 			WithdrawAsset(assets.clone().into()),
 			SetFeesMode { jit_withdraw: true },
 			InitiateTransfer {
@@ -306,7 +306,7 @@ fn bidirectional_teleport_foreign_asset_between_penpal_and_asset_hub() {
 			Err(sp_runtime::DispatchErrorWithPostInfo { .. }),
 		));
 		// teleporting it back works
-		let xcm = Xcm::<()>(vec![
+		let xcm = Xcm::<OpaqueCall>(vec![
 			WithdrawAsset(assets.clone().into()),
 			SetFeesMode { jit_withdraw: true },
 			InitiateTransfer {
@@ -381,7 +381,7 @@ fn bidirectional_reserve_transfer_foreign_asset_between_penpal_and_asset_hub() {
 			DepositAsset { assets: Wild(All), beneficiary: receiver.clone().into() },
 		]);
 		// teleporting the asset fails
-		let xcm = Xcm::<()>(vec![
+		let xcm = Xcm::<OpaqueCall>(vec![
 			WithdrawAsset(assets.clone().into()),
 			SetFeesMode { jit_withdraw: true },
 			InitiateTransfer {
@@ -401,7 +401,7 @@ fn bidirectional_reserve_transfer_foreign_asset_between_penpal_and_asset_hub() {
 			Err(sp_runtime::DispatchErrorWithPostInfo { .. }),
 		));
 		// reserve-transferring the asset works
-		let xcm = Xcm::<()>(vec![
+		let xcm = Xcm::<OpaqueCall>(vec![
 			WithdrawAsset(assets.clone().into()),
 			SetFeesMode { jit_withdraw: true },
 			InitiateTransfer {
@@ -466,7 +466,7 @@ fn bidirectional_reserve_transfer_foreign_asset_between_penpal_and_asset_hub() {
 			DepositAsset { assets: Wild(All), beneficiary: sender.clone().into() },
 		]);
 		// teleporting the asset back to penpal fails
-		let xcm = Xcm::<()>(vec![
+		let xcm = Xcm::<OpaqueCall>(vec![
 			WithdrawAsset(assets.clone().into()),
 			SetFeesMode { jit_withdraw: true },
 			InitiateTransfer {
@@ -486,7 +486,7 @@ fn bidirectional_reserve_transfer_foreign_asset_between_penpal_and_asset_hub() {
 			Err(sp_runtime::DispatchErrorWithPostInfo { .. }),
 		));
 		// but reserve-transferring it back works
-		let xcm = Xcm::<()>(vec![
+		let xcm = Xcm::<OpaqueCall>(vec![
 			WithdrawAsset(assets.clone().into()),
 			SetFeesMode { jit_withdraw: true },
 			InitiateTransfer {

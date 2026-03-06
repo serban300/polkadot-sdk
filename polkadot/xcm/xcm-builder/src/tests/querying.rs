@@ -39,7 +39,7 @@ fn pallet_query_should_work() {
 	);
 	assert_eq!(r, Outcome::Complete { used: Weight::from_parts(10, 10) });
 
-	let expected_msg = Xcm::<()>(vec![
+	let expected_msg = Xcm::<OpaqueCall>(vec![
 		QueryResponse {
 			query_id: 1,
 			max_weight: Weight::from_parts(50, 50),
@@ -74,7 +74,7 @@ fn pallet_query_with_results_should_work() {
 	);
 	assert_eq!(r, Outcome::Complete { used: Weight::from_parts(10, 10) });
 
-	let expected_msg = Xcm::<()>(vec![
+	let expected_msg = Xcm::<OpaqueCall>(vec![
 		QueryResponse {
 			query_id: 1,
 			max_weight: Weight::from_parts(50, 50),

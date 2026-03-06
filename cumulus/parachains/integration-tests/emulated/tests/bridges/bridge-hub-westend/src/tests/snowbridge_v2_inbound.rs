@@ -181,7 +181,7 @@ fn send_token_v2() {
 				beneficiary: claimer,
 			},
 		];
-		let xcm: Xcm<()> = instructions.into();
+		let xcm: Xcm<OpaqueCall> = instructions.into();
 		let versioned_message_xcm = VersionedXcm::V5(xcm);
 		let origin = H160::random();
 
@@ -291,7 +291,7 @@ fn send_weth_v2() {
 			RefundSurplus,
 			DepositAsset { assets: Wild(AllCounted(2)), beneficiary: beneficiary.clone() },
 		];
-		let xcm: Xcm<()> = instructions.into();
+		let xcm: Xcm<OpaqueCall> = instructions.into();
 		let versioned_message_xcm = VersionedXcm::V5(xcm);
 		let origin = EthereumGatewayAddress::get();
 
@@ -448,7 +448,7 @@ fn register_and_send_token_in_one_transaction_fails() {
 			// try to deposit new token, weth and leftover ether fees to beneficiary.
 			DepositAsset { assets: Wild(AllCounted(3)), beneficiary: beneficiary.clone() },
 		];
-		let xcm: Xcm<()> = instructions.into();
+		let xcm: Xcm<OpaqueCall> = instructions.into();
 		let versioned_message_xcm = VersionedXcm::V5(xcm);
 		let origin = EthereumGatewayAddress::get();
 
@@ -601,7 +601,7 @@ fn send_token_to_penpal_v2() {
 				beneficiary,
 			},
 		];
-		let xcm: Xcm<()> = instructions.into();
+		let xcm: Xcm<OpaqueCall> = instructions.into();
 		let versioned_message_xcm = VersionedXcm::V5(xcm);
 		let origin = EthereumGatewayAddress::get();
 
@@ -785,7 +785,7 @@ fn send_foreign_erc20_token_back_to_polkadot() {
 		type RuntimeEvent = <BridgeHubWestend as Chain>::RuntimeEvent;
 		let instructions =
 			vec![RefundSurplus, DepositAsset { assets: Wild(AllCounted(2)), beneficiary }];
-		let xcm: Xcm<()> = instructions.into();
+		let xcm: Xcm<OpaqueCall> = instructions.into();
 		let versioned_message_xcm = VersionedXcm::V5(xcm);
 		let origin = EthereumGatewayAddress::get();
 
@@ -949,7 +949,7 @@ fn invalid_claimer_does_not_fail_the_message() {
 			// Deposit weth and leftover ether fees to beneficiary.
 			DepositAsset { assets: Wild(AllCounted(2)), beneficiary: beneficiary.clone() },
 		];
-		let xcm: Xcm<()> = instructions.into();
+		let xcm: Xcm<OpaqueCall> = instructions.into();
 		let versioned_message_xcm = VersionedXcm::V5(xcm);
 
 		let message = Message {

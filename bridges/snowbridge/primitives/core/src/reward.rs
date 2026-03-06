@@ -133,7 +133,7 @@ where
 		let ethereum_location = Location::new(2, [GlobalConsensus(EthereumNetwork::get())]);
 		let assets: Asset = (ethereum_location.clone(), reward.into()).into();
 
-		let xcm: Xcm<()> = alloc::vec![
+		let xcm: Xcm<OpaqueCall> = alloc::vec![
 			UnpaidExecution { weight_limit: Unlimited, check_origin: None },
 			DescendOrigin(InboundQueueLocation::get().into()),
 			UniversalOrigin(GlobalConsensus(EthereumNetwork::get())),
@@ -221,11 +221,11 @@ mod tests {
 
 	pub struct MockXcmSender;
 	impl SendXcm for MockXcmSender {
-		type Ticket = Xcm<()>;
+		type Ticket = Xcm<OpaqueCall>;
 
 		fn validate(
 			dest: &mut Option<Location>,
-			xcm: &mut Option<Xcm<()>>,
+			xcm: &mut Option<Xcm<OpaqueCall>>,
 		) -> SendResult<Self::Ticket> {
 			if let Some(location) = dest {
 				match location.unpack() {
@@ -273,7 +273,7 @@ mod tests {
 
 			fn validate(
 				_dest: &mut Option<Location>,
-				_xcm: &mut Option<Xcm<()>>,
+				_xcm: &mut Option<Xcm<OpaqueCall>>,
 			) -> SendResult<Self::Ticket> {
 				Err(SendError::NotApplicable)
 			}
@@ -364,7 +364,7 @@ mod tests {
 
 			fn validate(
 				_dest: &mut Option<Location>,
-				_xcm: &mut Option<Xcm<()>>,
+				_xcm: &mut Option<Xcm<OpaqueCall>>,
 			) -> SendResult<Self::Ticket> {
 				Ok(((), Assets::from(vec![])))
 			}

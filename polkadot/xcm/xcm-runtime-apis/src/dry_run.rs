@@ -31,9 +31,9 @@ pub struct CallDryRunEffects<Event> {
 	/// The list of events fired by the extrinsic.
 	pub emitted_events: Vec<Event>,
 	/// The local XCM that was attempted to be executed, if any.
-	pub local_xcm: Option<VersionedXcm<()>>,
+	pub local_xcm: Option<VersionedXcm<OpaqueCall>>,
 	/// The list of XCMs that were queued for sending.
-	pub forwarded_xcms: Vec<(VersionedLocation, Vec<VersionedXcm<()>>)>,
+	pub forwarded_xcms: Vec<(VersionedLocation, Vec<VersionedXcm<OpaqueCall>>)>,
 }
 
 /// Effects of dry-running an XCM program.
@@ -44,7 +44,7 @@ pub struct XcmDryRunEffects<Event> {
 	/// List of events fired by the XCM program execution.
 	pub emitted_events: Vec<Event>,
 	/// List of queued messages for sending.
-	pub forwarded_xcms: Vec<(VersionedLocation, Vec<VersionedXcm<()>>)>,
+	pub forwarded_xcms: Vec<(VersionedLocation, Vec<VersionedXcm<OpaqueCall>>)>,
 }
 
 sp_api::decl_runtime_apis! {

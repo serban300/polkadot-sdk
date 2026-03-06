@@ -74,7 +74,7 @@ fn exporter_validate_with_unknown_network_yields_not_applicable() {
 	let channel: u32 = 0;
 	let mut universal_source: Option<InteriorLocation> = None;
 	let mut destination: Option<InteriorLocation> = None;
-	let mut message: Option<Xcm<()>> = None;
+	let mut message: Option<Xcm<OpaqueCall>> = None;
 
 	let result =
 		EthereumBlobExporter::<
@@ -93,7 +93,7 @@ fn exporter_validate_with_invalid_destination_yields_missing_argument() {
 	let channel: u32 = 0;
 	let mut universal_source: Option<InteriorLocation> = None;
 	let mut destination: Option<InteriorLocation> = None;
-	let mut message: Option<Xcm<()>> = None;
+	let mut message: Option<Xcm<OpaqueCall>> = None;
 
 	let result =
 		EthereumBlobExporter::<
@@ -115,7 +115,7 @@ fn exporter_validate_with_x8_destination_yields_not_applicable() {
 		[OnlyChild, OnlyChild, OnlyChild, OnlyChild, OnlyChild, OnlyChild, OnlyChild, OnlyChild]
 			.into(),
 	);
-	let mut message: Option<Xcm<()>> = None;
+	let mut message: Option<Xcm<OpaqueCall>> = None;
 
 	let result =
 		EthereumBlobExporter::<
@@ -134,7 +134,7 @@ fn exporter_validate_without_universal_source_yields_missing_argument() {
 	let channel: u32 = 0;
 	let mut universal_source: Option<InteriorLocation> = None;
 	let mut destination: Option<InteriorLocation> = Here.into();
-	let mut message: Option<Xcm<()>> = None;
+	let mut message: Option<Xcm<OpaqueCall>> = None;
 
 	let result =
 		EthereumBlobExporter::<
@@ -153,7 +153,7 @@ fn exporter_validate_without_global_universal_location_yields_not_applicable() {
 	let channel: u32 = 0;
 	let mut universal_source: Option<InteriorLocation> = Here.into();
 	let mut destination: Option<InteriorLocation> = Here.into();
-	let mut message: Option<Xcm<()>> = None;
+	let mut message: Option<Xcm<OpaqueCall>> = None;
 
 	let result =
 		EthereumBlobExporter::<
@@ -172,7 +172,7 @@ fn exporter_validate_without_global_bridge_location_yields_not_applicable() {
 	let channel: u32 = 0;
 	let mut universal_source: Option<InteriorLocation> = Here.into();
 	let mut destination: Option<InteriorLocation> = Here.into();
-	let mut message: Option<Xcm<()>> = None;
+	let mut message: Option<Xcm<OpaqueCall>> = None;
 
 	let result =
 		EthereumBlobExporter::<
@@ -192,7 +192,7 @@ fn exporter_validate_with_remote_universal_source_yields_not_applicable() {
 	let mut universal_source: Option<InteriorLocation> =
 		Some([GlobalConsensus(Kusama), Parachain(1000)].into());
 	let mut destination: Option<InteriorLocation> = Here.into();
-	let mut message: Option<Xcm<()>> = None;
+	let mut message: Option<Xcm<OpaqueCall>> = None;
 
 	let result =
 		EthereumBlobExporter::<
@@ -211,7 +211,7 @@ fn exporter_validate_without_para_id_in_source_yields_not_applicable() {
 	let channel: u32 = 0;
 	let mut universal_source: Option<InteriorLocation> = Some(GlobalConsensus(Polkadot).into());
 	let mut destination: Option<InteriorLocation> = Here.into();
-	let mut message: Option<Xcm<()>> = None;
+	let mut message: Option<Xcm<OpaqueCall>> = None;
 
 	let result =
 		EthereumBlobExporter::<
@@ -231,7 +231,7 @@ fn exporter_validate_complex_para_id_in_source_yields_not_applicable() {
 	let mut universal_source: Option<InteriorLocation> =
 		Some([GlobalConsensus(Polkadot), Parachain(1000), PalletInstance(12)].into());
 	let mut destination: Option<InteriorLocation> = Here.into();
-	let mut message: Option<Xcm<()>> = None;
+	let mut message: Option<Xcm<OpaqueCall>> = None;
 
 	let result =
 		EthereumBlobExporter::<
@@ -251,7 +251,7 @@ fn exporter_validate_without_xcm_message_yields_missing_argument() {
 	let mut universal_source: Option<InteriorLocation> =
 		Some([GlobalConsensus(Polkadot), Parachain(1000)].into());
 	let mut destination: Option<InteriorLocation> = Here.into();
-	let mut message: Option<Xcm<()>> = None;
+	let mut message: Option<Xcm<OpaqueCall>> = None;
 
 	let result =
 		EthereumBlobExporter::<
@@ -285,7 +285,7 @@ fn exporter_validate_with_max_target_fee_yields_unroutable() {
 	.into();
 	let filter: AssetFilter = assets.clone().into();
 
-	let mut message: Option<Xcm<()>> = Some(
+	let mut message: Option<Xcm<OpaqueCall>> = Some(
 		vec![
 			WithdrawAsset(fees),
 			BuyExecution { fees: fee, weight_limit: Unlimited },
@@ -324,7 +324,7 @@ fn exporter_validate_with_unparsable_xcm_yields_unroutable() {
 	let fee = Asset { id: AssetId(Here.into()), fun: Fungible(1000) };
 	let fees: Assets = vec![fee.clone()].into();
 
-	let mut message: Option<Xcm<()>> =
+	let mut message: Option<Xcm<OpaqueCall>> =
 		Some(vec![WithdrawAsset(fees), BuyExecution { fees: fee, weight_limit: Unlimited }].into());
 
 	let result =
@@ -359,7 +359,7 @@ fn exporter_validate_xcm_success_case_1() {
 	let fee = assets.clone().get(0).unwrap().clone();
 	let filter: AssetFilter = assets.clone().into();
 
-	let mut message: Option<Xcm<()>> = Some(
+	let mut message: Option<Xcm<OpaqueCall>> = Some(
 		vec![
 			WithdrawAsset(assets.clone()),
 			ClearOrigin,
@@ -411,7 +411,7 @@ fn xcm_converter_convert_success() {
 	.into();
 	let filter: AssetFilter = assets.clone().into();
 
-	let message: Xcm<()> = vec![
+	let message: Xcm<OpaqueCall> = vec![
 		WithdrawAsset(assets.clone()),
 		ClearOrigin,
 		BuyExecution { fees: assets.get(0).unwrap().clone(), weight_limit: Unlimited },
@@ -423,7 +423,7 @@ fn xcm_converter_convert_success() {
 	]
 	.into();
 	let mut converter =
-		XcmConverter::<MockTokenIdConvert, ()>::new(&message, network, Default::default());
+		XcmConverter::<MockTokenIdConvert, OpaqueCall>::new(&message, network, Default::default());
 	let expected_payload = UnlockNativeToken {
 		agent_id: Default::default(),
 		token: token_address.into(),
@@ -448,7 +448,7 @@ fn xcm_converter_convert_without_buy_execution_yields_success() {
 	.into();
 	let filter: AssetFilter = assets.clone().into();
 
-	let message: Xcm<()> = vec![
+	let message: Xcm<OpaqueCall> = vec![
 		WithdrawAsset(assets.clone()),
 		DepositAsset {
 			assets: filter,
@@ -458,7 +458,7 @@ fn xcm_converter_convert_without_buy_execution_yields_success() {
 	]
 	.into();
 	let mut converter =
-		XcmConverter::<MockTokenIdConvert, ()>::new(&message, network, Default::default());
+		XcmConverter::<MockTokenIdConvert, OpaqueCall>::new(&message, network, Default::default());
 	let expected_payload = UnlockNativeToken {
 		agent_id: Default::default(),
 		token: token_address.into(),
@@ -483,7 +483,7 @@ fn xcm_converter_convert_with_wildcard_all_asset_filter_succeeds() {
 	.into();
 	let filter: AssetFilter = Wild(All);
 
-	let message: Xcm<()> = vec![
+	let message: Xcm<OpaqueCall> = vec![
 		WithdrawAsset(assets.clone()),
 		ClearOrigin,
 		BuyExecution { fees: assets.get(0).unwrap().clone(), weight_limit: Unlimited },
@@ -495,7 +495,7 @@ fn xcm_converter_convert_with_wildcard_all_asset_filter_succeeds() {
 	]
 	.into();
 	let mut converter =
-		XcmConverter::<MockTokenIdConvert, ()>::new(&message, network, Default::default());
+		XcmConverter::<MockTokenIdConvert, OpaqueCall>::new(&message, network, Default::default());
 	let expected_payload = UnlockNativeToken {
 		agent_id: Default::default(),
 		token: token_address.into(),
@@ -516,7 +516,7 @@ fn xcm_converter_convert_with_native_eth_succeeds() {
 	let assets: Assets = vec![Asset { id: AssetId([].into()), fun: Fungible(1000) }].into();
 	let filter: AssetFilter = Wild(All);
 
-	let message: Xcm<()> = vec![
+	let message: Xcm<OpaqueCall> = vec![
 		WithdrawAsset(assets.clone()),
 		ClearOrigin,
 		BuyExecution { fees: assets.get(0).unwrap().clone(), weight_limit: Unlimited },
@@ -529,7 +529,7 @@ fn xcm_converter_convert_with_native_eth_succeeds() {
 	.into();
 
 	let mut converter =
-		XcmConverter::<MockTokenIdConvert, ()>::new(&message, network, Default::default());
+		XcmConverter::<MockTokenIdConvert, OpaqueCall>::new(&message, network, Default::default());
 
 	// The token address that is expected to be sent should be
 	// `0x0000000000000000000000000000000000000000`. The solidity will
@@ -558,7 +558,7 @@ fn xcm_converter_convert_with_fees_less_than_reserve_yields_success() {
 
 	let filter: AssetFilter = assets.clone().into();
 
-	let message: Xcm<()> = vec![
+	let message: Xcm<OpaqueCall> = vec![
 		WithdrawAsset(assets.clone()),
 		ClearOrigin,
 		BuyExecution { fees: fee_asset, weight_limit: Unlimited },
@@ -570,7 +570,7 @@ fn xcm_converter_convert_with_fees_less_than_reserve_yields_success() {
 	]
 	.into();
 	let mut converter =
-		XcmConverter::<MockTokenIdConvert, ()>::new(&message, network, Default::default());
+		XcmConverter::<MockTokenIdConvert, OpaqueCall>::new(&message, network, Default::default());
 	let expected_payload = UnlockNativeToken {
 		agent_id: Default::default(),
 		token: token_address.into(),
@@ -595,7 +595,7 @@ fn xcm_converter_convert_without_set_topic_yields_set_topic_expected() {
 	.into();
 	let filter: AssetFilter = assets.clone().into();
 
-	let message: Xcm<()> = vec![
+	let message: Xcm<OpaqueCall> = vec![
 		WithdrawAsset(assets.clone()),
 		BuyExecution { fees: assets.get(0).unwrap().clone(), weight_limit: Unlimited },
 		DepositAsset {
@@ -606,7 +606,7 @@ fn xcm_converter_convert_without_set_topic_yields_set_topic_expected() {
 	]
 	.into();
 	let mut converter =
-		XcmConverter::<MockTokenIdConvert, ()>::new(&message, network, Default::default());
+		XcmConverter::<MockTokenIdConvert, OpaqueCall>::new(&message, network, Default::default());
 	let result = converter.convert();
 	assert_eq!(result.err(), Some(XcmConverterError::SetTopicExpected));
 }
@@ -621,10 +621,10 @@ fn xcm_converter_convert_with_partial_message_yields_unexpected_end_of_xcm() {
 		fun: Fungible(1000),
 	}]
 	.into();
-	let message: Xcm<()> = vec![WithdrawAsset(assets)].into();
+	let message: Xcm<OpaqueCall> = vec![WithdrawAsset(assets)].into();
 
 	let mut converter =
-		XcmConverter::<MockTokenIdConvert, ()>::new(&message, network, Default::default());
+		XcmConverter::<MockTokenIdConvert, OpaqueCall>::new(&message, network, Default::default());
 	let result = converter.convert();
 	assert_eq!(result.err(), Some(XcmConverterError::UnexpectedEndOfXcm));
 }
@@ -644,7 +644,7 @@ fn xcm_converter_with_different_fee_asset_fails() {
 
 	let filter: AssetFilter = assets.clone().into();
 
-	let message: Xcm<()> = vec![
+	let message: Xcm<OpaqueCall> = vec![
 		WithdrawAsset(assets.clone()),
 		ClearOrigin,
 		BuyExecution { fees: fee_asset, weight_limit: Unlimited },
@@ -656,7 +656,7 @@ fn xcm_converter_with_different_fee_asset_fails() {
 	]
 	.into();
 	let mut converter =
-		XcmConverter::<MockTokenIdConvert, ()>::new(&message, network, Default::default());
+		XcmConverter::<MockTokenIdConvert, OpaqueCall>::new(&message, network, Default::default());
 	let result = converter.convert();
 	assert_eq!(result.err(), Some(XcmConverterError::InvalidFeeAsset));
 }
@@ -675,7 +675,7 @@ fn xcm_converter_with_fees_greater_than_reserve_fails() {
 
 	let filter: AssetFilter = assets.clone().into();
 
-	let message: Xcm<()> = vec![
+	let message: Xcm<OpaqueCall> = vec![
 		WithdrawAsset(assets.clone()),
 		ClearOrigin,
 		BuyExecution { fees: fee_asset, weight_limit: Unlimited },
@@ -687,7 +687,7 @@ fn xcm_converter_with_fees_greater_than_reserve_fails() {
 	]
 	.into();
 	let mut converter =
-		XcmConverter::<MockTokenIdConvert, ()>::new(&message, network, Default::default());
+		XcmConverter::<MockTokenIdConvert, OpaqueCall>::new(&message, network, Default::default());
 	let result = converter.convert();
 	assert_eq!(result.err(), Some(XcmConverterError::InvalidFeeAsset));
 }
@@ -696,10 +696,10 @@ fn xcm_converter_with_fees_greater_than_reserve_fails() {
 fn xcm_converter_convert_with_empty_xcm_yields_unexpected_end_of_xcm() {
 	let network = BridgedNetwork::get();
 
-	let message: Xcm<()> = vec![].into();
+	let message: Xcm<OpaqueCall> = vec![].into();
 
 	let mut converter =
-		XcmConverter::<MockTokenIdConvert, ()>::new(&message, network, Default::default());
+		XcmConverter::<MockTokenIdConvert, OpaqueCall>::new(&message, network, Default::default());
 
 	let result = converter.convert();
 	assert_eq!(result.err(), Some(XcmConverterError::UnexpectedEndOfXcm));
@@ -719,7 +719,7 @@ fn xcm_converter_convert_with_extra_instructions_yields_end_of_xcm_message_expec
 	.into();
 	let filter: AssetFilter = assets.clone().into();
 
-	let message: Xcm<()> = vec![
+	let message: Xcm<OpaqueCall> = vec![
 		WithdrawAsset(assets.clone()),
 		ClearOrigin,
 		BuyExecution { fees: assets.get(0).unwrap().clone(), weight_limit: Unlimited },
@@ -732,7 +732,7 @@ fn xcm_converter_convert_with_extra_instructions_yields_end_of_xcm_message_expec
 	]
 	.into();
 	let mut converter =
-		XcmConverter::<MockTokenIdConvert, ()>::new(&message, network, Default::default());
+		XcmConverter::<MockTokenIdConvert, OpaqueCall>::new(&message, network, Default::default());
 
 	let result = converter.convert();
 	assert_eq!(result.err(), Some(XcmConverterError::EndOfXcmMessageExpected));
@@ -752,7 +752,7 @@ fn xcm_converter_convert_without_withdraw_asset_yields_withdraw_expected() {
 	.into();
 	let filter: AssetFilter = assets.clone().into();
 
-	let message: Xcm<()> = vec![
+	let message: Xcm<OpaqueCall> = vec![
 		ClearOrigin,
 		BuyExecution { fees: assets.get(0).unwrap().clone(), weight_limit: Unlimited },
 		DepositAsset {
@@ -763,7 +763,7 @@ fn xcm_converter_convert_without_withdraw_asset_yields_withdraw_expected() {
 	]
 	.into();
 	let mut converter =
-		XcmConverter::<MockTokenIdConvert, ()>::new(&message, network, Default::default());
+		XcmConverter::<MockTokenIdConvert, OpaqueCall>::new(&message, network, Default::default());
 
 	let result = converter.convert();
 	assert_eq!(result.err(), Some(XcmConverterError::UnexpectedInstruction));
@@ -781,7 +781,7 @@ fn xcm_converter_convert_without_withdraw_asset_yields_deposit_expected() {
 	}]
 	.into();
 
-	let message: Xcm<()> = vec![
+	let message: Xcm<OpaqueCall> = vec![
 		WithdrawAsset(assets.clone()),
 		ClearOrigin,
 		BuyExecution { fees: assets.get(0).unwrap().clone(), weight_limit: Unlimited },
@@ -789,7 +789,7 @@ fn xcm_converter_convert_without_withdraw_asset_yields_deposit_expected() {
 	]
 	.into();
 	let mut converter =
-		XcmConverter::<MockTokenIdConvert, ()>::new(&message, network, Default::default());
+		XcmConverter::<MockTokenIdConvert, OpaqueCall>::new(&message, network, Default::default());
 
 	let result = converter.convert();
 	assert_eq!(result.err(), Some(XcmConverterError::DepositAssetExpected));
@@ -811,7 +811,7 @@ fn xcm_converter_convert_without_assets_yields_no_reserve_assets() {
 		fun: Fungible(1000),
 	};
 
-	let message: Xcm<()> = vec![
+	let message: Xcm<OpaqueCall> = vec![
 		WithdrawAsset(assets.clone()),
 		ClearOrigin,
 		BuyExecution { fees: fee, weight_limit: Unlimited },
@@ -823,7 +823,7 @@ fn xcm_converter_convert_without_assets_yields_no_reserve_assets() {
 	]
 	.into();
 	let mut converter =
-		XcmConverter::<MockTokenIdConvert, ()>::new(&message, network, Default::default());
+		XcmConverter::<MockTokenIdConvert, OpaqueCall>::new(&message, network, Default::default());
 
 	let result = converter.convert();
 	assert_eq!(result.err(), Some(XcmConverterError::NoReserveAssets));
@@ -850,7 +850,7 @@ fn xcm_converter_convert_with_two_assets_yields_too_many_assets() {
 	.into();
 	let filter: AssetFilter = assets.clone().into();
 
-	let message: Xcm<()> = vec![
+	let message: Xcm<OpaqueCall> = vec![
 		WithdrawAsset(assets.clone()),
 		ClearOrigin,
 		BuyExecution { fees: assets.get(0).unwrap().clone(), weight_limit: Unlimited },
@@ -862,7 +862,7 @@ fn xcm_converter_convert_with_two_assets_yields_too_many_assets() {
 	]
 	.into();
 	let mut converter =
-		XcmConverter::<MockTokenIdConvert, ()>::new(&message, network, Default::default());
+		XcmConverter::<MockTokenIdConvert, OpaqueCall>::new(&message, network, Default::default());
 
 	let result = converter.convert();
 	assert_eq!(result.err(), Some(XcmConverterError::TooManyAssets));
@@ -882,7 +882,7 @@ fn xcm_converter_convert_without_consuming_filter_yields_filter_does_not_consume
 	.into();
 	let filter: AssetFilter = Wild(WildAsset::AllCounted(0));
 
-	let message: Xcm<()> = vec![
+	let message: Xcm<OpaqueCall> = vec![
 		WithdrawAsset(assets.clone()),
 		ClearOrigin,
 		BuyExecution { fees: assets.get(0).unwrap().clone(), weight_limit: Unlimited },
@@ -894,7 +894,7 @@ fn xcm_converter_convert_without_consuming_filter_yields_filter_does_not_consume
 	]
 	.into();
 	let mut converter =
-		XcmConverter::<MockTokenIdConvert, ()>::new(&message, network, Default::default());
+		XcmConverter::<MockTokenIdConvert, OpaqueCall>::new(&message, network, Default::default());
 
 	let result = converter.convert();
 	assert_eq!(result.err(), Some(XcmConverterError::FilterDoesNotConsumeAllAssets));
@@ -914,7 +914,7 @@ fn xcm_converter_convert_with_zero_amount_asset_yields_zero_asset_transfer() {
 	.into();
 	let filter: AssetFilter = Wild(WildAsset::AllCounted(1));
 
-	let message: Xcm<()> = vec![
+	let message: Xcm<OpaqueCall> = vec![
 		WithdrawAsset(assets.clone()),
 		ClearOrigin,
 		BuyExecution { fees: assets.get(0).unwrap().clone(), weight_limit: Unlimited },
@@ -926,7 +926,7 @@ fn xcm_converter_convert_with_zero_amount_asset_yields_zero_asset_transfer() {
 	]
 	.into();
 	let mut converter =
-		XcmConverter::<MockTokenIdConvert, ()>::new(&message, network, Default::default());
+		XcmConverter::<MockTokenIdConvert, OpaqueCall>::new(&message, network, Default::default());
 
 	let result = converter.convert();
 	assert_eq!(result.err(), Some(XcmConverterError::ZeroAssetTransfer));
@@ -945,7 +945,7 @@ fn xcm_converter_convert_non_ethereum_asset_yields_asset_resolution_failed() {
 	.into();
 	let filter: AssetFilter = Wild(WildAsset::AllCounted(1));
 
-	let message: Xcm<()> = vec![
+	let message: Xcm<OpaqueCall> = vec![
 		WithdrawAsset(assets.clone()),
 		ClearOrigin,
 		BuyExecution { fees: assets.get(0).unwrap().clone(), weight_limit: Unlimited },
@@ -957,7 +957,7 @@ fn xcm_converter_convert_non_ethereum_asset_yields_asset_resolution_failed() {
 	]
 	.into();
 	let mut converter =
-		XcmConverter::<MockTokenIdConvert, ()>::new(&message, network, Default::default());
+		XcmConverter::<MockTokenIdConvert, OpaqueCall>::new(&message, network, Default::default());
 
 	let result = converter.convert();
 	assert_eq!(result.err(), Some(XcmConverterError::AssetResolutionFailed));
@@ -979,7 +979,7 @@ fn xcm_converter_convert_non_ethereum_chain_asset_yields_asset_resolution_failed
 	.into();
 	let filter: AssetFilter = Wild(WildAsset::AllCounted(1));
 
-	let message: Xcm<()> = vec![
+	let message: Xcm<OpaqueCall> = vec![
 		WithdrawAsset(assets.clone()),
 		ClearOrigin,
 		BuyExecution { fees: assets.get(0).unwrap().clone(), weight_limit: Unlimited },
@@ -991,7 +991,7 @@ fn xcm_converter_convert_non_ethereum_chain_asset_yields_asset_resolution_failed
 	]
 	.into();
 	let mut converter =
-		XcmConverter::<MockTokenIdConvert, ()>::new(&message, network, Default::default());
+		XcmConverter::<MockTokenIdConvert, OpaqueCall>::new(&message, network, Default::default());
 
 	let result = converter.convert();
 	assert_eq!(result.err(), Some(XcmConverterError::AssetResolutionFailed));
@@ -1013,7 +1013,7 @@ fn xcm_converter_convert_non_ethereum_chain_yields_asset_resolution_failed() {
 	.into();
 	let filter: AssetFilter = Wild(WildAsset::AllCounted(1));
 
-	let message: Xcm<()> = vec![
+	let message: Xcm<OpaqueCall> = vec![
 		WithdrawAsset(assets.clone()),
 		ClearOrigin,
 		BuyExecution { fees: assets.get(0).unwrap().clone(), weight_limit: Unlimited },
@@ -1025,7 +1025,7 @@ fn xcm_converter_convert_non_ethereum_chain_yields_asset_resolution_failed() {
 	]
 	.into();
 	let mut converter =
-		XcmConverter::<MockTokenIdConvert, ()>::new(&message, network, Default::default());
+		XcmConverter::<MockTokenIdConvert, OpaqueCall>::new(&message, network, Default::default());
 
 	let result = converter.convert();
 	assert_eq!(result.err(), Some(XcmConverterError::AssetResolutionFailed));
@@ -1046,7 +1046,7 @@ fn xcm_converter_convert_with_non_ethereum_beneficiary_yields_beneficiary_resolu
 	}]
 	.into();
 	let filter: AssetFilter = Wild(WildAsset::AllCounted(1));
-	let message: Xcm<()> = vec![
+	let message: Xcm<OpaqueCall> = vec![
 		WithdrawAsset(assets.clone()),
 		ClearOrigin,
 		BuyExecution { fees: assets.get(0).unwrap().clone(), weight_limit: Unlimited },
@@ -1063,7 +1063,7 @@ fn xcm_converter_convert_with_non_ethereum_beneficiary_yields_beneficiary_resolu
 	]
 	.into();
 	let mut converter =
-		XcmConverter::<MockTokenIdConvert, ()>::new(&message, network, Default::default());
+		XcmConverter::<MockTokenIdConvert, OpaqueCall>::new(&message, network, Default::default());
 
 	let result = converter.convert();
 	assert_eq!(result.err(), Some(XcmConverterError::BeneficiaryResolutionFailed));
@@ -1084,7 +1084,7 @@ fn xcm_converter_convert_with_non_ethereum_chain_beneficiary_yields_beneficiary_
 	.into();
 	let filter: AssetFilter = Wild(WildAsset::AllCounted(1));
 
-	let message: Xcm<()> = vec![
+	let message: Xcm<OpaqueCall> = vec![
 		WithdrawAsset(assets.clone()),
 		ClearOrigin,
 		BuyExecution { fees: assets.get(0).unwrap().clone(), weight_limit: Unlimited },
@@ -1100,7 +1100,7 @@ fn xcm_converter_convert_with_non_ethereum_chain_beneficiary_yields_beneficiary_
 	]
 	.into();
 	let mut converter =
-		XcmConverter::<MockTokenIdConvert, ()>::new(&message, network, Default::default());
+		XcmConverter::<MockTokenIdConvert, OpaqueCall>::new(&message, network, Default::default());
 
 	let result = converter.convert();
 	assert_eq!(result.err(), Some(XcmConverterError::BeneficiaryResolutionFailed));
@@ -1145,7 +1145,7 @@ fn xcm_converter_transfer_native_token_success() {
 	let assets: Assets = vec![Asset { id: AssetId(asset_location), fun: Fungible(amount) }].into();
 	let filter: AssetFilter = assets.clone().into();
 
-	let message: Xcm<()> = vec![
+	let message: Xcm<OpaqueCall> = vec![
 		ReserveAssetDeposited(assets.clone()),
 		ClearOrigin,
 		BuyExecution { fees: assets.get(0).unwrap().clone(), weight_limit: Unlimited },
@@ -1157,7 +1157,7 @@ fn xcm_converter_transfer_native_token_success() {
 	]
 	.into();
 	let mut converter =
-		XcmConverter::<MockTokenIdConvert, ()>::new(&message, network, Default::default());
+		XcmConverter::<MockTokenIdConvert, OpaqueCall>::new(&message, network, Default::default());
 	let expected_payload =
 		Command::MintForeignToken { recipient: beneficiary_address.into(), amount, token_id };
 	let result = converter.convert();
@@ -1178,7 +1178,7 @@ fn xcm_converter_transfer_native_token_with_invalid_location_will_fail() {
 	let assets: Assets = vec![Asset { id: AssetId(asset_location), fun: Fungible(amount) }].into();
 	let filter: AssetFilter = assets.clone().into();
 
-	let message: Xcm<()> = vec![
+	let message: Xcm<OpaqueCall> = vec![
 		ReserveAssetDeposited(assets.clone()),
 		ClearOrigin,
 		BuyExecution { fees: assets.get(0).unwrap().clone(), weight_limit: Unlimited },
@@ -1190,7 +1190,7 @@ fn xcm_converter_transfer_native_token_with_invalid_location_will_fail() {
 	]
 	.into();
 	let mut converter =
-		XcmConverter::<MockTokenIdConvert, ()>::new(&message, network, Default::default());
+		XcmConverter::<MockTokenIdConvert, OpaqueCall>::new(&message, network, Default::default());
 	let result = converter.convert();
 	assert_eq!(result.err(), Some(XcmConverterError::InvalidAsset));
 }
@@ -1213,7 +1213,7 @@ fn exporter_validate_with_invalid_dest_does_not_alter_destination() {
 	.into();
 	let fee = assets.clone().get(0).unwrap().clone();
 	let filter: AssetFilter = assets.clone().into();
-	let msg: Xcm<()> = vec![
+	let msg: Xcm<OpaqueCall> = vec![
 		WithdrawAsset(assets.clone()),
 		ClearOrigin,
 		BuyExecution { fees: fee, weight_limit: Unlimited },
@@ -1224,7 +1224,7 @@ fn exporter_validate_with_invalid_dest_does_not_alter_destination() {
 		SetTopic([0; 32]),
 	]
 	.into();
-	let mut msg_wrapper: Option<Xcm<()>> = Some(msg.clone());
+	let mut msg_wrapper: Option<Xcm<OpaqueCall>> = Some(msg.clone());
 	let mut dest_wrapper = Some(destination.clone());
 	let mut universal_source_wrapper = Some(universal_source.clone());
 
@@ -1266,7 +1266,7 @@ fn exporter_validate_with_invalid_universal_source_does_not_alter_universal_sour
 	.into();
 	let fee = assets.clone().get(0).unwrap().clone();
 	let filter: AssetFilter = assets.clone().into();
-	let msg: Xcm<()> = vec![
+	let msg: Xcm<OpaqueCall> = vec![
 		WithdrawAsset(assets.clone()),
 		ClearOrigin,
 		BuyExecution { fees: fee, weight_limit: Unlimited },
@@ -1277,7 +1277,7 @@ fn exporter_validate_with_invalid_universal_source_does_not_alter_universal_sour
 		SetTopic([0; 32]),
 	]
 	.into();
-	let mut msg_wrapper: Option<Xcm<()>> = Some(msg.clone());
+	let mut msg_wrapper: Option<Xcm<OpaqueCall>> = Some(msg.clone());
 	let mut dest_wrapper = Some(destination.clone());
 	let mut universal_source_wrapper = Some(universal_source.clone());
 

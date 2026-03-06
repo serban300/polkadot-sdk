@@ -16,7 +16,7 @@
 
 //! Trait for recording XCMs and a dummy implementation.
 
-use xcm::latest::Xcm;
+use xcm::{latest::Xcm, OpaqueCall};
 
 /// Trait for recording XCMs.
 pub trait RecordXcm {
@@ -26,9 +26,9 @@ pub trait RecordXcm {
 	fn set_record_xcm(enabled: bool);
 	/// Get recorded XCM.
 	/// Returns `None` if no message was sent, or if recording was off.
-	fn recorded_xcm() -> Option<Xcm<()>>;
+	fn recorded_xcm() -> Option<Xcm<OpaqueCall>>;
 	/// Record `xcm`.
-	fn record(xcm: Xcm<()>);
+	fn record(xcm: Xcm<OpaqueCall>);
 }
 
 impl RecordXcm for () {
@@ -38,9 +38,9 @@ impl RecordXcm for () {
 
 	fn set_record_xcm(_: bool) {}
 
-	fn recorded_xcm() -> Option<Xcm<()>> {
+	fn recorded_xcm() -> Option<Xcm<OpaqueCall>> {
 		None
 	}
 
-	fn record(_: Xcm<()>) {}
+	fn record(_: Xcm<OpaqueCall>) {}
 }

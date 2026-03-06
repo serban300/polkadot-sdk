@@ -53,7 +53,7 @@ pub trait ExportXcm {
 		channel: u32,
 		universal_source: &mut Option<InteriorLocation>,
 		destination: &mut Option<InteriorLocation>,
-		message: &mut Option<Xcm<()>>,
+		message: &mut Option<Xcm<OpaqueCall>>,
 	) -> SendResult<Self::Ticket>;
 
 	/// Actually carry out the delivery operation for a previously validated message sending.
@@ -73,7 +73,7 @@ impl ExportXcm for Tuple {
 		channel: u32,
 		universal_source: &mut Option<InteriorLocation>,
 		destination: &mut Option<InteriorLocation>,
-		message: &mut Option<Xcm<()>>,
+		message: &mut Option<Xcm<OpaqueCall>>,
 	) -> SendResult<Self::Ticket> {
 		let mut maybe_cost: Option<Assets> = None;
 		let one_ticket: Self::Ticket = (for_tuples! { #(
@@ -114,7 +114,7 @@ pub fn validate_export<T: ExportXcm>(
 	channel: u32,
 	universal_source: InteriorLocation,
 	dest: InteriorLocation,
-	msg: Xcm<()>,
+	msg: Xcm<OpaqueCall>,
 ) -> SendResult<T::Ticket> {
 	T::validate(network, channel, &mut Some(universal_source), &mut Some(dest), &mut Some(msg))
 }
@@ -132,7 +132,7 @@ pub fn export_xcm<T: ExportXcm>(
 	channel: u32,
 	universal_source: InteriorLocation,
 	dest: InteriorLocation,
-	msg: Xcm<()>,
+	msg: Xcm<OpaqueCall>,
 ) -> Result<(XcmHash, Assets), SendError> {
 	let (ticket, price) = T::validate(
 		network,

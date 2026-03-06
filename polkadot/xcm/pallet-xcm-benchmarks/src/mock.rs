@@ -22,7 +22,7 @@ use xcm::latest::Weight;
 pub struct DevNull;
 impl xcm::opaque::latest::SendXcm for DevNull {
 	type Ticket = ();
-	fn validate(_: &mut Option<Location>, _: &mut Option<Xcm<()>>) -> SendResult<()> {
+	fn validate(_: &mut Option<Location>, _: &mut Option<Xcm<OpaqueCall>>) -> SendResult<()> {
 		Ok(((), Assets::new()))
 	}
 	fn deliver(_: ()) -> Result<XcmHash, SendError> {

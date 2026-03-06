@@ -45,7 +45,7 @@ fn lock_roundtrip_should_work() {
 	assert_eq!(r, Outcome::Complete { used: Weight::from_parts(40, 40) });
 	assert_eq!(asset_list((3u64,)), vec![(Parent, 990u128).into()]);
 
-	let expected_msg = Xcm::<()>(vec![NoteUnlockable {
+	let expected_msg = Xcm::<OpaqueCall>(vec![NoteUnlockable {
 		owner: (Parent, Parachain(42), 3u64).into(),
 		asset: (Parent, 100u128).into(),
 	}]);
@@ -210,7 +210,7 @@ fn remote_unlock_roundtrip_should_work() {
 	assert_eq!(r, Outcome::Complete { used: Weight::from_parts(40, 40) });
 	assert_eq!(asset_list((3u64,)), vec![(Parent, 990u128).into()]);
 
-	let expected_msg = Xcm::<()>(vec![UnlockAsset {
+	let expected_msg = Xcm::<OpaqueCall>(vec![UnlockAsset {
 		target: (Parent, Parachain(42), 3u64).into(),
 		asset: (Parent, 100u128).into(),
 	}]);

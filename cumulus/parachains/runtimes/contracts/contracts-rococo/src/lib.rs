@@ -620,11 +620,11 @@ impl_runtime_apis! {
 			}
 		}
 
-		fn query_xcm_weight(message: VersionedXcm<()>) -> Result<Weight, XcmPaymentApiError> {
+		fn query_xcm_weight(message: VersionedXcm<OpaqueCall>) -> Result<Weight, XcmPaymentApiError> {
 			PolkadotXcm::query_xcm_weight(message)
 		}
 
-		fn query_delivery_fees(destination: VersionedLocation, message: VersionedXcm<()>) -> Result<VersionedAssets, XcmPaymentApiError> {
+		fn query_delivery_fees(destination: VersionedLocation, message: VersionedXcm<OpaqueCall>) -> Result<VersionedAssets, XcmPaymentApiError> {
 			PolkadotXcm::query_delivery_fees(destination, message)
 		}
 	}

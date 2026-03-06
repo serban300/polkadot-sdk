@@ -142,7 +142,7 @@ fn send_token_to_rococo_v2() {
 				beneficiary,
 			},
 		];
-		let xcm: Xcm<()> = instructions.into();
+		let xcm: Xcm<OpaqueCall> = instructions.into();
 		let versioned_message_xcm = VersionedXcm::V5(xcm);
 		let origin = EthereumGatewayAddress::get();
 
@@ -304,7 +304,7 @@ fn send_ether_to_rococo_v2() {
 				beneficiary,
 			},
 		];
-		let xcm: Xcm<()> = instructions.into();
+		let xcm: Xcm<OpaqueCall> = instructions.into();
 		let versioned_message_xcm = VersionedXcm::V5(xcm);
 		let origin = EthereumGatewayAddress::get();
 
@@ -500,7 +500,7 @@ fn send_roc_from_ethereum_to_rococo() {
 				beneficiary,
 			},
 		];
-		let xcm: Xcm<()> = instructions.into();
+		let xcm: Xcm<OpaqueCall> = instructions.into();
 		let versioned_message_xcm = VersionedXcm::V5(xcm);
 		let origin = EthereumGatewayAddress::get();
 

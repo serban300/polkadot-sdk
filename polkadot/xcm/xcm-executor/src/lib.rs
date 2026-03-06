@@ -452,7 +452,7 @@ impl<Config: config::Config> XcmExecutor<Config> {
 	fn send(
 		&mut self,
 		dest: Location,
-		msg: Xcm<()>,
+		msg: Xcm<OpaqueCall>,
 		reason: FeeReason,
 	) -> Result<XcmHash, XcmError> {
 		let mut msg = msg;
@@ -749,7 +749,7 @@ impl<Config: config::Config> XcmExecutor<Config> {
 	fn do_reserve_deposit_assets(
 		assets: AssetsInHolding,
 		dest: &Location,
-		remote_xcm: &mut Vec<Instruction<()>>,
+		remote_xcm: &mut Vec<Instruction<OpaqueCall>>,
 		context: Option<&XcmContext>,
 	) -> Result<Assets, XcmError> {
 		let reanchored_assets = Self::reanchored_assets(&assets, dest);
@@ -763,7 +763,7 @@ impl<Config: config::Config> XcmExecutor<Config> {
 		assets: AssetsInHolding,
 		failed_bin: &mut AssetsInHolding,
 		reserve: &Location,
-		remote_xcm: &mut Vec<Instruction<()>>,
+		remote_xcm: &mut Vec<Instruction<OpaqueCall>>,
 	) -> Result<Assets, XcmError> {
 		// Must ensure that we recognise the assets as being managed by the destination.
 		#[cfg(not(any(test, feature = "runtime-benchmarks")))]
@@ -785,7 +785,7 @@ impl<Config: config::Config> XcmExecutor<Config> {
 	fn do_teleport_assets(
 		assets: AssetsInHolding,
 		dest: &Location,
-		remote_xcm: &mut Vec<Instruction<()>>,
+		remote_xcm: &mut Vec<Instruction<OpaqueCall>>,
 		context: &XcmContext,
 	) -> Result<Assets, XcmError> {
 		let reanchored_assets = Self::reanchored_assets(&assets, dest);
@@ -1725,7 +1725,7 @@ impl<Config: config::Config> XcmExecutor<Config> {
 						tracing::error!(target: "xcm::xcm_executor::process_instruction", ?e, ?unlocker, ?context, "Failed to re-anchor origin");
 						XcmError::ReanchorFailed
 					})?;
-					let msg = Xcm::<()>(vec![NoteUnlockable { asset: remote_asset, owner }]);
+					let msg = Xcm::<OpaqueCall>(vec![NoteUnlockable { asset: remote_asset, owner }]);
 					let (ticket, price) = validate_send::<Config::XcmSender>(unlocker, msg)?;
 					self.take_fee(price, FeeReason::LockAsset)?;
 					lock_ticket.enact()?;
@@ -1757,7 +1757,7 @@ impl<Config: config::Config> XcmExecutor<Config> {
 					origin.clone(),
 				)?;
 				let msg =
-					Xcm::<()>(vec![UnlockAsset { asset: remote_asset, target: remote_target }]);
+					Xcm::<OpaqueCall>(vec![UnlockAsset { asset: remote_asset, target: remote_target }]);
 				let (ticket, price) = validate_send::<Config::XcmSender>(locker, msg)?;
 				let mut backup_holding = BackupAssetsInHolding::safe_backup(&self.holding);
 				let result = Config::TransactionalProcessor::process(|| {
@@ -1928,7 +1928,7 @@ impl<Config: config::Config> XcmExecutor<Config> {
 		assets: &mut AssetsInHolding,
 		destination: &Location,
 		reason: FeeReason,
-		xcm: &Xcm<()>,
+		xcm: &Xcm<OpaqueCall>,
 	) -> Result<Option<AssetsInHolding>, XcmError> {
 		let to_weigh_reanchored = Self::reanchored_assets(&assets, destination);
 		let remote_instruction = match reason {

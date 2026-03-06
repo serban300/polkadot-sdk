@@ -74,14 +74,14 @@ pub enum MessageKind {
 }
 
 /// Encodes the provided XCM message based on the `message_kind`.
-pub fn encode_xcm(message: Xcm<()>, message_kind: MessageKind) -> Vec<u8> {
+pub fn encode_xcm(message: Xcm<OpaqueCall>, message_kind: MessageKind) -> Vec<u8> {
 	match message_kind {
-		MessageKind::Ump | MessageKind::Dmp => VersionedXcm::<()>::from(message).encode(),
+		MessageKind::Ump | MessageKind::Dmp => VersionedXcm::<OpaqueCall>::from(message).encode(),
 		MessageKind::Xcmp => {
 			let fmt = XcmpMessageFormat::ConcatenatedVersionedXcm;
 			let mut outbound = fmt.encode();
 
-			let encoded = VersionedXcm::<()>::from(message).encode();
+			let encoded = VersionedXcm::<OpaqueCall>::from(message).encode();
 			outbound.extend_from_slice(&encoded[..]);
 			outbound
 		},
@@ -265,9 +265,9 @@ macro_rules! __impl_ext {
 }
 
 thread_local! {
-	pub static PARA_MESSAGE_BUS: RefCell<VecDeque<(ParaId, Location, Xcm<()>)>>
+	pub static PARA_MESSAGE_BUS: RefCell<VecDeque<(ParaId, Location, Xcm<OpaqueCall>)>>
 		= RefCell::new(VecDeque::new());
-	pub static RELAY_MESSAGE_BUS: RefCell<VecDeque<(Location, Xcm<()>)>>
+	pub static RELAY_MESSAGE_BUS: RefCell<VecDeque<(Location, Xcm<OpaqueCall>)>>
 		= RefCell::new(VecDeque::new());
 }
 
@@ -389,11 +389,11 @@ macro_rules! decl_test_network {
 		pub struct ParachainXcmRouter<T>($crate::PhantomData<T>);
 
 		impl<T: $crate::Get<$crate::ParaId>> $crate::SendXcm for ParachainXcmRouter<T> {
-			type Ticket = ($crate::ParaId, $crate::Location, $crate::Xcm<()>);
+			type Ticket = ($crate::ParaId, $crate::Location, $crate::Xcm<$crate::OpaqueCall>);
 			fn validate(
 				destination: &mut Option<$crate::Location>,
-				message: &mut Option<$crate::Xcm<()>>,
-			) -> $crate::SendResult<($crate::ParaId, $crate::Location, $crate::Xcm<()>)> {
+				message: &mut Option<$crate::Xcm<$crate::OpaqueCall>>,
+			) -> $crate::SendResult<($crate::ParaId, $crate::Location, $crate::Xcm<$crate::OpaqueCall>)> {
 				use $crate::XcmpMessageHandlerT;
 
 				let d = destination.take().ok_or($crate::SendError::MissingArgument)?;
@@ -411,7 +411,7 @@ macro_rules! decl_test_network {
 				Ok(((T::get(), d, m), $crate::Assets::new()))
 			}
 			fn deliver(
-				triple: ($crate::ParaId, $crate::Location, $crate::Xcm<()>),
+				triple: ($crate::ParaId, $crate::Location, $crate::Xcm<$crate::OpaqueCall>),
 			) -> Result<$crate::XcmHash, $crate::SendError> {
 				let hash = $crate::helpers::derive_topic_id(&triple.2);
 				$crate::PARA_MESSAGE_BUS.with(|b| b.borrow_mut().push_back(triple));
@@ -422,11 +422,11 @@ macro_rules! decl_test_network {
 		/// XCM router for relay chain.
 		pub struct RelayChainXcmRouter;
 		impl $crate::SendXcm for RelayChainXcmRouter {
-			type Ticket = ($crate::Location, $crate::Xcm<()>);
+			type Ticket = ($crate::Location, $crate::Xcm<$crate::OpaqueCall>);
 			fn validate(
 				destination: &mut Option<$crate::Location>,
-				message: &mut Option<$crate::Xcm<()>>,
-			) -> $crate::SendResult<($crate::Location, $crate::Xcm<()>)> {
+				message: &mut Option<$crate::Xcm<$crate::OpaqueCall>>,
+			) -> $crate::SendResult<($crate::Location, $crate::Xcm<$crate::OpaqueCall>)> {
 				use $crate::DmpMessageHandlerT;
 
 				let d = destination.take().ok_or($crate::SendError::MissingArgument)?;
@@ -443,7 +443,7 @@ macro_rules! decl_test_network {
 				Ok(((d, m), $crate::Assets::new()))
 			}
 			fn deliver(
-				pair: ($crate::Location, $crate::Xcm<()>),
+				pair: ($crate::Location, $crate::Xcm<$crate::OpaqueCall>),
 			) -> Result<$crate::XcmHash, $crate::SendError> {
 				let hash = $crate::helpers::derive_topic_id(&pair.1);
 				$crate::RELAY_MESSAGE_BUS.with(|b| b.borrow_mut().push_back(pair));

@@ -352,7 +352,10 @@ pub mod benchmark_helpers {
 	use snowbridge_pallet_outbound_queue_v2::BenchmarkHelper as OutboundQueueBenchmarkHelperV2;
 	use sp_core::H256;
 	use testnet_parachains_constants::westend::snowbridge::{AssetHubParaId, EthereumNetwork};
-	use xcm::latest::{Assets, Location, SendError, SendResult, SendXcm, Xcm, XcmHash};
+	use xcm::{
+		latest::{Assets, Location, SendError, SendResult, SendXcm, Xcm, XcmHash},
+		OpaqueCall,
+	};
 	use xcm_executor::XcmExecutor;
 
 	impl<T: snowbridge_pallet_ethereum_client::Config> BenchmarkHelper<T> for Runtime {
@@ -396,15 +399,15 @@ pub mod benchmark_helpers {
 
 	pub struct DoNothingRouter;
 	impl SendXcm for DoNothingRouter {
-		type Ticket = Xcm<()>;
+		type Ticket = Xcm<OpaqueCall>;
 
 		fn validate(
 			_dest: &mut Option<Location>,
-			xcm: &mut Option<Xcm<()>>,
+			xcm: &mut Option<Xcm<OpaqueCall>>,
 		) -> SendResult<Self::Ticket> {
 			Ok((xcm.clone().unwrap(), Assets::new()))
 		}
-		fn deliver(xcm: Xcm<()>) -> Result<XcmHash, SendError> {
+		fn deliver(xcm: Xcm<OpaqueCall>) -> Result<XcmHash, SendError> {
 			let hash = xcm.using_encoded(sp_io::hashing::blake2_256);
 			Ok(hash)
 		}

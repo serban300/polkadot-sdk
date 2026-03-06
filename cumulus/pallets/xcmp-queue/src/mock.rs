@@ -295,9 +295,9 @@ pub(crate) fn mk_page() -> Vec<u8> {
 	page
 }
 
-pub(crate) fn versioned_xcm(version: XcmVersion) -> VersionedXcm<()> {
-	let instr = Instruction::<()>::Trap(1);
-	VersionedXcm::from(Xcm::<()>(vec![instr; 3]))
+pub(crate) fn versioned_xcm(version: XcmVersion) -> VersionedXcm<OpaqueCall> {
+	let instr = Instruction::<OpaqueCall>::Trap(1);
+	VersionedXcm::from(Xcm::<OpaqueCall>(vec![instr; 3]))
 		.into_version(version)
 		.expect("Version conversion should work")
 }

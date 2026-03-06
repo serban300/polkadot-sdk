@@ -139,7 +139,7 @@ pub mod pallet {
 		MessageSent {
 			origin: Location,
 			destination: Location,
-			message: Xcm<()>,
+			message: Xcm<OpaqueCall>,
 			message_id: XcmHash,
 		},
 		/// Set OperatingMode
@@ -274,7 +274,11 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		fn send_xcm(origin: Location, dest: Location, xcm: Xcm<()>) -> Result<XcmHash, SendError> {
+		fn send_xcm(
+			origin: Location,
+			dest: Location,
+			xcm: Xcm<OpaqueCall>,
+		) -> Result<XcmHash, SendError> {
 			let is_waived =
 				<T::XcmExecutor as FeeManager>::is_waived(Some(&origin), FeeReason::ChargeFees);
 			let (ticket, price) = validate_send::<T::XcmSender>(dest, xcm.clone())?;
@@ -350,7 +354,7 @@ pub mod pallet {
 			})
 		}
 
-		fn build_remote_xcm(call: &impl Encode) -> Xcm<()> {
+		fn build_remote_xcm(call: &impl Encode) -> Xcm<OpaqueCall> {
 			Xcm(vec![
 				DescendOrigin(T::PalletLocation::get()),
 				UnpaidExecution { weight_limit: Unlimited, check_origin: None },

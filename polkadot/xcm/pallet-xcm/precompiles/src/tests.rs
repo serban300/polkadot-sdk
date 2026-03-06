@@ -62,7 +62,7 @@ fn test_xcm_send_precompile_works() {
 		]);
 
 		let versioned_dest: VersionedLocation = RelayLocation::get().into();
-		let versioned_message: VersionedXcm<()> = VersionedXcm::from(message.clone());
+		let versioned_message: VersionedXcm<OpaqueCall> = VersionedXcm::from(message.clone());
 
 		let xcm_send_params = IXcm::sendCall {
 			destination: versioned_dest.encode().into(),
@@ -113,7 +113,7 @@ fn test_xcm_send_precompile_to_parachain() {
 		]);
 
 		let destination: VersionedLocation = Parachain(SOME_PARA_ID).into();
-		let versioned_message: VersionedXcm<()> = VersionedXcm::from(message.clone());
+		let versioned_message: VersionedXcm<OpaqueCall> = VersionedXcm::from(message.clone());
 
 		let xcm_send_params = IXcm::sendCall {
 			destination: destination.encode().into(),
@@ -164,7 +164,7 @@ fn test_xcm_send_precompile_fails() {
 		]);
 
 		let destination: VersionedLocation = VersionedLocation::from(Location::ancestor(8));
-		let versioned_message: VersionedXcm<()> = VersionedXcm::from(message.clone());
+		let versioned_message: VersionedXcm<OpaqueCall> = VersionedXcm::from(message.clone());
 
 		let xcm_send_params = IXcm::sendCall {
 			destination: destination.encode().into(),

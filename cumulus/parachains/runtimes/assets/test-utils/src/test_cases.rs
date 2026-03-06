@@ -1579,7 +1579,7 @@ pub fn reserve_transfer_native_asset_to_non_teleport_para_works<
 				Box::new(VersionedAssetId::from(AssetId(Location::parent()))),
 				Box::new(TransferType::LocalReserve),
 				Box::new(VersionedXcm::from(
-					Xcm::<()>::builder_unsafe()
+					Xcm::<OpaqueCall>::builder_unsafe()
 						.deposit_asset(AllCounted(1), dest_beneficiary.clone())
 						.build()
 				)),
@@ -1620,7 +1620,7 @@ pub fn reserve_transfer_native_asset_to_non_teleport_para_works<
 				xcm_sent_message_hash,
 				Some(xcm_sent.using_encoded(sp_io::hashing::blake2_256))
 			);
-			let mut xcm_sent: Xcm<()> = xcm_sent.try_into().expect("versioned xcm");
+			let mut xcm_sent: Xcm<OpaqueCall> = xcm_sent.try_into().expect("versioned xcm");
 
 			// check sent XCM Program to other parachain
 			println!("reserve_transfer_native_asset_works sent xcm: {:?}", xcm_sent);

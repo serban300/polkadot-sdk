@@ -105,7 +105,7 @@ fn exchange_asset_from_penpal_via_asset_hub_back_to_penpal() {
 			DepositAsset { assets: Wild(All), beneficiary: sender.clone().into() },
 		]);
 		// xcm to be executed locally on penpal as starting point
-		let xcm = Xcm::<()>(vec![
+		let xcm = Xcm::<OpaqueCall>(vec![
 			WithdrawAsset(wnd_to_withdraw.into()),
 			PayFees { asset: penpal_local_fees },
 			InitiateTransfer {

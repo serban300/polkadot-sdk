@@ -51,7 +51,8 @@ use scale_info::TypeInfo;
 use sp_core::H160;
 use sp_runtime::traits::Zero;
 use xcm::prelude::{
-	send_xcm, Junction::*, Location, SendError as XcmpSendError, SendXcm, Xcm, XcmContext, XcmHash,
+	send_xcm, Junction::*, Location, OpaqueCall, SendError as XcmpSendError, SendXcm, Xcm,
+	XcmContext, XcmHash,
 };
 use xcm_executor::traits::TransactAsset;
 
@@ -328,13 +329,13 @@ pub mod pallet {
 		pub fn do_convert(
 			message_id: H256,
 			message: VersionedMessage,
-		) -> Result<(Xcm<()>, BalanceOf<T>), Error<T>> {
+		) -> Result<(Xcm<OpaqueCall>, BalanceOf<T>), Error<T>> {
 			let (xcm, fee) = T::MessageConverter::convert(message_id, message)
 				.map_err(|e| Error::<T>::ConvertMessage(e))?;
 			Ok((xcm, fee))
 		}
 
-		pub fn send_xcm(xcm: Xcm<()>, dest: ParaId) -> Result<XcmHash, Error<T>> {
+		pub fn send_xcm(xcm: Xcm<OpaqueCall>, dest: ParaId) -> Result<XcmHash, Error<T>> {
 			let dest = Location::new(1, [Parachain(dest.into())]);
 			let (xcm_hash, _) = send_xcm::<T::XcmSender>(dest, xcm).map_err(Error::<T>::from)?;
 			Ok(xcm_hash)

@@ -118,6 +118,7 @@ use xcm::{
 		VersionedAsset, VersionedAssetId, VersionedAssets, VersionedLocation, VersionedXcm,
 		XcmVersion,
 	},
+	OpaqueCall,
 };
 use xcm_runtime_apis::{
 	dry_run::{CallDryRunEffects, Error as XcmDryRunApiError, XcmDryRunEffects},
@@ -2029,11 +2030,11 @@ pallet_revive::impl_runtime_apis_plus_revive_traits!(
 			PolkadotXcm::query_weight_to_asset_fee::<Trader>(weight, asset)
 		}
 
-		fn query_xcm_weight(message: VersionedXcm<()>) -> Result<Weight, XcmPaymentApiError> {
+		fn query_xcm_weight(message: VersionedXcm<OpaqueCall>) -> Result<Weight, XcmPaymentApiError> {
 			PolkadotXcm::query_xcm_weight(message)
 		}
 
-		fn query_delivery_fees(destination: VersionedLocation, message: VersionedXcm<()>, asset_id: VersionedAssetId) -> Result<VersionedAssets, XcmPaymentApiError> {
+		fn query_delivery_fees(destination: VersionedLocation, message: VersionedXcm<OpaqueCall>, asset_id: VersionedAssetId) -> Result<VersionedAssets, XcmPaymentApiError> {
 			type AssetExchanger = <XcmConfig as xcm_executor::Config>::AssetExchanger;
 			PolkadotXcm::query_delivery_fees::<AssetExchanger>(destination, message, asset_id)
 		}

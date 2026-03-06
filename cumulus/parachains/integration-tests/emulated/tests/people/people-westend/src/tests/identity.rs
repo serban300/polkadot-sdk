@@ -54,7 +54,7 @@ fn set_identity_cross_chain() {
 			>::set_identity {
 				info: bx!(identity_info),
 			});
-		let xcm_message = Xcm::<()>(vec![
+		let xcm_message = Xcm::<OpaqueCall>(vec![
 			WithdrawAsset(total_fees.into()),
 			PayFees { asset: fees.clone() },
 			InitiateTransfer {

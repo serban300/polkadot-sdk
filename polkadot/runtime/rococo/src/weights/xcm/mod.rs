@@ -111,7 +111,7 @@ impl<RuntimeCall> XcmWeightInfo<RuntimeCall> for RococoXcmWeight<RuntimeCall> {
 	fn transfer_asset(assets: &Assets, _dest: &Location) -> Weight {
 		assets.weigh_assets(XcmBalancesWeight::<Runtime>::transfer_asset())
 	}
-	fn transfer_reserve_asset(assets: &Assets, _dest: &Location, _xcm: &Xcm<()>) -> Weight {
+	fn transfer_reserve_asset(assets: &Assets, _dest: &Location, _xcm: &Xcm<OpaqueCall>) -> Weight {
 		assets.weigh_assets(XcmBalancesWeight::<Runtime>::transfer_reserve_asset())
 	}
 	fn transact(
@@ -150,7 +150,11 @@ impl<RuntimeCall> XcmWeightInfo<RuntimeCall> for RococoXcmWeight<RuntimeCall> {
 	fn deposit_asset(assets: &AssetFilter, _dest: &Location) -> Weight {
 		assets.weigh_assets(XcmBalancesWeight::<Runtime>::deposit_asset())
 	}
-	fn deposit_reserve_asset(assets: &AssetFilter, _dest: &Location, _xcm: &Xcm<()>) -> Weight {
+	fn deposit_reserve_asset(
+		assets: &AssetFilter,
+		_dest: &Location,
+		_xcm: &Xcm<OpaqueCall>,
+	) -> Weight {
 		assets.weigh_assets(XcmBalancesWeight::<Runtime>::deposit_reserve_asset())
 	}
 	fn exchange_asset(_give: &AssetFilter, _receive: &Assets, _maximal: &bool) -> Weight {
@@ -160,11 +164,11 @@ impl<RuntimeCall> XcmWeightInfo<RuntimeCall> for RococoXcmWeight<RuntimeCall> {
 	fn initiate_reserve_withdraw(
 		assets: &AssetFilter,
 		_reserve: &Location,
-		_xcm: &Xcm<()>,
+		_xcm: &Xcm<OpaqueCall>,
 	) -> Weight {
 		assets.weigh_assets(XcmBalancesWeight::<Runtime>::initiate_reserve_withdraw())
 	}
-	fn initiate_teleport(assets: &AssetFilter, _dest: &Location, _xcm: &Xcm<()>) -> Weight {
+	fn initiate_teleport(assets: &AssetFilter, _dest: &Location, _xcm: &Xcm<OpaqueCall>) -> Weight {
 		assets.weigh_assets(XcmBalancesWeight::<Runtime>::initiate_teleport())
 	}
 	fn initiate_transfer(
@@ -172,7 +176,7 @@ impl<RuntimeCall> XcmWeightInfo<RuntimeCall> for RococoXcmWeight<RuntimeCall> {
 		remote_fees: &Option<AssetTransferFilter>,
 		_preserve_origin: &bool,
 		assets: &BoundedVec<AssetTransferFilter, MaxAssetTransferFilters>,
-		_xcm: &Xcm<()>,
+		_xcm: &Xcm<OpaqueCall>,
 	) -> Weight {
 		let mut weight = if let Some(remote_fees) = remote_fees {
 			let fees = remote_fees.inner();
@@ -257,7 +261,7 @@ impl<RuntimeCall> XcmWeightInfo<RuntimeCall> for RococoXcmWeight<RuntimeCall> {
 		// Rococo does not currently support universal origin operations
 		Weight::MAX
 	}
-	fn export_message(_: &NetworkId, _: &Junctions, _: &Xcm<()>) -> Weight {
+	fn export_message(_: &NetworkId, _: &Junctions, _: &Xcm<OpaqueCall>) -> Weight {
 		// Rococo relay should not support export message operations
 		Weight::MAX
 	}

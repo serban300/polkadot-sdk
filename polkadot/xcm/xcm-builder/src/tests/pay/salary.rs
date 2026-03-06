@@ -141,7 +141,7 @@ fn salary_pay_over_xcm_works() {
 
 		// Get message from mock transport layer
 		let (_, message, mut hash) = sent_xcm()[0].clone();
-		// Change type from `Xcm<()>` to `Xcm<RuntimeCall>` to be able to execute later
+		// Change type from `Xcm<OpaqueCall>` to `Xcm<RuntimeCall>` to be able to execute later
 		let message =
 			Xcm::<<XcmConfig as xcm_executor::Config>::RuntimeCall>::from(message.clone());
 

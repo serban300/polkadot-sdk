@@ -174,10 +174,10 @@ mod tests {
 	#[test]
 	fn process_message_exceeds_limits_fails() {
 		struct MockedExecutor;
-		impl ExecuteXcm<()> for MockedExecutor {
-			type Prepared = xcm_executor::WeighedMessage<()>;
+		impl ExecuteXcm<OpaqueCall> for MockedExecutor {
+			type Prepared = xcm_executor::WeighedMessage<OpaqueCall>;
 			fn prepare(
-				message: xcm::latest::Xcm<()>,
+				message: xcm::latest::Xcm<OpaqueCall>,
 				_: Weight,
 			) -> core::result::Result<Self::Prepared, InstructionError> {
 				Ok(xcm_executor::WeighedMessage::new(Weight::zero(), message))
@@ -198,10 +198,10 @@ mod tests {
 			}
 		}
 
-		type Processor = ProcessXcmMessage<Junction, MockedExecutor, ()>;
+		type Processor = ProcessXcmMessage<Junction, MockedExecutor, OpaqueCall>;
 
-		let xcm = VersionedXcm::from(xcm::latest::Xcm::<()>(vec![
-			xcm::latest::Instruction::<()>::ClearOrigin,
+		let xcm = VersionedXcm::from(xcm::latest::Xcm::<OpaqueCall>(vec![
+			xcm::latest::Instruction::<OpaqueCall>::ClearOrigin,
 		]));
 		assert_err!(
 			Processor::process_message(

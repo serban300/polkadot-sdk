@@ -199,7 +199,7 @@ pub fn limited_reserve_transfer_assets_for_native_asset_works<
 				Box::new(VersionedAssetId::from(AssetId(Location::parent()))),
 				Box::new(TransferType::LocalReserve),
 				Box::new(VersionedXcm::from(
-					Xcm::<()>::builder_unsafe()
+					Xcm::<OpaqueCall>::builder_unsafe()
 						.deposit_asset(AllCounted(1), target_destination_account)
 						.build()
 				)),
@@ -235,7 +235,7 @@ pub fn limited_reserve_transfer_assets_for_native_asset_works<
 				xcm_sent_message_hash,
 				Some(xcm_sent.using_encoded(sp_io::hashing::blake2_256))
 			);
-			let mut xcm_sent: Xcm<()> = xcm_sent.try_into().expect("versioned xcm");
+			let mut xcm_sent: Xcm<OpaqueCall> = xcm_sent.try_into().expect("versioned xcm");
 
 			// check sent XCM ExportMessage to BridgeHub
 

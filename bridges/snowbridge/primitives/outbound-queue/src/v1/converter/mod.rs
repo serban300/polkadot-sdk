@@ -57,7 +57,7 @@ where
 		_channel: u32,
 		universal_source: &mut Option<InteriorLocation>,
 		destination: &mut Option<InteriorLocation>,
-		message: &mut Option<Xcm<()>>,
+		message: &mut Option<Xcm<OpaqueCall>>,
 	) -> SendResult<Self::Ticket> {
 		let expected_network = EthereumNetwork::get();
 		let universal_location = UniversalLocation::get();
@@ -115,7 +115,7 @@ where
 		})?;
 
 		let mut converter =
-			XcmConverter::<ConvertAssetId, ()>::new(&message, expected_network, agent_id);
+			XcmConverter::<ConvertAssetId, OpaqueCall>::new(&message, expected_network, agent_id);
 		let (command, message_id) = converter.convert().map_err(|err|{
 			tracing::error!(target: "xcm::ethereum_blob_exporter", error=?err, "unroutable due to pattern matching.");
 			SendError::Unroutable

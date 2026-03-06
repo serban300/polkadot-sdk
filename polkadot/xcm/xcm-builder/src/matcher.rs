@@ -52,12 +52,12 @@ impl<'a, Call> CreateMatcher for &'a mut [Instruction<Call>] {
 /// use xcm::latest::Instruction;
 /// use staging_xcm_builder::{CreateMatcher, MatchXcm};
 ///
-/// let mut msg = [Instruction::<()>::ClearOrigin];
+/// let mut msg = [Instruction::<OpaqueCall>::ClearOrigin];
 /// let res = msg
 /// 	.matcher()
 /// 	.assert_remaining_insts(1)?
 /// 	.match_next_inst(|inst| match inst {
-/// 		Instruction::<()>::ClearOrigin => Ok(()),
+/// 		Instruction::<OpaqueCall>::ClearOrigin => Ok(()),
 /// 		_ => Err(ProcessMessageError::BadFormat),
 /// 	});
 /// assert!(res.is_ok());
@@ -181,7 +181,7 @@ mod tests {
 
 	#[test]
 	fn match_next_inst_works() {
-		let test_cases: Vec<(Vec<Instruction<()>>, bool)> =
+		let test_cases: Vec<(Vec<Instruction<OpaqueCall>>, bool)> =
 			vec![(vec![ClearOrigin], true), (vec![Trap(0)], false)];
 
 		for (mut xcm, expected) in test_cases.into_iter() {
@@ -195,7 +195,7 @@ mod tests {
 
 	#[test]
 	fn match_next_inst_while_works() {
-		let mut xcm: Vec<Instruction<()>> = vec![ClearOrigin];
+		let mut xcm: Vec<Instruction<OpaqueCall>> = vec![ClearOrigin];
 
 		let _ = xcm
 			.matcher()

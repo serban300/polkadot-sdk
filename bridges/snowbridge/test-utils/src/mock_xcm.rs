@@ -14,10 +14,10 @@ thread_local! {
 	pub static SENDER_OVERRIDE: RefCell<Option<(
 		fn(
 			&mut Option<Location>,
-			&mut Option<Xcm<()>>,
-		) -> Result<(Xcm<()>, Assets), SendError>,
+			&mut Option<Xcm<OpaqueCall>>,
+		) -> Result<(Xcm<OpaqueCall>, Assets), SendError>,
 		fn(
-			Xcm<()>,
+			Xcm<OpaqueCall>,
 		) -> Result<XcmHash, SendError>,
 	)>> = RefCell::new(None);
 	pub static CHARGE_FEES_OVERRIDE: RefCell<Option<
@@ -32,8 +32,11 @@ pub fn set_fee_waiver(waived: Vec<FeeReason>) {
 
 #[allow(dead_code)]
 pub fn set_sender_override(
-	validate: fn(&mut Option<Location>, &mut Option<Xcm<()>>) -> SendResult<Xcm<()>>,
-	deliver: fn(Xcm<()>) -> Result<XcmHash, SendError>,
+	validate: fn(
+		&mut Option<Location>,
+		&mut Option<Xcm<OpaqueCall>>,
+	) -> SendResult<Xcm<OpaqueCall>>,
+	deliver: fn(Xcm<OpaqueCall>) -> Result<XcmHash, SendError>,
 ) {
 	SENDER_OVERRIDE.with(|x| x.replace(Some((validate, deliver))));
 }
@@ -57,11 +60,11 @@ pub fn clear_charge_fees_override() {
 pub struct MockXcmSender;
 
 impl SendXcm for MockXcmSender {
-	type Ticket = Xcm<()>;
+	type Ticket = Xcm<OpaqueCall>;
 
 	fn validate(
 		dest: &mut Option<Location>,
-		xcm: &mut Option<Xcm<()>>,
+		xcm: &mut Option<Xcm<OpaqueCall>>,
 	) -> SendResult<Self::Ticket> {
 		let r: SendResult<Self::Ticket> = SENDER_OVERRIDE.with(|s| {
 			if let Some((ref f, _)) = &*s.borrow() {

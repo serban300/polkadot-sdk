@@ -25,8 +25,10 @@ fn props(weight_credit: Weight) -> Properties {
 
 #[test]
 fn take_weight_credit_barrier_should_work() {
-	let mut message =
-		Xcm::<()>(vec![TransferAsset { assets: (Parent, 100).into(), beneficiary: Here.into() }]);
+	let mut message = Xcm::<OpaqueCall>(vec![TransferAsset {
+		assets: (Parent, 100).into(),
+		beneficiary: Here.into(),
+	}]);
 	let mut properties = props(Weight::from_parts(10, 10));
 	let r = TakeWeightCredit::should_execute(
 		&Parent.into(),
@@ -49,7 +51,7 @@ fn take_weight_credit_barrier_should_work() {
 
 #[test]
 fn computed_origin_should_work() {
-	let mut message = Xcm::<()>(vec![
+	let mut message = Xcm::<OpaqueCall>(vec![
 		UniversalOrigin(GlobalConsensus(Kusama)),
 		DescendOrigin(Parachain(100).into()),
 		DescendOrigin(PalletInstance(69).into()),
@@ -105,8 +107,10 @@ fn computed_origin_should_work() {
 
 #[test]
 fn allow_unpaid_should_work() {
-	let mut message =
-		Xcm::<()>(vec![TransferAsset { assets: (Parent, 100).into(), beneficiary: Here.into() }]);
+	let mut message = Xcm::<OpaqueCall>(vec![TransferAsset {
+		assets: (Parent, 100).into(),
+		beneficiary: Here.into(),
+	}]);
 
 	AllowUnpaidFrom::set(vec![Parent.into()]);
 
@@ -129,10 +133,12 @@ fn allow_unpaid_should_work() {
 
 #[test]
 fn allow_explicit_unpaid_should_work() {
-	let mut bad_message1 =
-		Xcm::<()>(vec![TransferAsset { assets: (Parent, 100).into(), beneficiary: Here.into() }]);
+	let mut bad_message1 = Xcm::<OpaqueCall>(vec![TransferAsset {
+		assets: (Parent, 100).into(),
+		beneficiary: Here.into(),
+	}]);
 
-	let mut bad_message2 = Xcm::<()>(vec![
+	let mut bad_message2 = Xcm::<OpaqueCall>(vec![
 		UnpaidExecution {
 			weight_limit: Limited(Weight::from_parts(10, 10)),
 			check_origin: Some(Parent.into()),
@@ -140,7 +146,7 @@ fn allow_explicit_unpaid_should_work() {
 		TransferAsset { assets: (Parent, 100).into(), beneficiary: Here.into() },
 	]);
 
-	let mut good_message = Xcm::<()>(vec![
+	let mut good_message = Xcm::<OpaqueCall>(vec![
 		UnpaidExecution {
 			weight_limit: Limited(Weight::from_parts(20, 20)),
 			check_origin: Some(Parent.into()),
@@ -183,7 +189,7 @@ fn allow_explicit_unpaid_should_work() {
 	);
 	assert_eq!(r, Ok(()));
 
-	let mut message_with_different_weight_parts = Xcm::<()>(vec![
+	let mut message_with_different_weight_parts = Xcm::<OpaqueCall>(vec![
 		UnpaidExecution {
 			weight_limit: Limited(Weight::from_parts(20, 10)),
 			check_origin: Some(Parent.into()),
@@ -208,7 +214,7 @@ fn allow_explicit_unpaid_should_work() {
 	assert_eq!(r, Ok(()));
 
 	// Invalid since location to alias is not allowed.
-	let mut message = Xcm::<()>::builder_unsafe()
+	let mut message = Xcm::<OpaqueCall>::builder_unsafe()
 		.receive_teleported_asset((Here, 100u128))
 		.alias_origin(Parachain(1000))
 		.unpaid_execution(Unlimited, None)
@@ -222,7 +228,7 @@ fn allow_explicit_unpaid_should_work() {
 	assert_eq!(result, Err(ProcessMessageError::Unsupported));
 
 	// Valid because all parachains are children of the relay chain.
-	let mut message = Xcm::<()>::builder_unsafe()
+	let mut message = Xcm::<OpaqueCall>::builder_unsafe()
 		.receive_teleported_asset((Here, 100u128))
 		.alias_origin((Parent, Parachain(1000)))
 		.unpaid_execution(Unlimited, None)
@@ -236,7 +242,7 @@ fn allow_explicit_unpaid_should_work() {
 	assert_eq!(result, Ok(()));
 
 	// Valid.
-	let mut message = Xcm::<()>::builder_unsafe()
+	let mut message = Xcm::<OpaqueCall>::builder_unsafe()
 		.alias_origin((Parent, Parachain(1000)))
 		.unpaid_execution(Unlimited, None)
 		.build();
@@ -250,7 +256,7 @@ fn allow_explicit_unpaid_should_work() {
 
 	// Invalid because `ClearOrigin` clears origin and `UnpaidExecution`
 	// can't know if there are enough permissions.
-	let mut message = Xcm::<()>::builder_unsafe()
+	let mut message = Xcm::<OpaqueCall>::builder_unsafe()
 		.receive_teleported_asset((Here, 100u128))
 		.clear_origin()
 		.unpaid_execution(Unlimited, None)
@@ -264,7 +270,7 @@ fn allow_explicit_unpaid_should_work() {
 	assert_eq!(result, Err(ProcessMessageError::Unsupported));
 
 	// Valid.
-	let mut message = Xcm::<()>::builder_unsafe()
+	let mut message = Xcm::<OpaqueCall>::builder_unsafe()
 		.receive_teleported_asset((Here, 100u128))
 		.reserve_asset_deposited((Parent, 100u128))
 		.descend_origin(Parachain(1000))
@@ -279,7 +285,7 @@ fn allow_explicit_unpaid_should_work() {
 	assert_eq!(result, Ok(()));
 
 	// Invalid because of `ClearOrigin`.
-	let mut message = Xcm::<()>::builder_unsafe()
+	let mut message = Xcm::<OpaqueCall>::builder_unsafe()
 		.receive_teleported_asset((Here, 100u128))
 		.clear_origin()
 		.build();
@@ -292,7 +298,7 @@ fn allow_explicit_unpaid_should_work() {
 	assert_eq!(result, Err(ProcessMessageError::Unsupported));
 
 	// Invalid because there is no `UnpaidExecution`.
-	let mut message = Xcm::<()>::builder_unsafe()
+	let mut message = Xcm::<OpaqueCall>::builder_unsafe()
 		.receive_teleported_asset((Here, 100u128))
 		.alias_origin((Parent, Parachain(1000)))
 		.build();
@@ -309,7 +315,7 @@ fn allow_explicit_unpaid_should_work() {
 		(Parent, 100u128).into(),
 		((Parent, PalletInstance(10), GeneralIndex(1000)), 100u128).into(),
 	];
-	let mut message = Xcm::<()>::builder_unsafe()
+	let mut message = Xcm::<OpaqueCall>::builder_unsafe()
 		.set_hints(vec![AssetClaimer {
 			location: AccountId32 { id: [100u8; 32], network: None }.into(),
 		}])
@@ -332,7 +338,7 @@ fn allow_explicit_unpaid_should_work() {
 		(Parent, 100u128).into(),
 		((Parent, PalletInstance(10), GeneralIndex(1000)), 100u128).into(),
 	];
-	let mut message = Xcm::<()>::builder_unsafe()
+	let mut message = Xcm::<OpaqueCall>::builder_unsafe()
 		.set_hints(vec![AssetClaimer {
 			location: AccountId32 { id: [100u8; 32], network: None }.into(),
 		}])
@@ -355,7 +361,7 @@ fn allow_explicit_unpaid_should_work() {
 		(Parent, 100u128).into(),
 		((Parent, PalletInstance(10), GeneralIndex(1000)), 100u128).into(),
 	];
-	let mut message = Xcm::<()>::builder_unsafe()
+	let mut message = Xcm::<OpaqueCall>::builder_unsafe()
 		.set_hints(vec![AssetClaimer {
 			location: AccountId32 { id: [100u8; 32], network: None }.into(),
 		}])
@@ -379,7 +385,7 @@ fn allow_explicit_unpaid_should_work() {
 		(Parent, 100u128).into(),
 		((Parent, PalletInstance(10), GeneralIndex(1000)), 100u128).into(),
 	];
-	let mut message = Xcm::<()>::builder_unsafe()
+	let mut message = Xcm::<OpaqueCall>::builder_unsafe()
 		.set_hints(vec![AssetClaimer {
 			location: AccountId32 { id: [100u8; 32], network: None }.into(),
 		}])
@@ -402,7 +408,7 @@ fn allow_explicit_unpaid_should_work() {
 		(Parent, 100u128).into(),
 		((Parent, PalletInstance(10), GeneralIndex(1000)), 100u128).into(),
 	];
-	let mut message = Xcm::<()>::builder_unsafe()
+	let mut message = Xcm::<OpaqueCall>::builder_unsafe()
 		.set_hints(vec![AssetClaimer {
 			location: AccountId32 { id: [100u8; 32], network: None }.into(),
 		}])
@@ -429,7 +435,7 @@ fn allow_explicit_unpaid_fails_with_alias_origin_if_no_aliasers() {
 		(Parent, 100u128).into(),
 		((Parent, PalletInstance(10), GeneralIndex(1000)), 100u128).into(),
 	];
-	let mut good_message = Xcm::<()>::builder_unsafe()
+	let mut good_message = Xcm::<OpaqueCall>::builder_unsafe()
 		.set_hints(vec![AssetClaimer {
 			location: AccountId32 { id: [100u8; 32], network: None }.into(),
 		}])
@@ -452,7 +458,7 @@ fn allow_explicit_unpaid_fails_with_alias_origin_if_no_aliasers() {
 		(Parent, 100u128).into(),
 		((Parent, PalletInstance(10), GeneralIndex(1000)), 100u128).into(),
 	];
-	let mut bad_message = Xcm::<()>::builder_unsafe()
+	let mut bad_message = Xcm::<OpaqueCall>::builder_unsafe()
 		.set_hints(vec![AssetClaimer {
 			location: AccountId32 { id: [100u8; 32], network: None }.into(),
 		}])
@@ -487,7 +493,7 @@ fn allow_explicit_unpaid_with_computed_origin() {
 		(Parent, 100u128).into(),
 		((Parent, PalletInstance(10), GeneralIndex(1000)), 100u128).into(),
 	];
-	let mut message = Xcm::<()>::builder_unsafe()
+	let mut message = Xcm::<OpaqueCall>::builder_unsafe()
 		.set_hints(vec![AssetClaimer {
 			location: AccountId32 { id: [100u8; 32], network: None }.into(),
 		}])
@@ -515,7 +521,7 @@ fn allow_explicit_unpaid_with_computed_origin() {
 		(Parent, 100u128).into(),
 		((Parent, PalletInstance(10), GeneralIndex(1000)), 100u128).into(),
 	];
-	let mut message = Xcm::<()>::builder_unsafe()
+	let mut message = Xcm::<OpaqueCall>::builder_unsafe()
 		.universal_origin(Polkadot)
 		.set_hints(vec![AssetClaimer {
 			location: AccountId32 { id: [100u8; 32], network: None }.into(),
@@ -543,7 +549,7 @@ fn allow_explicit_unpaid_with_computed_origin() {
 		(Parent, 100u128).into(),
 		((Parent, PalletInstance(10), GeneralIndex(1000)), 100u128).into(),
 	];
-	let mut message = Xcm::<()>::builder_unsafe()
+	let mut message = Xcm::<OpaqueCall>::builder_unsafe()
 		.universal_origin(Polkadot)
 		.set_hints(vec![AssetClaimer {
 			location: AccountId32 { id: [100u8; 32], network: None }.into(),
@@ -571,8 +577,10 @@ fn allow_explicit_unpaid_with_computed_origin() {
 fn allow_paid_should_work() {
 	AllowPaidFrom::set(vec![Parent.into()]);
 
-	let mut message =
-		Xcm::<()>(vec![TransferAsset { assets: (Parent, 100).into(), beneficiary: Here.into() }]);
+	let mut message = Xcm::<OpaqueCall>(vec![TransferAsset {
+		assets: (Parent, 100).into(),
+		beneficiary: Here.into(),
+	}]);
 
 	let r = AllowTopLevelPaidExecutionFrom::<IsInVec<AllowPaidFrom>>::should_execute(
 		&Parachain(1).into(),
@@ -583,7 +591,7 @@ fn allow_paid_should_work() {
 	assert_eq!(r, Err(ProcessMessageError::Unsupported));
 
 	let fees = (Parent, 1).into();
-	let mut underpaying_message = Xcm::<()>(vec![
+	let mut underpaying_message = Xcm::<OpaqueCall>(vec![
 		ReserveAssetDeposited((Parent, 100).into()),
 		BuyExecution { fees, weight_limit: Limited(Weight::from_parts(20, 20)) },
 		DepositAsset { assets: AllCounted(1).into(), beneficiary: Here.into() },
@@ -598,7 +606,7 @@ fn allow_paid_should_work() {
 	assert_eq!(r, Err(ProcessMessageError::Overweight(Weight::from_parts(30, 30))));
 
 	let fees = (Parent, 1).into();
-	let mut paying_message = Xcm::<()>(vec![
+	let mut paying_message = Xcm::<OpaqueCall>(vec![
 		ReserveAssetDeposited((Parent, 100).into()),
 		BuyExecution { fees, weight_limit: Limited(Weight::from_parts(30, 30)) },
 		DepositAsset { assets: AllCounted(1).into(), beneficiary: Here.into() },
@@ -621,7 +629,7 @@ fn allow_paid_should_work() {
 	assert_eq!(r, Ok(()));
 
 	let fees = (Parent, 1).into();
-	let mut paying_message_with_different_weight_parts = Xcm::<()>(vec![
+	let mut paying_message_with_different_weight_parts = Xcm::<OpaqueCall>(vec![
 		WithdrawAsset((Parent, 100).into()),
 		BuyExecution { fees, weight_limit: Limited(Weight::from_parts(20, 10)) },
 		DepositAsset { assets: AllCounted(1).into(), beneficiary: Here.into() },
@@ -649,7 +657,7 @@ fn allow_paid_should_deprivilege_origin() {
 	AllowPaidFrom::set(vec![Parent.into()]);
 	let fees = (Parent, 1).into();
 
-	let mut paying_message_clears_origin = Xcm::<()>(vec![
+	let mut paying_message_clears_origin = Xcm::<OpaqueCall>(vec![
 		ReserveAssetDeposited((Parent, 100).into()),
 		ClearOrigin,
 		BuyExecution { fees, weight_limit: Limited(Weight::from_parts(30, 30)) },
@@ -699,7 +707,7 @@ fn allow_paid_should_allow_hints() {
 	AllowPaidFrom::set(vec![Parent.into()]);
 	let fees = (Parent, 1).into();
 
-	let mut paying_message_with_hints = Xcm::<()>(vec![
+	let mut paying_message_with_hints = Xcm::<OpaqueCall>(vec![
 		ReserveAssetDeposited((Parent, 100).into()),
 		SetHints { hints: vec![AssetClaimer { location: Location::here() }].try_into().unwrap() },
 		BuyExecution { fees, weight_limit: Limited(Weight::from_parts(30, 30)) },
@@ -719,8 +727,10 @@ fn suspension_should_work() {
 	TestSuspender::set_suspended(true);
 	AllowUnpaidFrom::set(vec![Parent.into()]);
 
-	let mut message =
-		Xcm::<()>(vec![TransferAsset { assets: (Parent, 100).into(), beneficiary: Here.into() }]);
+	let mut message = Xcm::<OpaqueCall>(vec![TransferAsset {
+		assets: (Parent, 100).into(),
+		beneficiary: Here.into(),
+	}]);
 	let r = RespectSuspension::<AllowUnpaidExecutionFrom::<IsInVec<AllowUnpaidFrom>>, TestSuspender>::should_execute(
 		&Parent.into(),
 		message.inner_mut(),
@@ -730,8 +740,10 @@ fn suspension_should_work() {
 	assert_eq!(r, Err(ProcessMessageError::Yield));
 
 	TestSuspender::set_suspended(false);
-	let mut message =
-		Xcm::<()>(vec![TransferAsset { assets: (Parent, 100).into(), beneficiary: Here.into() }]);
+	let mut message = Xcm::<OpaqueCall>(vec![TransferAsset {
+		assets: (Parent, 100).into(),
+		beneficiary: Here.into(),
+	}]);
 	let r = RespectSuspension::<AllowUnpaidExecutionFrom::<IsInVec<AllowUnpaidFrom>>, TestSuspender>::should_execute(
 		&Parent.into(),
 		message.inner_mut(),
@@ -747,7 +759,7 @@ fn allow_subscriptions_from_should_work() {
 	AllowSubsFrom::set(vec![Location::parent()]);
 
 	// closure for (xcm, origin) testing with `AllowSubscriptionsFrom`
-	let assert_should_execute = |mut xcm: Vec<Instruction<()>>, origin, expected_result| {
+	let assert_should_execute = |mut xcm: Vec<Instruction<OpaqueCall>>, origin, expected_result| {
 		assert_eq!(
 			AllowSubscriptionsFrom::<IsInVec<AllowSubsFrom>>::should_execute(
 				&origin,
@@ -830,7 +842,7 @@ fn allow_subscriptions_from_should_work() {
 #[test]
 fn allow_hrmp_notifications_from_relay_chain_should_work() {
 	// closure for (xcm, origin) testing with `AllowHrmpNotificationsFromRelayChain`
-	let assert_should_execute = |mut xcm: Vec<Instruction<()>>, origin, expected_result| {
+	let assert_should_execute = |mut xcm: Vec<Instruction<OpaqueCall>>, origin, expected_result| {
 		assert_eq!(
 			AllowHrmpNotificationsFromRelayChain::should_execute(
 				&origin,
@@ -1011,7 +1023,7 @@ fn deny_then_try_works() {
 		}
 	}
 	// closure for (xcm, origin) testing with `DenyThenTry`
-	let assert_should_execute = |mut xcm: Vec<Instruction<()>>, origin, expected_result| {
+	let assert_should_execute = |mut xcm: Vec<Instruction<OpaqueCall>>, origin, expected_result| {
 		pub type Barrier = DenyThenTry<
 			(
 				DenyClearTransactStatusAsYield,
@@ -1072,7 +1084,7 @@ fn deny_then_try_works() {
 
 #[test]
 fn deny_reserve_transfer_to_relaychain_should_work() {
-	let assert_deny_execution = |mut xcm: Vec<Instruction<()>>, origin, expected_result| {
+	let assert_deny_execution = |mut xcm: Vec<Instruction<OpaqueCall>>, origin, expected_result| {
 		assert_eq!(
 			DenyReserveTransferToRelayChain::deny_execution(
 				&origin,
@@ -1190,7 +1202,7 @@ impl<Barrier: DenyExecution> ShouldExecute for Executable<Barrier> {
 #[test]
 fn deny_recursively_then_try_works() {
 	type Barrier = DenyThenTry<DenyRecursively<DenyReserveTransferToRelayChain>, AllowAll>;
-	let xcm = Xcm::<Instruction<()>>(vec![DepositReserveAsset {
+	let xcm = Xcm::<Instruction<OpaqueCall>>(vec![DepositReserveAsset {
 		assets: Wild(All),
 		dest: Location::parent(),
 		xcm: vec![].into(),
@@ -1205,7 +1217,7 @@ fn deny_recursively_then_try_works() {
 	assert!(result.is_err());
 
 	// Should deny with `SetAppendix`
-	let mut message = Xcm::<Instruction<()>>(vec![SetAppendix(xcm.clone())]);
+	let mut message = Xcm::<Instruction<OpaqueCall>>(vec![SetAppendix(xcm.clone())]);
 	let result =
 		Barrier::should_execute(&origin, message.clone().inner_mut(), max_weight, &mut properties);
 	assert!(result.is_err());
@@ -1217,12 +1229,12 @@ fn deny_recursively_then_try_works() {
 	assert!(result.is_ok());
 
 	// Should deny with `SetErrorHandler`
-	let mut message = Xcm::<Instruction<()>>(vec![SetErrorHandler(xcm.clone())]);
+	let mut message = Xcm::<Instruction<OpaqueCall>>(vec![SetErrorHandler(xcm.clone())]);
 	let result = Barrier::should_execute(&origin, message.inner_mut(), max_weight, &mut properties);
 	assert!(result.is_err());
 
 	// Should deny with `ExecuteWithOrigin`
-	let mut message = Xcm::<Instruction<()>>(vec![ExecuteWithOrigin {
+	let mut message = Xcm::<Instruction<OpaqueCall>>(vec![ExecuteWithOrigin {
 		xcm: xcm.clone(),
 		descendant_origin: None,
 	}]);
@@ -1230,7 +1242,7 @@ fn deny_recursively_then_try_works() {
 	assert!(result.is_err());
 
 	// Should deny with more levels
-	let mut message = Xcm::<Instruction<()>>(vec![ExecuteWithOrigin {
+	let mut message = Xcm::<Instruction<OpaqueCall>>(vec![ExecuteWithOrigin {
 		xcm: vec![SetErrorHandler(vec![SetAppendix(xcm.clone())].into())].into(),
 		descendant_origin: None,
 	}]);
@@ -1238,17 +1250,17 @@ fn deny_recursively_then_try_works() {
 	assert!(result.is_err());
 
 	// Should allow for valid XCM with `SetAppendix`
-	let xcm = Xcm::<Instruction<()>>(vec![DepositReserveAsset {
+	let xcm = Xcm::<Instruction<OpaqueCall>>(vec![DepositReserveAsset {
 		assets: Wild(All),
 		dest: Here.into_location(),
 		xcm: vec![].into(),
 	}]);
-	let mut message = Xcm::<Instruction<()>>(vec![SetAppendix(xcm.clone())]);
+	let mut message = Xcm::<Instruction<OpaqueCall>>(vec![SetAppendix(xcm.clone())]);
 	let result = Barrier::should_execute(&origin, message.inner_mut(), max_weight, &mut properties);
 	assert!(result.is_ok());
 
 	// Should ensure unrelated XCMs are not blocked
-	let mut unrelated_xcm = Xcm::<Instruction<()>>(vec![BuyExecution {
+	let mut unrelated_xcm = Xcm::<Instruction<OpaqueCall>>(vec![BuyExecution {
 		fees: (Parent, 100).into(),
 		weight_limit: Unlimited,
 	}]);
@@ -1280,7 +1292,7 @@ fn compare_deny_filters() {
 		let mut properties = props(Weight::zero());
 
 		// Validate Top-Level
-		let xcm = Xcm::<Instruction<()>>(
+		let xcm = Xcm::<Instruction<OpaqueCall>>(
 			vec![DepositReserveAsset {
 				assets: Wild(All),
 				dest: Location::parent(),
@@ -1293,7 +1305,8 @@ fn compare_deny_filters() {
 		assert_eq!(top_level_result, result);
 
 		// Validate Nested
-		let mut nested_xcm = Xcm::<Instruction<()>>(vec![SetErrorHandler(xcm.into())].into());
+		let mut nested_xcm =
+			Xcm::<Instruction<OpaqueCall>>(vec![SetErrorHandler(xcm.into())].into());
 		let result =
 			Barrier::should_execute(&origin, nested_xcm.inner_mut(), max_weight, &mut properties);
 		assert_eq!(nested_result, result);
@@ -1318,7 +1331,7 @@ fn compare_deny_filters() {
 fn assert_deny_instructions_recursively<Barrier: ShouldExecute>() {
 	// closure for (xcm, origin) testing with `Barrier` which denies `ClearOrigin`
 	// instruction
-	let test_barrier = |mut xcm: Vec<Instruction<()>>, origin| {
+	let test_barrier = |mut xcm: Vec<Instruction<OpaqueCall>>, origin| {
 		Barrier::should_execute(
 			&origin,
 			&mut xcm,

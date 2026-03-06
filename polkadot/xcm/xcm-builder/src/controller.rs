@@ -97,7 +97,7 @@ pub trait SendController<Origin> {
 	fn send(
 		origin: Origin,
 		dest: Box<VersionedLocation>,
-		message: Box<VersionedXcm<()>>,
+		message: Box<VersionedXcm<OpaqueCall>>,
 	) -> Result<XcmHash, DispatchError>;
 }
 
@@ -158,7 +158,7 @@ impl<Origin> SendController<Origin> for () {
 	fn send(
 		_origin: Origin,
 		_dest: Box<VersionedLocation>,
-		_message: Box<VersionedXcm<()>>,
+		_message: Box<VersionedXcm<OpaqueCall>>,
 	) -> Result<XcmHash, DispatchError> {
 		Ok(Default::default())
 	}

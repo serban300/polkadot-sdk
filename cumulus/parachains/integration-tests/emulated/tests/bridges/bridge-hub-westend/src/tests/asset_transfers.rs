@@ -72,7 +72,7 @@ fn send_assets_from_penpal_westend_through_westend_ah_to_rococo_ah(
 	destination: Location,
 	assets: (Assets, TransferType),
 	fees: (AssetId, TransferType),
-	custom_xcm_on_dest: Xcm<()>,
+	custom_xcm_on_dest: Xcm<OpaqueCall>,
 ) {
 	send_assets_over_bridge(|| {
 		let sov_penpal_on_ahw = AssetHubWestend::sovereign_account_id_of(
@@ -239,7 +239,7 @@ fn send_wnds_usdt_and_weth_from_asset_hub_westend_to_asset_hub_rococo() {
 	let fee: AssetId = usdt_at_asset_hub_westend.into();
 
 	// use the more involved transfer extrinsic
-	let custom_xcm_on_dest = Xcm::<()>(vec![DepositAsset {
+	let custom_xcm_on_dest = Xcm::<OpaqueCall>(vec![DepositAsset {
 		assets: Wild(AllCounted(assets.len() as u32)),
 		beneficiary: AccountId32Junction { network: None, id: receiver.clone().into() }.into(),
 	}]);
@@ -384,7 +384,7 @@ fn send_wnds_from_penpal_westend_through_asset_hub_westend_to_asset_hub_rococo()
 		let fees_transfer_type = TransferType::RemoteReserve(local_asset_hub.into());
 		let beneficiary: Location =
 			AccountId32Junction { network: None, id: receiver.clone().into() }.into();
-		let custom_xcm_on_dest = Xcm::<()>(vec![DepositAsset {
+		let custom_xcm_on_dest = Xcm::<OpaqueCall>(vec![DepositAsset {
 			assets: Wild(AllCounted(assets.len() as u32)),
 			beneficiary,
 		}]);
@@ -487,12 +487,12 @@ fn send_wnds_from_penpal_westend_through_asset_hub_westend_to_asset_hub_rococo_t
 		let remote_fees = (bridged_wnd_at_ah_rococo(), amount / 2).into();
 		let beneficiary: Location =
 			AccountId32Junction { network: None, id: receiver.clone().into() }.into();
-		let custom_xcm_on_penpal_dest = Xcm::<()>(vec![
+		let custom_xcm_on_penpal_dest = Xcm::<OpaqueCall>(vec![
 			BuyExecution { fees: remote_fees, weight_limit: Unlimited },
 			DepositAsset { assets: Wild(AllCounted(assets.len() as u32)), beneficiary },
 		]);
 		let pp_loc_from_ah = AssetHubRococo::sibling_location_of(PenpalA::para_id());
-		let custom_xcm_on_remote_ah = Xcm::<()>(vec![
+		let custom_xcm_on_remote_ah = Xcm::<OpaqueCall>(vec![
 			// BuyExecution { fees: remote_fees, weight_limit: Unlimited },
 			DepositReserveAsset {
 				assets: Wild(AllCounted(1)),
@@ -618,14 +618,14 @@ fn send_wnds_from_westend_relay_through_asset_hub_westend_to_asset_hub_rococo_to
 		let beneficiary: Location =
 			AccountId32Junction { network: None, id: receiver.clone().into() }.into();
 		// executes on Westend Relay
-		let kusama_xcm = Xcm::<()>(vec![
+		let kusama_xcm = Xcm::<OpaqueCall>(vec![
 			WithdrawAsset((Location::here(), amount).into()),
 			SetFeesMode { jit_withdraw: true },
 			InitiateTeleport {
 				assets: Wild(AllCounted(1)),
 				dest: local_asset_hub,
 				// executes on Westend Asset Hub
-				xcm: Xcm::<()>(vec![
+				xcm: Xcm::<OpaqueCall>(vec![
 					BuyExecution {
 						fees: (wnd_at_westend_parachains, amount / 2).into(),
 						weight_limit: Unlimited,
@@ -634,7 +634,7 @@ fn send_wnds_from_westend_relay_through_asset_hub_westend_to_asset_hub_rococo_to
 						assets: Wild(AllCounted(1)),
 						dest: asset_hub_rococo_location(),
 						// executes on Rococo Asset Hub
-						xcm: Xcm::<()>(vec![
+						xcm: Xcm::<OpaqueCall>(vec![
 							BuyExecution {
 								fees: (wnd_at_rococo_parachains.clone(), amount / 2).into(),
 								weight_limit: Unlimited,
@@ -643,7 +643,7 @@ fn send_wnds_from_westend_relay_through_asset_hub_westend_to_asset_hub_rococo_to
 								assets: Wild(AllCounted(1)),
 								dest: AssetHubRococo::sibling_location_of(PenpalA::para_id()),
 								// executes on Rococo Penpal
-								xcm: Xcm::<()>(vec![
+								xcm: Xcm::<OpaqueCall>(vec![
 									BuyExecution {
 										fees: (wnd_at_rococo_parachains.clone(), amount / 2).into(),
 										weight_limit: Unlimited,
@@ -790,7 +790,7 @@ fn send_back_rocs_from_penpal_westend_through_asset_hub_westend_to_asset_hub_roc
 		let remote_fees: Asset = (roc_at_westend_parachains.clone(), amount).into();
 		let remote_fees = remote_fees.reanchored(&final_destination, &context).unwrap();
 		// buy execution using ROCs, then deposit all remaining ROCs
-		let xcm_on_final_dest = Xcm::<()>(vec![
+		let xcm_on_final_dest = Xcm::<OpaqueCall>(vec![
 			BuyExecution { fees: remote_fees, weight_limit: WeightLimit::Unlimited },
 			DepositAsset { assets: Wild(AllCounted(1)), beneficiary },
 		]);
@@ -803,7 +803,7 @@ fn send_back_rocs_from_penpal_westend_through_asset_hub_westend_to_asset_hub_roc
 		let asset: Asset = (roc_at_westend_parachains.clone(), amount).into();
 		let asset = asset.reanchored(&intermediary_hop, &context).unwrap();
 		// on Asset Hub Westend, forward a request to withdraw ROCs from reserve on Asset Hub Rococo
-		let xcm_on_hop = Xcm::<()>(vec![InitiateReserveWithdraw {
+		let xcm_on_hop = Xcm::<OpaqueCall>(vec![InitiateReserveWithdraw {
 			assets: Definite(asset.into()), // ROCs
 			reserve: final_destination,     // AHR
 			xcm: xcm_on_final_dest,         // XCM to execute on AHR
@@ -932,14 +932,14 @@ fn send_back_rocs_from_penpal_westend_through_asset_hub_westend_to_asset_hub_roc
 		let beneficiary: Location =
 			AccountId32Junction { network: None, id: receiver.clone().into() }.into();
 		// executes on Penpal Westend
-		let xcm = Xcm::<()>(vec![
+		let xcm = Xcm::<OpaqueCall>(vec![
 			WithdrawAsset((roc_at_westend_parachains.clone(), amount).into()),
 			SetFeesMode { jit_withdraw: true },
 			InitiateReserveWithdraw {
 				assets: Wild(AllCounted(1)),
 				reserve: local_asset_hub,
 				// executes on Westend Asset Hub
-				xcm: Xcm::<()>(vec![
+				xcm: Xcm::<OpaqueCall>(vec![
 					BuyExecution {
 						fees: (roc_at_westend_parachains.clone(), amount / 2).into(),
 						weight_limit: Unlimited,
@@ -948,7 +948,7 @@ fn send_back_rocs_from_penpal_westend_through_asset_hub_westend_to_asset_hub_roc
 						assets: Wild(AllCounted(1)),
 						reserve: asset_hub_rococo_location(),
 						// executes on Rococo Asset Hub
-						xcm: Xcm::<()>(vec![
+						xcm: Xcm::<OpaqueCall>(vec![
 							BuyExecution {
 								fees: (roc_at_rococo_parachains.clone(), amount / 2).into(),
 								weight_limit: Unlimited,
@@ -957,7 +957,7 @@ fn send_back_rocs_from_penpal_westend_through_asset_hub_westend_to_asset_hub_roc
 								assets: Wild(AllCounted(1)),
 								dest: AssetHubRococo::sibling_location_of(PenpalA::para_id()),
 								// executes on Rococo Penpal
-								xcm: Xcm::<()>(vec![
+								xcm: Xcm::<OpaqueCall>(vec![
 									BuyExecution {
 										fees: (roc_at_rococo_parachains.clone(), amount / 2).into(),
 										weight_limit: Unlimited,
@@ -1124,14 +1124,14 @@ fn send_back_rocs_from_penpal_westend_through_asset_hub_westend_to_asset_hub_roc
 		let beneficiary: Location =
 			AccountId32Junction { network: None, id: receiver.clone().into() }.into();
 		// executes on Penpal Westend
-		let xcm = Xcm::<()>(vec![
+		let xcm = Xcm::<OpaqueCall>(vec![
 			WithdrawAsset((roc_at_westend_parachains.clone(), amount).into()),
 			SetFeesMode { jit_withdraw: true },
 			InitiateReserveWithdraw {
 				assets: Wild(AllCounted(1)),
 				reserve: local_asset_hub,
 				// executes on Westend Asset Hub
-				xcm: Xcm::<()>(vec![
+				xcm: Xcm::<OpaqueCall>(vec![
 					BuyExecution {
 						fees: (roc_at_westend_parachains.clone(), amount / 2).into(),
 						weight_limit: Unlimited,
@@ -1140,7 +1140,7 @@ fn send_back_rocs_from_penpal_westend_through_asset_hub_westend_to_asset_hub_roc
 						assets: Wild(AllCounted(1)),
 						reserve: asset_hub_rococo_location(),
 						// executes on Rococo Asset Hub
-						xcm: Xcm::<()>(vec![
+						xcm: Xcm::<OpaqueCall>(vec![
 							BuyExecution {
 								fees: (roc_at_rococo_parachains.clone(), amount / 2).into(),
 								weight_limit: Unlimited,
@@ -1149,7 +1149,7 @@ fn send_back_rocs_from_penpal_westend_through_asset_hub_westend_to_asset_hub_roc
 								assets: Wild(AllCounted(1)),
 								dest: Location::parent(),
 								// executes on Rococo Relay
-								xcm: Xcm::<()>(vec![
+								xcm: Xcm::<OpaqueCall>(vec![
 									BuyExecution {
 										fees: (Location::here(), amount / 2).into(),
 										weight_limit: Unlimited,
@@ -1329,7 +1329,7 @@ fn do_send_pens_and_wnds_from_penpal_westend_via_ahw_to_asset_hub_rococo(
 				(wnds.id.clone(), Fungible(wnds_amount - ahw_fee_amount - penpal_fees_amount))
 					.into();
 			// XCM to be executed locally
-			let xcm = Xcm::<()>(vec![
+			let xcm = Xcm::<OpaqueCall>(vec![
 				// Withdraw both WNDs and PENs from origin account
 				WithdrawAsset(assets.into()),
 				PayFees { asset: penpal_fees.into() },

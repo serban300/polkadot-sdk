@@ -109,15 +109,15 @@ impl TestToBridgeHubSender {
 }
 
 thread_local! {
-	pub static SENT_XCM: RefCell<Vec<(Location, Xcm<()>)>> = RefCell::new(Vec::new());
+	pub static SENT_XCM: RefCell<Vec<(Location, Xcm<OpaqueCall>)>> = RefCell::new(Vec::new());
 }
 
 impl SendXcm for TestToBridgeHubSender {
-	type Ticket = (Location, Xcm<()>);
+	type Ticket = (Location, Xcm<OpaqueCall>);
 
 	fn validate(
 		destination: &mut Option<Location>,
-		message: &mut Option<Xcm<()>>,
+		message: &mut Option<Xcm<OpaqueCall>>,
 	) -> SendResult<Self::Ticket> {
 		let pair = (destination.take().unwrap(), message.take().unwrap());
 		Ok((pair, (BridgeFeeAsset::get(), HRMP_FEE).into()))
@@ -135,7 +135,7 @@ impl InspectMessageQueues for TestToBridgeHubSender {
 		SENT_XCM.with(|q| q.borrow_mut().clear());
 	}
 
-	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
+	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<OpaqueCall>>)> {
 		SENT_XCM.with(|q| {
 			(*q.borrow())
 				.clone()

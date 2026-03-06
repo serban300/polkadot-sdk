@@ -30,7 +30,7 @@ fn transfer_and_transact_in_same_xcm(
 	weth: Asset,
 	destination: Location,
 	beneficiary: Location,
-	call: xcm::DoubleEncoded<()>,
+	call: xcm::DoubleEncoded<OpaqueCall>,
 ) {
 	let signed_origin = <BridgeHubWestend as Chain>::RuntimeOrigin::root();
 	let context: InteriorLocation = [
@@ -55,7 +55,7 @@ fn transfer_and_transact_in_same_xcm(
 		DepositAsset { assets: Wild(All), beneficiary },
 	]);
 	let destination = destination.reanchored(&asset_hub_location, &context).unwrap();
-	let xcm_to_ah = Xcm::<()>(vec![
+	let xcm_to_ah = Xcm::<OpaqueCall>(vec![
 		UnpaidExecution { check_origin: None, weight_limit: Unlimited },
 		DescendOrigin([PalletInstance(80)].into()), // snowbridge pallet
 		UniversalOrigin(GlobalConsensus(Ethereum { chain_id: SEPOLIA_ID })),

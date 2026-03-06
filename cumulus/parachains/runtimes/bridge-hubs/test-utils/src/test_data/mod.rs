@@ -37,9 +37,9 @@ use xcm_executor::traits::{validate_export, ExportXcm};
 
 pub(crate) type XcmAsPlainPayload = sp_std::vec::Vec<u8>;
 
-pub fn prepare_inbound_xcm(xcm_message: Xcm<()>, destination: InteriorLocation) -> Vec<u8> {
+pub fn prepare_inbound_xcm(xcm_message: Xcm<OpaqueCall>, destination: InteriorLocation) -> Vec<u8> {
 	let location = xcm::VersionedInteriorLocation::from(destination);
-	let xcm = xcm::VersionedXcm::<()>::from(xcm_message);
+	let xcm = xcm::VersionedXcm::<OpaqueCall>::from(xcm_message);
 
 	// (double encoding, because `.encode()` is called on original Xcm BLOB when it is pushed to the
 	// storage)
@@ -63,7 +63,7 @@ pub fn initialization_data<
 }
 
 /// Dummy xcm
-pub(crate) fn dummy_xcm() -> Xcm<()> {
+pub(crate) fn dummy_xcm() -> Xcm<OpaqueCall> {
 	vec![Trap(42)].into()
 }
 

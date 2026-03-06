@@ -35,9 +35,9 @@ fn usdt_transfer_call(
 
 	// Create the XCM to transfer USDT to PenpalB via Asset Hub using InitiateTransfer
 	let remote_xcm_on_penpal_b =
-		Xcm::<()>(vec![DepositAsset { assets: Wild(AllCounted(1)), beneficiary }]);
+		Xcm::<OpaqueCall>(vec![DepositAsset { assets: Wild(AllCounted(1)), beneficiary }]);
 
-	let xcm_on_asset_hub = Xcm::<()>(vec![InitiateTransfer {
+	let xcm_on_asset_hub = Xcm::<OpaqueCall>(vec![InitiateTransfer {
 		destination,
 		remote_fees: Some(AssetTransferFilter::ReserveDeposit(
 			Definite((usdt_location_on_ah, 1_000_000u128).into()), // 1 USDT for fees
@@ -132,7 +132,7 @@ fn transfer_assets_para_to_para_through_ah_call(
 	type RuntimeCall = <PenpalA as Chain>::RuntimeCall;
 
 	let asset_hub_location: Location = PenpalA::sibling_location_of(AssetHubWestend::para_id());
-	let custom_xcm_on_dest = Xcm::<()>(vec![DepositAsset {
+	let custom_xcm_on_dest = Xcm::<OpaqueCall>(vec![DepositAsset {
 		assets: Wild(AllCounted(test.args.assets.len() as u32)),
 		beneficiary: test.args.beneficiary,
 	}]);
@@ -232,7 +232,7 @@ fn multi_hop_works() {
 	// These are set in the AssetHub closure.
 	let mut intermediate_execution_fees = 0;
 	let mut intermediate_delivery_fees_amount = 0;
-	let mut intermediate_remote_message = VersionedXcm::from(Xcm::<()>(Vec::new()));
+	let mut intermediate_remote_message = VersionedXcm::from(Xcm::<OpaqueCall>(Vec::new()));
 	<AssetHubWestend as TestExt>::execute_with(|| {
 		type Runtime = <AssetHubWestend as Chain>::Runtime;
 		type RuntimeCall = <AssetHubWestend as Chain>::RuntimeCall;
@@ -245,7 +245,7 @@ fn multi_hop_works() {
 		)
 		.unwrap();
 
-		// We have to do this to turn `VersionedXcm<()>` into `VersionedXcm<RuntimeCall>`.
+		// We have to do this to turn `VersionedXcm<OpaqueCall>` into `VersionedXcm<RuntimeCall>`.
 		let xcm_program = VersionedXcm::from(Xcm::<RuntimeCall>::from(
 			remote_message.clone().try_into().unwrap(),
 		));

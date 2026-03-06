@@ -549,7 +549,7 @@ fn relay_to_para_reserve_transfer_assets(t: RelayToParaTest) -> DispatchResult {
 		bx!(remote_fee_id.into()),
 		bx!(TransferType::LocalReserve),
 		bx!(VersionedXcm::from(
-			Xcm::<()>::builder_unsafe()
+			Xcm::<OpaqueCall>::builder_unsafe()
 				.deposit_asset(AllCounted(1), t.args.beneficiary)
 				.build()
 		)),
@@ -577,7 +577,7 @@ fn para_to_relay_reserve_transfer_assets(t: ParaToRelayTest) -> DispatchResult {
 		bx!(remote_fee_id.into()),
 		bx!(TransferType::DestinationReserve),
 		bx!(VersionedXcm::from(
-			Xcm::<()>::builder_unsafe()
+			Xcm::<OpaqueCall>::builder_unsafe()
 				.deposit_asset(AllCounted(1), t.args.beneficiary)
 				.build()
 		)),
@@ -605,7 +605,7 @@ fn system_para_to_para_reserve_transfer_assets(t: SystemParaToParaTest) -> Dispa
 		bx!(remote_fee_id.into()),
 		bx!(TransferType::LocalReserve),
 		bx!(VersionedXcm::from(
-			Xcm::<()>::builder_unsafe()
+			Xcm::<OpaqueCall>::builder_unsafe()
 				.deposit_asset(AllCounted(2), t.args.beneficiary)
 				.build()
 		)),
@@ -633,7 +633,7 @@ fn para_to_system_para_reserve_transfer_assets(t: ParaToSystemParaTest) -> Dispa
 		bx!(remote_fee_id.into()),
 		bx!(TransferType::DestinationReserve),
 		bx!(VersionedXcm::from(
-			Xcm::<()>::builder_unsafe()
+			Xcm::<OpaqueCall>::builder_unsafe()
 				.deposit_asset(AllCounted(2), t.args.beneficiary)
 				.build()
 		)),
@@ -672,7 +672,7 @@ fn para_to_para_through_relay_limited_reserve_transfer_assets(
 		bx!(remote_fee_id.into()),
 		bx!(TransferType::RemoteReserve(relay_location)),
 		bx!(VersionedXcm::from(
-			Xcm::<()>::builder_unsafe()
+			Xcm::<OpaqueCall>::builder_unsafe()
 				.deposit_asset(AllCounted(1), t.args.beneficiary)
 				.build()
 		)),
@@ -1590,7 +1590,7 @@ fn reserve_withdraw_from_untrusted_reserve_fails() {
 			bx!(TransferType::DestinationReserve),
 			bx!(fee_id.into()),
 			bx!(TransferType::DestinationReserve),
-			bx!(VersionedXcm::from(Xcm::<()>::new())),
+			bx!(VersionedXcm::from(Xcm::<OpaqueCall>::new())),
 			Unlimited,
 		);
 		assert_err!(
@@ -1610,7 +1610,7 @@ fn reserve_withdraw_from_untrusted_reserve_fails() {
 			InitiateReserveWithdraw {
 				assets: Wild(All),
 				reserve: destination,
-				xcm: Xcm::<()>::new(),
+				xcm: Xcm::<OpaqueCall>::new(),
 			},
 		]);
 		let result = <AssetHubWestend as AssetHubWestendPallet>::PolkadotXcm::execute(

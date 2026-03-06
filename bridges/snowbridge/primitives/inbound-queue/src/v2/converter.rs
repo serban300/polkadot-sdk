@@ -33,7 +33,7 @@ pub struct PreparedMessage {
 	/// The assets bridged from Ethereum
 	pub assets: Vec<AssetTransfer>,
 	/// The XCM to execute on the destination
-	pub remote_xcm: Xcm<()>,
+	pub remote_xcm: Xcm<OpaqueCall>,
 	/// Fee in Ether to cover the xcm execution on AH.
 	pub execution_fee: Asset,
 }
@@ -136,7 +136,7 @@ where
 				Location::new(0, [AccountId32 { network: None, id: bridge_owner.clone().into() }])
 			});
 
-		let mut remote_xcm: Xcm<()> = match &message.payload {
+		let mut remote_xcm: Xcm<OpaqueCall> = match &message.payload {
 			Payload::Raw(raw) => Self::decode_raw_xcm(raw),
 			Payload::CreateAsset { token, network } => Self::make_create_asset_xcm(
 				token,
@@ -230,7 +230,7 @@ where
 		eth_value: u128,
 		bridge_owner: AccountId,
 		claimer: Location,
-	) -> Result<Xcm<()>, ConvertMessageError> {
+	) -> Result<Xcm<OpaqueCall>, ConvertMessageError> {
 		let dot_asset = Location::new(1, Here);
 		let dot_fee: xcm::prelude::Asset = (dot_asset, CreateAssetCall::get().deposit).into();
 
@@ -273,7 +273,7 @@ where
 		dot_fee_asset: xcm::prelude::Asset,
 		eth_asset: xcm::prelude::Asset,
 		claimer: Location,
-	) -> Xcm<()> {
+	) -> Xcm<OpaqueCall> {
 		let bridge_owner_bytes: [u8; 32] = bridge_owner.into();
 		let reserve_data = assets_common::local_and_foreign_assets::ForeignAssetReserveData {
 			reserve: Location::new(2, [GlobalConsensus(EthereumNetwork::get())]),
@@ -318,14 +318,14 @@ where
 		.into()
 	}
 
-	/// Parse and (non-strictly) decode `raw` XCM bytes into a `Xcm<()>`.
-	/// If decoding fails, return an empty `Xcm<()>`—thus allowing the message
+	/// Parse and (non-strictly) decode `raw` XCM bytes into a `Xcm<OpaqueCall>`.
+	/// If decoding fails, return an empty `Xcm<OpaqueCall>`—thus allowing the message
 	/// to proceed so assets can still be trapped on AH rather than the funds being locked on
 	/// Ethereum but not accessible on AH.
-	fn decode_raw_xcm(raw: &[u8]) -> Xcm<()> {
+	fn decode_raw_xcm(raw: &[u8]) -> Xcm<OpaqueCall> {
 		let mut data = raw;
 		if let Ok(versioned_xcm) =
-			VersionedXcm::<()>::decode_with_depth_limit(MAX_XCM_DECODE_DEPTH, &mut data)
+			VersionedXcm::<OpaqueCall>::decode_with_depth_limit(MAX_XCM_DECODE_DEPTH, &mut data)
 		{
 			if let Ok(decoded_xcm) = versioned_xcm.try_into() {
 				return decoded_xcm;
@@ -366,7 +366,7 @@ where
 	ConvertAssetId: MaybeConvert<TokenId, Location>,
 	AccountId: Into<[u8; 32]> + From<[u8; 32]> + Clone,
 {
-	fn convert(message: Message) -> Result<Xcm<()>, ConvertMessageError> {
+	fn convert(message: Message) -> Result<Xcm<OpaqueCall>, ConvertMessageError> {
 		let message = Self::prepare(message)?;
 
 		tracing::trace!(target: LOG_TARGET, ?message, "prepared message");
@@ -508,7 +508,7 @@ mod tests {
 				assets: Wild(AllCounted(1).into()),
 				beneficiary: beneficiary.clone(),
 			}];
-			let xcm: Xcm<()> = instructions.into();
+			let xcm: Xcm<OpaqueCall> = instructions.into();
 			let versioned_xcm = VersionedXcm::V5(xcm);
 			let claimer_location =
 				Location::new(0, AccountId32 { network: None, id: H256::random().into() });
@@ -646,7 +646,7 @@ mod tests {
 			DepositAsset { assets: Wild(AllCounted(1).into()), beneficiary },
 			SetTopic(message_id.into()),
 		];
-		let xcm: Xcm<()> = instructions.into();
+		let xcm: Xcm<OpaqueCall> = instructions.into();
 		let versioned_xcm = VersionedXcm::V5(xcm);
 		let claimer_account = AccountId32 { network: None, id: H256::random().into() };
 		let claimer: Option<Vec<u8>> = Some(claimer_account.clone().encode());
@@ -698,7 +698,7 @@ mod tests {
 			DepositAsset { assets: Wild(AllCounted(1).into()), beneficiary },
 			SetTopic(message_id.into()),
 		];
-		let xcm: Xcm<()> = instructions.into();
+		let xcm: Xcm<OpaqueCall> = instructions.into();
 		let versioned_xcm = VersionedXcm::V5(xcm);
 		let claimer_account = AccountId32 { network: None, id: H256::random().into() };
 		let claimer: Option<Vec<u8>> = Some(claimer_account.clone().encode());
@@ -735,7 +735,7 @@ mod tests {
 			}];
 			let instructions =
 				vec![DepositAsset { assets: Wild(AllCounted(1).into()), beneficiary }];
-			let xcm: Xcm<()> = instructions.into();
+			let xcm: Xcm<OpaqueCall> = instructions.into();
 			let versioned_xcm = VersionedXcm::V5(xcm);
 			// Invalid claimer location, cannot be decoded into a Location
 			let claimer: Option<Vec<u8>> = Some(vec![]);
@@ -842,7 +842,7 @@ mod tests {
 
 			// User's XCM with a SetTopic as the last instruction
 			let instructions = vec![RefundSurplus, SetTopic(user_topic)];
-			let xcm: Xcm<()> = instructions.into();
+			let xcm: Xcm<OpaqueCall> = instructions.into();
 			let versioned_xcm = VersionedXcm::V5(xcm);
 
 			let execution_fee = 1_000_000_000_000u128;
@@ -923,7 +923,7 @@ mod tests {
 
 			// Add a set topic, but not as the last instruction.
 			let instructions = vec![SetTopic(user_topic), RefundSurplus];
-			let xcm: Xcm<()> = instructions.into();
+			let xcm: Xcm<OpaqueCall> = instructions.into();
 			let versioned_xcm = VersionedXcm::V5(xcm);
 
 			let message = Message {

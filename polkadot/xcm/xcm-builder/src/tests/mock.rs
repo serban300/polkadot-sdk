@@ -138,9 +138,9 @@ impl GetDispatchInfo for TestCall {
 }
 
 thread_local! {
-	pub static SENT_XCM: RefCell<Vec<(Location, Xcm<()>, XcmHash)>> = RefCell::new(Vec::new());
+	pub static SENT_XCM: RefCell<Vec<(Location, Xcm<OpaqueCall>, XcmHash)>> = RefCell::new(Vec::new());
 	pub static EXPORTED_XCM: RefCell<
-		Vec<(NetworkId, u32, InteriorLocation, InteriorLocation, Xcm<()>, XcmHash)>
+		Vec<(NetworkId, u32, InteriorLocation, InteriorLocation, Xcm<OpaqueCall>, XcmHash)>
 	> = RefCell::new(Vec::new());
 	pub static EXPORTER_OVERRIDE: RefCell<Option<(
 		fn(
@@ -148,14 +148,14 @@ thread_local! {
 			u32,
 			&InteriorLocation,
 			&InteriorLocation,
-			&Xcm<()>,
+			&Xcm<OpaqueCall>,
 		) -> Result<Assets, SendError>,
 		fn(
 			NetworkId,
 			u32,
 			InteriorLocation,
 			InteriorLocation,
-			Xcm<()>,
+			Xcm<OpaqueCall>,
 		) -> Result<XcmHash, SendError>,
 	)>> = RefCell::new(None);
 	pub static SEND_PRICE: RefCell<Assets> = RefCell::new(Assets::new());
@@ -177,14 +177,14 @@ pub fn set_exporter_override(
 		u32,
 		&InteriorLocation,
 		&InteriorLocation,
-		&Xcm<()>,
+		&Xcm<OpaqueCall>,
 	) -> Result<Assets, SendError>,
 	deliver: fn(
 		NetworkId,
 		u32,
 		InteriorLocation,
 		InteriorLocation,
-		Xcm<()>,
+		Xcm<OpaqueCall>,
 	) -> Result<XcmHash, SendError>,
 ) {
 	EXPORTER_OVERRIDE.with(|x| x.replace(Some((price, deliver))));
@@ -195,17 +195,17 @@ pub fn clear_exporter_override() {
 }
 pub struct TestMessageSenderImpl;
 impl SendXcm for TestMessageSenderImpl {
-	type Ticket = (Location, Xcm<()>, XcmHash);
+	type Ticket = (Location, Xcm<OpaqueCall>, XcmHash);
 	fn validate(
 		dest: &mut Option<Location>,
-		msg: &mut Option<Xcm<()>>,
-	) -> SendResult<(Location, Xcm<()>, XcmHash)> {
+		msg: &mut Option<Xcm<OpaqueCall>>,
+	) -> SendResult<(Location, Xcm<OpaqueCall>, XcmHash)> {
 		let msg = msg.take().unwrap();
 		let hash = derive_topic_id(&msg);
 		let triplet = (dest.take().unwrap(), msg, hash);
 		Ok((triplet, SEND_PRICE.with(|l| l.borrow().clone())))
 	}
-	fn deliver(triplet: (Location, Xcm<()>, XcmHash)) -> Result<XcmHash, SendError> {
+	fn deliver(triplet: (Location, Xcm<OpaqueCall>, XcmHash)) -> Result<XcmHash, SendError> {
 		let hash = triplet.2;
 		SENT_XCM.with(|q| q.borrow_mut().push(triplet));
 		Ok(hash)
@@ -215,14 +215,15 @@ pub type TestMessageSender = EnsureDecodableXcm<TestMessageSenderImpl>;
 
 pub struct TestMessageExporter;
 impl ExportXcm for TestMessageExporter {
-	type Ticket = (NetworkId, u32, InteriorLocation, InteriorLocation, Xcm<()>, XcmHash);
+	type Ticket = (NetworkId, u32, InteriorLocation, InteriorLocation, Xcm<OpaqueCall>, XcmHash);
 	fn validate(
 		network: NetworkId,
 		channel: u32,
 		uni_src: &mut Option<InteriorLocation>,
 		dest: &mut Option<InteriorLocation>,
-		msg: &mut Option<Xcm<()>>,
-	) -> SendResult<(NetworkId, u32, InteriorLocation, InteriorLocation, Xcm<()>, XcmHash)> {
+		msg: &mut Option<Xcm<OpaqueCall>>,
+	) -> SendResult<(NetworkId, u32, InteriorLocation, InteriorLocation, Xcm<OpaqueCall>, XcmHash)>
+	{
 		let (s, d, m) = (uni_src.take().unwrap(), dest.take().unwrap(), msg.take().unwrap());
 		let r: Result<Assets, SendError> = EXPORTER_OVERRIDE.with(|e| {
 			if let Some((ref f, _)) = &*e.borrow() {
@@ -243,7 +244,7 @@ impl ExportXcm for TestMessageExporter {
 		}
 	}
 	fn deliver(
-		tuple: (NetworkId, u32, InteriorLocation, InteriorLocation, Xcm<()>, XcmHash),
+		tuple: (NetworkId, u32, InteriorLocation, InteriorLocation, Xcm<OpaqueCall>, XcmHash),
 	) -> Result<XcmHash, SendError> {
 		EXPORTER_OVERRIDE.with(|e| {
 			if let Some((_, ref f)) = &*e.borrow() {
@@ -563,7 +564,7 @@ impl<T: Config, BlockNumber: sp_runtime::traits::Zero + Encode> QueryHandler
 	}
 
 	fn report_outcome(
-		message: &mut Xcm<()>,
+		message: &mut Xcm<OpaqueCall>,
 		responder: impl Into<Location>,
 		timeout: Self::BlockNumber,
 	) -> Result<QueryId, Self::Error> {

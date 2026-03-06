@@ -413,7 +413,7 @@ pub mod pallet {
 		fn send(
 			origin: OriginFor<T>,
 			dest: Box<VersionedLocation>,
-			message: Box<VersionedXcm<()>>,
+			message: Box<VersionedXcm<OpaqueCall>>,
 		) -> Result<XcmHash, DispatchError> {
 			let origin_location = T::SendXcmOrigin::ensure_origin(origin)?;
 			let interior: Junctions = origin_location.clone().try_into().map_err(|_| {
@@ -430,7 +430,7 @@ pub mod pallet {
 				);
 				Error::<T>::BadVersion
 			})?;
-			let message: Xcm<()> = (*message).try_into().map_err(|()| {
+			let message: Xcm<OpaqueCall> = (*message).try_into().map_err(|()| {
 				tracing::debug!(
 					target: "xcm::pallet_xcm::send",
 					"Failed to convert VersionedXcm message to Xcm",
@@ -487,7 +487,7 @@ pub mod pallet {
 		fn emit_sent_event(
 			origin: Location,
 			destination: Location,
-			message: Option<Xcm<()>>,
+			message: Option<Xcm<OpaqueCall>>,
 			message_id: XcmHash,
 		) {
 			Self::deposit_event(Event::Sent {
@@ -518,7 +518,12 @@ pub mod pallet {
 		/// Execution of an XCM message was attempted.
 		Attempted { outcome: xcm::latest::Outcome },
 		/// An XCM message was sent.
-		Sent { origin: Location, destination: Location, message: Xcm<()>, message_id: XcmHash },
+		Sent {
+			origin: Location,
+			destination: Location,
+			message: Xcm<OpaqueCall>,
+			message_id: XcmHash,
+		},
 		/// An XCM message failed to send.
 		SendFailed {
 			origin: Location,
@@ -942,7 +947,7 @@ pub mod pallet {
 	/// Only relevant if this pallet is being used as the [`xcm_executor::traits::RecordXcm`]
 	/// implementation in the XCM executor configuration.
 	#[pallet::storage]
-	pub(crate) type RecordedXcm<T: Config> = StorageValue<_, Xcm<()>>;
+	pub(crate) type RecordedXcm<T: Config> = StorageValue<_, Xcm<OpaqueCall>>;
 
 	/// Map of authorized aliasers of local origins. Each local location can authorize a list of
 	/// other locations to alias into it. Each aliaser is only valid until its inner `expiry`
@@ -1113,7 +1118,7 @@ pub mod pallet {
 		pub fn send(
 			origin: OriginFor<T>,
 			dest: Box<VersionedLocation>,
-			message: Box<VersionedXcm<()>>,
+			message: Box<VersionedXcm<OpaqueCall>>,
 		) -> DispatchResult {
 			<Self as SendController<_>>::send(origin, dest, message)?;
 			Ok(())
@@ -1629,7 +1634,7 @@ pub mod pallet {
 			assets_transfer_type: Box<TransferType>,
 			remote_fees_id: Box<VersionedAssetId>,
 			fees_transfer_type: Box<TransferType>,
-			custom_xcm_on_dest: Box<VersionedXcm<()>>,
+			custom_xcm_on_dest: Box<VersionedXcm<OpaqueCall>>,
 			weight_limit: WeightLimit,
 		) -> DispatchResult {
 			let origin_location = T::ExecuteXcmOrigin::ensure_origin(origin)?;
@@ -1654,7 +1659,7 @@ pub mod pallet {
 				);
 				Error::<T>::BadVersion
 			})?;
-			let remote_xcm: Xcm<()> = (*custom_xcm_on_dest).try_into().map_err(|()| {
+			let remote_xcm: Xcm<OpaqueCall> = (*custom_xcm_on_dest).try_into().map_err(|()| {
 				tracing::debug!(
 					target: "xcm::pallet_xcm::transfer_assets_using_type_and_then",
 					"Failed to convert custom_xcm_on_dest VersionedXcm",
@@ -1880,7 +1885,7 @@ enum FeesHandling<T: Config> {
 	/// `fees` asset can be batch-transferred with rest of assets using same XCM instructions.
 	Batched { fees: Asset },
 	/// fees cannot be batched, they are handled separately using XCM programs here.
-	Separate { local_xcm: Xcm<<T as Config>::RuntimeCall>, remote_xcm: Xcm<()> },
+	Separate { local_xcm: Xcm<<T as Config>::RuntimeCall>, remote_xcm: Xcm<OpaqueCall> },
 }
 
 impl<T: Config> core::fmt::Debug for FeesHandling<T> {
@@ -1913,7 +1918,7 @@ impl<T: Config> QueryHandler for Pallet<T> {
 	/// To check the status of the query, use `fn query()` passing the resultant `QueryId`
 	/// value.
 	fn report_outcome(
-		message: &mut Xcm<()>,
+		message: &mut Xcm<OpaqueCall>,
 		responder: impl Into<Location>,
 		timeout: Self::BlockNumber,
 	) -> Result<QueryId, Self::Error> {
@@ -2168,7 +2173,7 @@ impl<T: Config> Pallet<T> {
 	fn do_transfer_assets(
 		origin: Location,
 		dest: Location,
-		beneficiary: Either<Location, Xcm<()>>,
+		beneficiary: Either<Location, Xcm<OpaqueCall>>,
 		mut assets: Vec<Asset>,
 		assets_transfer_type: TransferType,
 		fee_asset_index: usize,
@@ -2235,12 +2240,12 @@ impl<T: Config> Pallet<T> {
 	fn build_xcm_transfer_type(
 		origin: Location,
 		dest: Location,
-		beneficiary: Either<Location, Xcm<()>>,
+		beneficiary: Either<Location, Xcm<OpaqueCall>>,
 		assets: Vec<Asset>,
 		transfer_type: TransferType,
 		fees: FeesHandling<T>,
 		weight_limit: WeightLimit,
-	) -> Result<(Xcm<<T as Config>::RuntimeCall>, Option<Xcm<()>>), Error<T>> {
+	) -> Result<(Xcm<<T as Config>::RuntimeCall>, Option<Xcm<OpaqueCall>>), Error<T>> {
 		tracing::debug!(
 			target: "xcm::pallet_xcm::build_xcm_transfer_type",
 			?origin, ?dest, ?beneficiary, ?assets, ?transfer_type, ?fees, ?weight_limit,
@@ -2302,7 +2307,7 @@ impl<T: Config> Pallet<T> {
 		origin: Location,
 		dest: Location,
 		mut local_xcm: Xcm<<T as Config>::RuntimeCall>,
-		remote_xcm: Option<Xcm<()>>,
+		remote_xcm: Option<Xcm<OpaqueCall>>,
 	) -> DispatchResult {
 		tracing::debug!(
 			target: "xcm::pallet_xcm::execute_xcm_transfer",
@@ -2366,7 +2371,7 @@ impl<T: Config> Pallet<T> {
 		fees: FeesHandling<T>,
 		weight_limit: WeightLimit,
 		local: &mut Xcm<<T as Config>::RuntimeCall>,
-		remote: &mut Xcm<()>,
+		remote: &mut Xcm<OpaqueCall>,
 	) -> Result<(), Error<T>> {
 		match fees {
 			FeesHandling::Batched { fees } => {
@@ -2399,7 +2404,7 @@ impl<T: Config> Pallet<T> {
 		dest: Location,
 		fees: Asset,
 		weight_limit: WeightLimit,
-	) -> Result<(Xcm<<T as Config>::RuntimeCall>, Xcm<()>), Error<T>> {
+	) -> Result<(Xcm<<T as Config>::RuntimeCall>, Xcm<OpaqueCall>), Error<T>> {
 		let value = (origin, vec![fees.clone()]);
 		ensure!(T::XcmReserveTransferFilter::contains(&value), Error::<T>::Filtered);
 
@@ -2428,11 +2433,11 @@ impl<T: Config> Pallet<T> {
 	fn local_reserve_transfer_programs(
 		origin: Location,
 		dest: Location,
-		beneficiary: Either<Location, Xcm<()>>,
+		beneficiary: Either<Location, Xcm<OpaqueCall>>,
 		assets: Vec<Asset>,
 		fees: FeesHandling<T>,
 		weight_limit: WeightLimit,
-	) -> Result<(Xcm<<T as Config>::RuntimeCall>, Xcm<()>), Error<T>> {
+	) -> Result<(Xcm<<T as Config>::RuntimeCall>, Xcm<OpaqueCall>), Error<T>> {
 		let value = (origin, assets);
 		ensure!(T::XcmReserveTransferFilter::contains(&value), Error::<T>::Filtered);
 		let (_, assets) = value;
@@ -2483,7 +2488,7 @@ impl<T: Config> Pallet<T> {
 		dest: Location,
 		fees: Asset,
 		weight_limit: WeightLimit,
-	) -> Result<(Xcm<<T as Config>::RuntimeCall>, Xcm<()>), Error<T>> {
+	) -> Result<(Xcm<<T as Config>::RuntimeCall>, Xcm<OpaqueCall>), Error<T>> {
 		let value = (origin, vec![fees.clone()]);
 		ensure!(T::XcmReserveTransferFilter::contains(&value), Error::<T>::Filtered);
 		ensure!(
@@ -2519,11 +2524,11 @@ impl<T: Config> Pallet<T> {
 	fn destination_reserve_transfer_programs(
 		origin: Location,
 		dest: Location,
-		beneficiary: Either<Location, Xcm<()>>,
+		beneficiary: Either<Location, Xcm<OpaqueCall>>,
 		assets: Vec<Asset>,
 		fees: FeesHandling<T>,
 		weight_limit: WeightLimit,
-	) -> Result<(Xcm<<T as Config>::RuntimeCall>, Xcm<()>), Error<T>> {
+	) -> Result<(Xcm<<T as Config>::RuntimeCall>, Xcm<OpaqueCall>), Error<T>> {
 		let value = (origin, assets);
 		ensure!(T::XcmReserveTransferFilter::contains(&value), Error::<T>::Filtered);
 		let (_, assets) = value;
@@ -2581,7 +2586,7 @@ impl<T: Config> Pallet<T> {
 	fn remote_reserve_transfer_program(
 		origin: Location,
 		reserve: Location,
-		beneficiary: Either<Location, Xcm<()>>,
+		beneficiary: Either<Location, Xcm<OpaqueCall>>,
 		dest: Location,
 		assets: Vec<Asset>,
 		fees: Asset,
@@ -2648,7 +2653,7 @@ impl<T: Config> Pallet<T> {
 		dest: Location,
 		fees: Asset,
 		weight_limit: WeightLimit,
-	) -> Result<(Xcm<<T as Config>::RuntimeCall>, Xcm<()>), Error<T>> {
+	) -> Result<(Xcm<<T as Config>::RuntimeCall>, Xcm<OpaqueCall>), Error<T>> {
 		let value = (origin, vec![fees.clone()]);
 		ensure!(T::XcmTeleportFilter::contains(&value), Error::<T>::Filtered);
 		ensure!(
@@ -2708,11 +2713,11 @@ impl<T: Config> Pallet<T> {
 	fn teleport_assets_program(
 		origin: Location,
 		dest: Location,
-		beneficiary: Either<Location, Xcm<()>>,
+		beneficiary: Either<Location, Xcm<OpaqueCall>>,
 		assets: Vec<Asset>,
 		fees: FeesHandling<T>,
 		weight_limit: WeightLimit,
-	) -> Result<(Xcm<<T as Config>::RuntimeCall>, Xcm<()>), Error<T>> {
+	) -> Result<(Xcm<<T as Config>::RuntimeCall>, Xcm<OpaqueCall>), Error<T>> {
 		let value = (origin, assets);
 		ensure!(T::XcmTeleportFilter::contains(&value), Error::<T>::Filtered);
 		let (_, assets) = value;
@@ -3012,7 +3017,7 @@ impl<T: Config> Pallet<T> {
 	pub fn send_xcm(
 		interior: impl Into<Junctions>,
 		dest: impl Into<Location>,
-		mut message: Xcm<()>,
+		mut message: Xcm<OpaqueCall>,
 	) -> Result<XcmHash, SendError> {
 		let interior = interior.into();
 		let local_origin = interior.clone().into();
@@ -3066,7 +3071,7 @@ impl<T: Config> Pallet<T> {
 		let result = call.dispatch(origin.into());
 		crate::Pallet::<Runtime>::set_record_xcm(false);
 		let local_xcm = crate::Pallet::<Runtime>::recorded_xcm()
-			.map(|xcm| VersionedXcm::<()>::from(xcm).into_version(result_xcms_version))
+			.map(|xcm| VersionedXcm::<OpaqueCall>::from(xcm).into_version(result_xcms_version))
 			.transpose()
 			.map_err(|()| {
 				tracing::debug!(
@@ -3092,7 +3097,7 @@ impl<T: Config> Pallet<T> {
 				.map(|record| record.event.clone())
 				.collect();
 		Ok(CallDryRunEffects {
-			local_xcm: local_xcm.map(VersionedXcm::<()>::from),
+			local_xcm: local_xcm.map(VersionedXcm::<OpaqueCall>::from),
 			forwarded_xcms,
 			emitted_events: events,
 			execution_result: result,
@@ -3154,8 +3159,8 @@ impl<T: Config> Pallet<T> {
 
 	fn convert_xcms(
 		xcm_version: XcmVersion,
-		xcms: Vec<VersionedXcm<()>>,
-	) -> Result<Vec<VersionedXcm<()>>, ()> {
+		xcms: Vec<VersionedXcm<OpaqueCall>>,
+	) -> Result<Vec<VersionedXcm<OpaqueCall>>, ()> {
 		xcms.into_iter()
 			.map(|xcm| xcm.into_version(xcm_version))
 			.collect::<Result<Vec<_>, ()>>()
@@ -3163,8 +3168,8 @@ impl<T: Config> Pallet<T> {
 
 	fn convert_forwarded_xcms(
 		xcm_version: XcmVersion,
-		forwarded_xcms: Vec<(VersionedLocation, Vec<VersionedXcm<()>>)>,
-	) -> Result<Vec<(VersionedLocation, Vec<VersionedXcm<()>>)>, XcmDryRunApiError> {
+		forwarded_xcms: Vec<(VersionedLocation, Vec<VersionedXcm<OpaqueCall>>)>,
+	) -> Result<Vec<(VersionedLocation, Vec<VersionedXcm<OpaqueCall>>)>, XcmDryRunApiError> {
 		forwarded_xcms
 			.into_iter()
 			.map(|(dest, forwarded_xcms)| {
@@ -3198,8 +3203,10 @@ impl<T: Config> Pallet<T> {
 			.collect())
 	}
 
-	pub fn query_xcm_weight(message: VersionedXcm<()>) -> Result<Weight, XcmPaymentApiError> {
-		let message = Xcm::<()>::try_from(message.clone())
+	pub fn query_xcm_weight(
+		message: VersionedXcm<OpaqueCall>,
+	) -> Result<Weight, XcmPaymentApiError> {
+		let message = Xcm::<OpaqueCall>::try_from(message.clone())
 			.map_err(|e| {
 				tracing::debug!(target: "xcm::pallet_xcm::query_xcm_weight", ?e, ?message, "Failed to convert versioned message");
 				XcmPaymentApiError::VersionedConversionFailed
@@ -3261,7 +3268,7 @@ impl<T: Config> Pallet<T> {
 	/// NOTE: Only use this if delivery fees consist of only 1 asset, else this function will error.
 	pub fn query_delivery_fees<AssetExchanger: xcm_executor::traits::AssetExchange>(
 		destination: VersionedLocation,
-		message: VersionedXcm<()>,
+		message: VersionedXcm<OpaqueCall>,
 		versioned_asset_id: VersionedAssetId,
 	) -> Result<VersionedAssets, XcmPaymentApiError> {
 		let result_version = destination.identify_version().max(message.identify_version());
@@ -3274,7 +3281,7 @@ impl<T: Config> Pallet<T> {
 				XcmPaymentApiError::VersionedConversionFailed
 			})?;
 
-		let message: Xcm<()> =
+		let message: Xcm<OpaqueCall> =
 			message.clone().try_into().map_err(|e| {
 				tracing::debug!(target: "xcm::pallet_xcm::query_delivery_fees", ?e, ?message, "Failed to convert versioned message");
 				XcmPaymentApiError::VersionedConversionFailed
@@ -3477,7 +3484,7 @@ impl<T: Config> Pallet<T> {
 	/// then reporting the outcome will fail. Furthermore if the estimate is too high, then it
 	/// may be put in the overweight queue and need to be manually executed.
 	pub fn report_outcome_notify(
-		message: &mut Xcm<()>,
+		message: &mut Xcm<OpaqueCall>,
 		responder: impl Into<Location>,
 		notify: impl Into<<T as Config>::RuntimeCall>,
 		timeout: BlockNumberFor<T>,
@@ -4189,11 +4196,11 @@ impl<T: Config> RecordXcm for Pallet<T> {
 		ShouldRecordXcm::<T>::put(enabled);
 	}
 
-	fn recorded_xcm() -> Option<Xcm<()>> {
+	fn recorded_xcm() -> Option<Xcm<OpaqueCall>> {
 		RecordedXcm::<T>::get()
 	}
 
-	fn record(xcm: Xcm<()>) {
+	fn record(xcm: Xcm<OpaqueCall>) {
 		RecordedXcm::<T>::put(xcm);
 	}
 }

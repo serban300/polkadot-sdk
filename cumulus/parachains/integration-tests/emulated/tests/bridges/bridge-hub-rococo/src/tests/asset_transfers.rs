@@ -60,7 +60,7 @@ fn send_assets_from_penpal_rococo_through_rococo_ah_to_westend_ah(
 	destination: Location,
 	assets: (Assets, TransferType),
 	fees: (AssetId, TransferType),
-	custom_xcm_on_dest: Xcm<()>,
+	custom_xcm_on_dest: Xcm<OpaqueCall>,
 ) {
 	send_assets_over_bridge(|| {
 		let sov_penpal_on_ahr = AssetHubRococo::sovereign_account_id_of(
@@ -329,7 +329,7 @@ fn send_back_wnds_usdt_and_weth_from_asset_hub_rococo_to_asset_hub_westend() {
 	let fee = usdt_id;
 
 	// use the more involved transfer extrinsic
-	let custom_xcm_on_dest = Xcm::<()>(vec![DepositAsset {
+	let custom_xcm_on_dest = Xcm::<OpaqueCall>(vec![DepositAsset {
 		assets: Wild(AllCounted(assets.len() as u32)),
 		beneficiary: AccountId32Junction { network: None, id: receiver.clone().into() }.into(),
 	}]);
@@ -397,7 +397,7 @@ fn send_rocs_from_penpal_rococo_through_asset_hub_rococo_to_asset_hub_westend() 
 		let fees_transfer_type = TransferType::RemoteReserve(local_asset_hub.into());
 		let beneficiary: Location =
 			AccountId32Junction { network: None, id: receiver.clone().into() }.into();
-		let custom_xcm_on_dest = Xcm::<()>(vec![DepositAsset {
+		let custom_xcm_on_dest = Xcm::<OpaqueCall>(vec![DepositAsset {
 			assets: Wild(AllCounted(assets.len() as u32)),
 			beneficiary,
 		}]);
@@ -508,7 +508,7 @@ fn send_back_wnds_from_penpal_rococo_through_asset_hub_rococo_to_asset_hub_weste
 		let remote_fees: Asset = (wnd_at_rococo_parachains.clone(), amount).into();
 		let remote_fees = remote_fees.reanchored(&final_destination, &context).unwrap();
 		// buy execution using WNDs, then deposit all remaining WNDs
-		let xcm_on_final_dest = Xcm::<()>(vec![
+		let xcm_on_final_dest = Xcm::<OpaqueCall>(vec![
 			BuyExecution { fees: remote_fees, weight_limit: WeightLimit::Unlimited },
 			DepositAsset { assets: Wild(AllCounted(1)), beneficiary },
 		]);
@@ -521,7 +521,7 @@ fn send_back_wnds_from_penpal_rococo_through_asset_hub_rococo_to_asset_hub_weste
 		let asset: Asset = (wnd_at_rococo_parachains.clone(), amount).into();
 		let asset = asset.reanchored(&intermediary_hop, &context).unwrap();
 		// on Asset Hub Rococo, forward a request to withdraw WNDs from reserve on Asset Hub Westend
-		let xcm_on_hop = Xcm::<()>(vec![InitiateReserveWithdraw {
+		let xcm_on_hop = Xcm::<OpaqueCall>(vec![InitiateReserveWithdraw {
 			assets: Definite(asset.into()), // WNDs
 			reserve: final_destination,     // AHW
 			xcm: xcm_on_final_dest,         // XCM to execute on AHW

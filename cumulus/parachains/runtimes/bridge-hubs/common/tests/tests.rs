@@ -20,9 +20,12 @@ use frame_support::{
 	parameter_types,
 	traits::{Equals, EverythingBut, ProcessMessageError::Unsupported},
 };
-use xcm::prelude::{
-	AliasOrigin, ByGenesis, ExportMessage, Here, Instruction, Location, NetworkId, Parachain,
-	Weight,
+use xcm::{
+	prelude::{
+		AliasOrigin, ByGenesis, ExportMessage, Here, Instruction, Location, NetworkId, Parachain,
+		Weight,
+	},
+	OpaqueCall,
 };
 use xcm_executor::traits::{DenyExecution, Properties};
 
@@ -40,7 +43,7 @@ fn test_deny_export_message_from() {
 	// 2: network == Remote1
 	pub type Denied = DenyExportMessageFrom<EverythingBut<Equals<Source1>>, Equals<Remote1>>;
 
-	let assert_deny_execution = |mut xcm: Vec<Instruction<()>>, origin, expected_result| {
+	let assert_deny_execution = |mut xcm: Vec<Instruction<OpaqueCall>>, origin, expected_result| {
 		assert_eq!(
 			Denied::deny_execution(
 				&origin,

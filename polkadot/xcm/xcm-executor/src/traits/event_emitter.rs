@@ -17,6 +17,7 @@
 use xcm::{
 	latest::{Location, SendError, Xcm, XcmHash},
 	prelude::XcmError,
+	OpaqueCall,
 };
 
 /// Defines the event emitter for the XCM executor.
@@ -34,7 +35,7 @@ pub trait EventEmitter {
 	fn emit_sent_event(
 		origin: Location,
 		destination: Location,
-		message: Option<Xcm<()>>,
+		message: Option<Xcm<OpaqueCall>>,
 		message_id: XcmHash,
 	);
 
@@ -67,7 +68,7 @@ impl EventEmitter for () {
 	fn emit_sent_event(
 		_origin: Location,
 		_destination: Location,
-		_message: Option<Xcm<()>>,
+		_message: Option<Xcm<OpaqueCall>>,
 		_message_id: XcmHash,
 	) {
 	}

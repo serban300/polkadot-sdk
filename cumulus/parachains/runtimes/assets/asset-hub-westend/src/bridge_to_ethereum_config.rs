@@ -111,15 +111,15 @@ pub mod benchmark_helpers {
 
 	pub struct DoNothingRouter;
 	impl SendXcm for DoNothingRouter {
-		type Ticket = Xcm<()>;
+		type Ticket = Xcm<OpaqueCall>;
 
 		fn validate(
 			_dest: &mut Option<Location>,
-			xcm: &mut Option<Xcm<()>>,
+			xcm: &mut Option<Xcm<OpaqueCall>>,
 		) -> SendResult<Self::Ticket> {
 			Ok((xcm.clone().unwrap(), Assets::new()))
 		}
-		fn deliver(xcm: Xcm<()>) -> Result<XcmHash, SendError> {
+		fn deliver(xcm: Xcm<OpaqueCall>) -> Result<XcmHash, SendError> {
 			let hash = xcm.using_encoded(sp_io::hashing::blake2_256);
 			Ok(hash)
 		}

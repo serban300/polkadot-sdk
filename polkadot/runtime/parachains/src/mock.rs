@@ -56,7 +56,7 @@ use std::{
 use xcm::{
 	prelude::XcmVersion,
 	v5::{Assets, InteriorLocation, Location, SendError, SendResult, SendXcm, Xcm, XcmHash},
-	IntoVersion, VersionedXcm, WrapVersion,
+	IntoVersion, OpaqueCall, VersionedXcm, WrapVersion,
 };
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -448,7 +448,10 @@ impl coretime::Config for Test {
 pub struct DummyXcmSender;
 impl SendXcm for DummyXcmSender {
 	type Ticket = ();
-	fn validate(_: &mut Option<Location>, _: &mut Option<Xcm<()>>) -> SendResult<Self::Ticket> {
+	fn validate(
+		_: &mut Option<Location>,
+		_: &mut Option<Xcm<OpaqueCall>>,
+	) -> SendResult<Self::Ticket> {
 		Ok(((), Assets::new()))
 	}
 

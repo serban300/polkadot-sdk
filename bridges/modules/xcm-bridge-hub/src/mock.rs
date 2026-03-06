@@ -282,11 +282,11 @@ thread_local! {
 /// `ExportXcm` implementation of `pallet_xcm_bridge_hub` as `MessageExporter`.
 pub struct ExecuteXcmOverSendXcm;
 impl SendXcm for ExecuteXcmOverSendXcm {
-	type Ticket = Xcm<()>;
+	type Ticket = Xcm<OpaqueCall>;
 
 	fn validate(
 		_: &mut Option<Location>,
-		message: &mut Option<Xcm<()>>,
+		message: &mut Option<Xcm<OpaqueCall>>,
 	) -> SendResult<Self::Ticket> {
 		Ok((message.take().unwrap(), Assets::new()))
 	}
@@ -313,7 +313,7 @@ impl InspectMessageQueues for ExecuteXcmOverSendXcm {
 		todo!()
 	}
 
-	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
+	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<OpaqueCall>>)> {
 		todo!()
 	}
 }
@@ -470,7 +470,10 @@ impl TestLocalXcmChannelManager {
 		frame_support::storage::unhashed::get_or_default(&Self::resumed_key(bridge))
 	}
 
-	fn build_congestion_message(bridge: &BridgeId, is_congested: bool) -> Vec<Instruction<()>> {
+	fn build_congestion_message(
+		bridge: &BridgeId,
+		is_congested: bool,
+	) -> Vec<Instruction<OpaqueCall>> {
 		use bp_xcm_bridge_hub_router::XcmBridgeHubRouterCall;
 		#[allow(clippy::large_enum_variant)]
 		#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone, scale_info::TypeInfo)]

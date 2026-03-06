@@ -58,7 +58,7 @@ pub struct TestDeliveryPrice<A, F>(core::marker::PhantomData<(A, F)>);
 impl<A: Get<AssetId>, F: FeeTracker> PriceForMessageDelivery for TestDeliveryPrice<A, F> {
 	type Id = F::Id;
 
-	fn price_for_delivery(_: Self::Id, msg: &Xcm<()>) -> Assets {
+	fn price_for_delivery(_: Self::Id, msg: &Xcm<OpaqueCall>) -> Assets {
 		let base_fee: super::Balance = 1_000_000;
 
 		let parents = msg.iter().find_map(|xcm| match xcm {

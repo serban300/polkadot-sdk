@@ -270,7 +270,7 @@ pub fn relayed_incoming_message_works<Runtime, AllPalletsWithoutSystem, MPI>(
 		InboundRelayerId<Runtime, MPI>,
 		InteriorLocation,
 		MessageNonce,
-		Xcm<()>,
+		Xcm<OpaqueCall>,
 		bp_runtime::ChainId,
 	) -> CallsAndVerifiers<Runtime>,
 ) where
@@ -322,8 +322,8 @@ pub fn relayed_incoming_message_works<Runtime, AllPalletsWithoutSystem, MPI>(
 			// some random numbers (checked by test)
 			let message_nonce = 1;
 
-			let xcm = vec![Instruction::<()>::ClearOrigin; 42];
-			let expected_dispatch = xcm::latest::Xcm::<()>({
+			let xcm = vec![Instruction::<OpaqueCall>::ClearOrigin; 42];
+			let expected_dispatch = xcm::latest::Xcm::<OpaqueCall>({
 				let mut expected_instructions = xcm.clone();
 				// dispatch prepends bridge pallet instance
 				expected_instructions.insert(
@@ -355,7 +355,7 @@ pub fn relayed_incoming_message_works<Runtime, AllPalletsWithoutSystem, MPI>(
 					sibling_parachain_id.into(),
 				)
 				.unwrap();
-			let dispatched = xcm::latest::Xcm::<()>::try_from(imported_xcm).unwrap();
+			let dispatched = xcm::latest::Xcm::<OpaqueCall>::try_from(imported_xcm).unwrap();
 			let mut dispatched_clone = dispatched.clone();
 			for (idx, expected_instr) in expected_dispatch.0.iter().enumerate() {
 				assert_eq!(expected_instr, &dispatched.0[idx]);

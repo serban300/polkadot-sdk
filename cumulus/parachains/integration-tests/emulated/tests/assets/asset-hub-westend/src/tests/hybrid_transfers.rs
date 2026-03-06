@@ -64,7 +64,7 @@ fn para_to_para_assethub_hop_assertions(mut t: ParaToParaThroughAHTest) {
 fn ah_to_para_transfer_assets(t: SystemParaToParaTest) -> DispatchResult {
 	let fee_idx = t.args.fee_asset_item as usize;
 	let fee: Asset = t.args.assets.inner().get(fee_idx).cloned().unwrap();
-	let custom_xcm_on_dest = Xcm::<()>(vec![DepositAsset {
+	let custom_xcm_on_dest = Xcm::<OpaqueCall>(vec![DepositAsset {
 		assets: Wild(AllCounted(t.args.assets.len() as u32)),
 		beneficiary: t.args.beneficiary,
 	}]);
@@ -83,7 +83,7 @@ fn ah_to_para_transfer_assets(t: SystemParaToParaTest) -> DispatchResult {
 fn para_to_ah_transfer_assets(t: ParaToSystemParaTest) -> DispatchResult {
 	let fee_idx = t.args.fee_asset_item as usize;
 	let fee: Asset = t.args.assets.inner().get(fee_idx).cloned().unwrap();
-	let custom_xcm_on_dest = Xcm::<()>(vec![DepositAsset {
+	let custom_xcm_on_dest = Xcm::<OpaqueCall>(vec![DepositAsset {
 		assets: Wild(AllCounted(t.args.assets.len() as u32)),
 		beneficiary: t.args.beneficiary,
 	}]);
@@ -103,7 +103,7 @@ fn para_to_para_transfer_assets_through_ah(t: ParaToParaThroughAHTest) -> Dispat
 	let fee_idx = t.args.fee_asset_item as usize;
 	let fee: Asset = t.args.assets.inner().get(fee_idx).cloned().unwrap();
 	let asset_hub_location: Location = PenpalA::sibling_location_of(AssetHubWestend::para_id());
-	let custom_xcm_on_dest = Xcm::<()>(vec![DepositAsset {
+	let custom_xcm_on_dest = Xcm::<OpaqueCall>(vec![DepositAsset {
 		assets: Wild(AllCounted(t.args.assets.len() as u32)),
 		beneficiary: t.args.beneficiary,
 	}]);
@@ -130,7 +130,7 @@ fn para_to_para_transfer_assets_through_ah(t: ParaToParaThroughAHTest) -> Dispat
 fn para_to_asset_hub_teleport_foreign_assets(t: ParaToSystemParaTest) -> DispatchResult {
 	let fee_idx = t.args.fee_asset_item as usize;
 	let fee: Asset = t.args.assets.inner().get(fee_idx).cloned().unwrap();
-	let custom_xcm_on_dest = Xcm::<()>(vec![DepositAsset {
+	let custom_xcm_on_dest = Xcm::<OpaqueCall>(vec![DepositAsset {
 		assets: Wild(AllCounted(t.args.assets.len() as u32)),
 		beneficiary: t.args.beneficiary,
 	}]);
@@ -149,7 +149,7 @@ fn para_to_asset_hub_teleport_foreign_assets(t: ParaToSystemParaTest) -> Dispatc
 fn asset_hub_to_para_teleport_foreign_assets(t: SystemParaToParaTest) -> DispatchResult {
 	let fee_idx = t.args.fee_asset_item as usize;
 	let fee: Asset = t.args.assets.inner().get(fee_idx).cloned().unwrap();
-	let custom_xcm_on_dest = Xcm::<()>(vec![DepositAsset {
+	let custom_xcm_on_dest = Xcm::<OpaqueCall>(vec![DepositAsset {
 		assets: Wild(AllCounted(t.args.assets.len() as u32)),
 		beneficiary: t.args.beneficiary,
 	}]);
@@ -805,7 +805,7 @@ fn transfer_native_asset_from_relay_to_penpal_through_asset_hub() {
 			// we already spent some fees along the way, just use half of what we started with
 			*amount = *amount / 2;
 		}
-		let xcm_on_final_dest = Xcm::<()>(vec![
+		let xcm_on_final_dest = Xcm::<OpaqueCall>(vec![
 			BuyExecution { fees: remote_fees, weight_limit: t.args.weight_limit.clone() },
 			DepositAsset {
 				assets: Wild(AllCounted(t.args.assets.len() as u32)),
@@ -817,7 +817,7 @@ fn transfer_native_asset_from_relay_to_penpal_through_asset_hub() {
 		let mut dest = t.args.dest.clone();
 		dest.reanchor(&asset_hub_location, &context).unwrap();
 		// on Asset Hub, forward assets to Penpal
-		let xcm_on_hop = Xcm::<()>(vec![DepositReserveAsset {
+		let xcm_on_hop = Xcm::<OpaqueCall>(vec![DepositReserveAsset {
 			assets: Wild(AllCounted(t.args.assets.len() as u32)),
 			dest,
 			xcm: xcm_on_final_dest,
@@ -936,7 +936,7 @@ fn transfer_native_asset_from_penpal_to_relay_through_asset_hub() {
 			// we already spent some fees along the way, just use half of what we started with
 			*amount = *amount / 2;
 		}
-		let xcm_on_final_dest = Xcm::<()>(vec![
+		let xcm_on_final_dest = Xcm::<OpaqueCall>(vec![
 			BuyExecution { fees: remote_fees, weight_limit: t.args.weight_limit.clone() },
 			DepositAsset {
 				assets: Wild(AllCounted(t.args.assets.len() as u32)),
@@ -948,7 +948,7 @@ fn transfer_native_asset_from_penpal_to_relay_through_asset_hub() {
 		let mut dest = t.args.dest.clone();
 		dest.reanchor(&asset_hub_location, &context).unwrap();
 		// on Asset Hub
-		let xcm_on_hop = Xcm::<()>(vec![InitiateTeleport {
+		let xcm_on_hop = Xcm::<OpaqueCall>(vec![InitiateTeleport {
 			assets: Wild(AllCounted(t.args.assets.len() as u32)),
 			dest,
 			xcm: xcm_on_final_dest,
@@ -1017,7 +1017,7 @@ fn bidirectional_transfer_multiple_assets_between_penpal_and_asset_hub() {
 			RefundSurplus,
 			DepositAsset { assets: Wild(All), beneficiary: t.args.beneficiary },
 		]);
-		let xcm = Xcm::<()>(vec![
+		let xcm = Xcm::<OpaqueCall>(vec![
 			WithdrawAsset(all_assets.into()),
 			PayFees { asset: fees.clone() },
 			InitiateTransfer {
@@ -1055,7 +1055,7 @@ fn bidirectional_transfer_multiple_assets_between_penpal_and_asset_hub() {
 			RefundSurplus,
 			DepositAsset { assets: Wild(All), beneficiary: t.args.beneficiary },
 		]);
-		let xcm = Xcm::<()>(vec![
+		let xcm = Xcm::<OpaqueCall>(vec![
 			WithdrawAsset(all_assets.into()),
 			PayFees { asset: fees.clone() },
 			InitiateTransfer {

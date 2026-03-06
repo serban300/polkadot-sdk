@@ -94,7 +94,7 @@ struct XcmMessage {
 	// Destination chain
 	destination: u32,
 	// XCM message
-	message: Xcm<()>,
+	message: Xcm<OpaqueCall>,
 }
 
 impl<'a> Arbitrary<'a> for XcmMessage {
@@ -157,7 +157,7 @@ pub type RelayChainPalletXcm = pallet_xcm::Pallet<relay_chain::Runtime>;
 pub type ParachainPalletXcm = pallet_xcm::Pallet<parachain::Runtime>;
 
 // We check XCM messages recursively for blocklisted messages
-fn recursively_matches_blocklisted_messages(message: &Instruction<()>) -> bool {
+fn recursively_matches_blocklisted_messages(message: &Instruction<OpaqueCall>) -> bool {
 	match message {
 		DepositReserveAsset { xcm, .. } |
 		ExportMessage { xcm, .. } |

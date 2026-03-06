@@ -84,7 +84,7 @@ impl<Call> XcmWeightInfo<Call> for BridgeHubWestendXcmWeight<Call> {
 	fn transfer_asset(assets: &Assets, _dest: &Location) -> Weight {
 		assets.weigh_assets(XcmFungibleWeight::<Runtime>::transfer_asset())
 	}
-	fn transfer_reserve_asset(assets: &Assets, _dest: &Location, _xcm: &Xcm<()>) -> Weight {
+	fn transfer_reserve_asset(assets: &Assets, _dest: &Location, _xcm: &Xcm<OpaqueCall>) -> Weight {
 		assets.weigh_assets(XcmFungibleWeight::<Runtime>::transfer_reserve_asset())
 	}
 	fn transact(
@@ -123,7 +123,11 @@ impl<Call> XcmWeightInfo<Call> for BridgeHubWestendXcmWeight<Call> {
 	fn deposit_asset(assets: &AssetFilter, _dest: &Location) -> Weight {
 		assets.weigh_assets(XcmFungibleWeight::<Runtime>::deposit_asset())
 	}
-	fn deposit_reserve_asset(assets: &AssetFilter, _dest: &Location, _xcm: &Xcm<()>) -> Weight {
+	fn deposit_reserve_asset(
+		assets: &AssetFilter,
+		_dest: &Location,
+		_xcm: &Xcm<OpaqueCall>,
+	) -> Weight {
 		assets.weigh_assets(XcmFungibleWeight::<Runtime>::deposit_reserve_asset())
 	}
 	fn exchange_asset(_give: &AssetFilter, _receive: &Assets, _maximal: &bool) -> Weight {
@@ -132,11 +136,11 @@ impl<Call> XcmWeightInfo<Call> for BridgeHubWestendXcmWeight<Call> {
 	fn initiate_reserve_withdraw(
 		assets: &AssetFilter,
 		_reserve: &Location,
-		_xcm: &Xcm<()>,
+		_xcm: &Xcm<OpaqueCall>,
 	) -> Weight {
 		assets.weigh_assets(XcmFungibleWeight::<Runtime>::initiate_reserve_withdraw())
 	}
-	fn initiate_teleport(assets: &AssetFilter, _dest: &Location, _xcm: &Xcm<()>) -> Weight {
+	fn initiate_teleport(assets: &AssetFilter, _dest: &Location, _xcm: &Xcm<OpaqueCall>) -> Weight {
 		assets.weigh_assets(XcmFungibleWeight::<Runtime>::initiate_teleport())
 	}
 	fn initiate_transfer(
@@ -144,7 +148,7 @@ impl<Call> XcmWeightInfo<Call> for BridgeHubWestendXcmWeight<Call> {
 		remote_fees: &Option<AssetTransferFilter>,
 		_preserve_origin: &bool,
 		assets: &BoundedVec<AssetTransferFilter, MaxAssetTransferFilters>,
-		_xcm: &Xcm<()>,
+		_xcm: &Xcm<OpaqueCall>,
 	) -> Weight {
 		let mut weight = if let Some(remote_fees) = remote_fees {
 			let fees = remote_fees.inner();
@@ -239,7 +243,7 @@ impl<Call> XcmWeightInfo<Call> for BridgeHubWestendXcmWeight<Call> {
 	fn universal_origin(_: &Junction) -> Weight {
 		Weight::MAX
 	}
-	fn export_message(_: &NetworkId, _: &Junctions, inner: &Xcm<()>) -> Weight {
+	fn export_message(_: &NetworkId, _: &Junctions, inner: &Xcm<OpaqueCall>) -> Weight {
 		let inner_encoded_len = inner.encode().len() as u32;
 		XcmGeneric::<Runtime>::export_message(inner_encoded_len)
 	}

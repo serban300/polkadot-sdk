@@ -431,7 +431,7 @@ pub type SendResult<T> = result::Result<(T, MultiAssets), SendError>;
 /// struct Sender1;
 /// impl SendXcm for Sender1 {
 ///     type Ticket = Infallible;
-///     fn validate(_: &mut Option<MultiLocation>, _: &mut Option<Xcm<()>>) -> SendResult<Infallible> {
+///     fn validate(_: &mut Option<MultiLocation>, _: &mut Option<Xcm<OpaqueCall>>) -> SendResult<Infallible> {
 ///         Err(SendError::NotApplicable)
 ///     }
 ///     fn deliver(_: Infallible) -> Result<XcmHash, SendError> {
@@ -443,7 +443,7 @@ pub type SendResult<T> = result::Result<(T, MultiAssets), SendError>;
 /// struct Sender2;
 /// impl SendXcm for Sender2 {
 ///     type Ticket = ();
-///     fn validate(destination: &mut Option<MultiLocation>, message: &mut Option<Xcm<()>>) -> SendResult<()> {
+///     fn validate(destination: &mut Option<MultiLocation>, message: &mut Option<Xcm<OpaqueCall>>) -> SendResult<()> {
 ///         match destination.as_ref().ok_or(SendError::MissingArgument)? {
 ///             MultiLocation { parents: 0, interior: X2(j1, j2) } => Ok(((), MultiAssets::new())),
 ///             _ => Err(SendError::Unroutable),
@@ -458,7 +458,7 @@ pub type SendResult<T> = result::Result<(T, MultiAssets), SendError>;
 /// struct Sender3;
 /// impl SendXcm for Sender3 {
 ///     type Ticket = ();
-///     fn validate(destination: &mut Option<MultiLocation>, message: &mut Option<Xcm<()>>) -> SendResult<()> {
+///     fn validate(destination: &mut Option<MultiLocation>, message: &mut Option<Xcm<OpaqueCall>>) -> SendResult<()> {
 ///         match destination.as_ref().ok_or(SendError::MissingArgument)? {
 ///             MultiLocation { parents: 1, interior: Here } => Ok(((), MultiAssets::new())),
 ///             _ => Err(SendError::NotApplicable),
@@ -502,7 +502,7 @@ pub trait SendXcm {
 	/// implementation to exit early without trying other type fields.
 	fn validate(
 		destination: &mut Option<MultiLocation>,
-		message: &mut Option<Xcm<()>>,
+		message: &mut Option<Xcm<OpaqueCall>>,
 	) -> SendResult<Self::Ticket>;
 
 	/// Actually carry out the delivery operation for a previously validated message sending.
@@ -515,7 +515,7 @@ impl SendXcm for Tuple {
 
 	fn validate(
 		destination: &mut Option<MultiLocation>,
-		message: &mut Option<Xcm<()>>,
+		message: &mut Option<Xcm<OpaqueCall>>,
 	) -> SendResult<Self::Ticket> {
 		let mut maybe_cost: Option<MultiAssets> = None;
 		let one_ticket: Self::Ticket = (for_tuples! { #(
@@ -551,7 +551,10 @@ impl SendXcm for Tuple {
 
 /// Convenience function for using a `SendXcm` implementation. Just interprets the `dest` and wraps
 /// both in `Some` before passing them as mutable references into `T::send_xcm`.
-pub fn validate_send<T: SendXcm>(dest: MultiLocation, msg: Xcm<()>) -> SendResult<T::Ticket> {
+pub fn validate_send<T: SendXcm>(
+	dest: MultiLocation,
+	msg: Xcm<OpaqueCall>,
+) -> SendResult<T::Ticket> {
 	T::validate(&mut Some(dest), &mut Some(msg))
 }
 
@@ -565,7 +568,7 @@ pub fn validate_send<T: SendXcm>(dest: MultiLocation, msg: Xcm<()>) -> SendResul
 /// before actually doing the delivery.
 pub fn send_xcm<T: SendXcm>(
 	dest: MultiLocation,
-	msg: Xcm<()>,
+	msg: Xcm<OpaqueCall>,
 ) -> result::Result<(XcmHash, MultiAssets), SendError> {
 	let (ticket, price) = T::validate(&mut Some(dest), &mut Some(msg))?;
 	let hash = T::deliver(ticket)?;

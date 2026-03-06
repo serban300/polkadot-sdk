@@ -3,13 +3,16 @@
 // SPDX-FileCopyrightText: 2021-2025 Parity Technologies (UK) Ltd.
 use super::Message;
 use sp_runtime::DispatchError;
-use xcm::latest::{SendError, Xcm};
+use xcm::{
+	latest::{SendError, Xcm},
+	OpaqueCall,
+};
 use Debug;
 
 /// Converts an inbound message from Ethereum to an XCM message that can be
 /// executed on a parachain.
 pub trait ConvertMessage {
-	fn convert(message: Message) -> Result<Xcm<()>, ConvertMessageError>;
+	fn convert(message: Message) -> Result<Xcm<OpaqueCall>, ConvertMessageError>;
 }
 
 /// Reason why a message conversion failed.

@@ -105,7 +105,7 @@ impl<C> WeightBounds<C> for TestWeigher {
 
 thread_local! {
 	pub static ASSETS: RefCell<BTreeMap<Location, AssetsInHolding>> = RefCell::new(BTreeMap::new());
-	pub static SENT_XCM: RefCell<Vec<(Location, Xcm<()>)>> = RefCell::new(Vec::new());
+	pub static SENT_XCM: RefCell<Vec<(Location, Xcm<OpaqueCall>)>> = RefCell::new(Vec::new());
 }
 
 pub fn add_asset(who: impl Into<Location>, what: impl Into<Asset>) {
@@ -312,11 +312,11 @@ impl ClaimAssets for TestAssetTrap {
 /// It charges `1` for the delivery fee.
 pub struct TestSender;
 impl SendXcm for TestSender {
-	type Ticket = (Location, Xcm<()>);
+	type Ticket = (Location, Xcm<OpaqueCall>);
 
 	fn validate(
 		destination: &mut Option<Location>,
-		message: &mut Option<Xcm<()>>,
+		message: &mut Option<Xcm<OpaqueCall>>,
 	) -> SendResult<Self::Ticket> {
 		let ticket = (destination.take().unwrap(), message.take().unwrap());
 		let delivery_fee: Asset = (Here, 1u128).into();
@@ -330,7 +330,7 @@ impl SendXcm for TestSender {
 }
 
 /// Gets queued test messages.
-pub fn sent_xcm() -> Vec<(Location, Xcm<()>)> {
+pub fn sent_xcm() -> Vec<(Location, Xcm<OpaqueCall>)> {
 	SENT_XCM.with(|q| (*q.borrow()).clone())
 }
 

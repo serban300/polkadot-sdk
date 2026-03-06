@@ -257,7 +257,7 @@ impl<T: Config<I>, I: 'static> ExporterFor for Pallet<T, I> {
 	fn exporter_for(
 		network: &NetworkId,
 		remote_location: &InteriorLocation,
-		message: &Xcm<()>,
+		message: &Xcm<OpaqueCall>,
 	) -> Option<(Location, Option<Asset>)> {
 		tracing::trace!(
 			target: LOG_TARGET,
@@ -347,7 +347,7 @@ impl<T: Config<I>, I: 'static> SendXcm for Pallet<T, I> {
 
 	fn validate(
 		dest: &mut Option<Location>,
-		xcm: &mut Option<Xcm<()>>,
+		xcm: &mut Option<Xcm<OpaqueCall>>,
 	) -> SendResult<Self::Ticket> {
 		tracing::trace!(target: LOG_TARGET, msg=?xcm, destination=?dest, "validate");
 
@@ -423,7 +423,7 @@ impl<T: Config<I>, I: 'static> InspectMessageQueues for Pallet<T, I> {
 
 	/// This router needs to implement `InspectMessageQueues` but doesn't have to
 	/// return any messages, since it just reuses the `XcmpQueue` router.
-	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
+	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<OpaqueCall>>)> {
 		Vec::new()
 	}
 }
@@ -539,7 +539,7 @@ mod tests {
 		run_test(|| {
 			// unroutable dest
 			let dest = Location::new(2, [GlobalConsensus(ByGenesis([0; 32])), Parachain(1000)]);
-			let xcm: Xcm<()> = vec![ClearOrigin].into();
+			let xcm: Xcm<OpaqueCall> = vec![ClearOrigin].into();
 
 			// check that router does not consume when `NotApplicable`
 			let mut xcm_wrapper = Some(xcm.clone());
@@ -562,7 +562,7 @@ mod tests {
 			let dest =
 				Location::new(2, [GlobalConsensus(BridgedNetworkId::get()), Parachain(1000)]);
 			// oversized XCM
-			let xcm: Xcm<()> = vec![ClearOrigin; HARD_MESSAGE_SIZE_LIMIT as usize].into();
+			let xcm: Xcm<OpaqueCall> = vec![ClearOrigin; HARD_MESSAGE_SIZE_LIMIT as usize].into();
 
 			// dest is routable with the inner router
 			assert_ok!(ViaBridgeHubExporter::<TestRuntime, ()>::validate(
@@ -592,7 +592,7 @@ mod tests {
 		run_test(|| {
 			// routable dest but we don't know XCM version
 			let dest = UnknownXcmVersionForRoutableLocation::get();
-			let xcm: Xcm<()> = vec![ClearOrigin].into();
+			let xcm: Xcm<OpaqueCall> = vec![ClearOrigin].into();
 
 			// dest is routable with the inner router
 			assert_ok!(ViaBridgeHubExporter::<TestRuntime, ()>::validate(
@@ -621,7 +621,7 @@ mod tests {
 	fn returns_proper_delivery_price() {
 		run_test(|| {
 			let dest = Location::new(2, [GlobalConsensus(BridgedNetworkId::get())]);
-			let xcm: Xcm<()> = vec![ClearOrigin].into();
+			let xcm: Xcm<OpaqueCall> = vec![ClearOrigin].into();
 			let msg_size = xcm.encoded_size();
 
 			// initially the base fee is used: `BASE_FEE + BYTE_FEE * msg_size + HRMP_FEE`

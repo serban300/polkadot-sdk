@@ -69,7 +69,7 @@ impl<Exporter: ExportXcm, UniversalLocation: Get<InteriorLocation>> SendXcm
 
 	fn validate(
 		dest: &mut Option<Location>,
-		msg: &mut Option<Xcm<()>>,
+		msg: &mut Option<Xcm<OpaqueCall>>,
 	) -> SendResult<Exporter::Ticket> {
 		// This `clone` ensures that `dest` is not consumed in any case.
 		let d = dest.clone().ok_or(MissingArgument)?;
@@ -116,7 +116,7 @@ impl<Exporter: ExportXcm, UniversalLocation: Get<InteriorLocation>> SendXcm
 
 	fn validate(
 		dest: &mut Option<Location>,
-		msg: &mut Option<Xcm<()>>,
+		msg: &mut Option<Xcm<OpaqueCall>>,
 	) -> SendResult<Exporter::Ticket> {
 		// This `clone` ensures that `dest` is not consumed in any case.
 		let d = dest.clone().ok_or(MissingArgument)?;
@@ -165,7 +165,7 @@ pub trait ExporterFor {
 	fn exporter_for(
 		network: &NetworkId,
 		remote_location: &InteriorLocation,
-		message: &Xcm<()>,
+		message: &Xcm<OpaqueCall>,
 	) -> Option<(Location, Option<Asset>)>;
 }
 
@@ -174,7 +174,7 @@ impl ExporterFor for Tuple {
 	fn exporter_for(
 		network: &NetworkId,
 		remote_location: &InteriorLocation,
-		message: &Xcm<()>,
+		message: &Xcm<OpaqueCall>,
 	) -> Option<(Location, Option<Asset>)> {
 		for_tuples!( #(
 			if let Some(r) = Tuple::exporter_for(network, remote_location, message) {
@@ -221,7 +221,7 @@ impl<T: Get<Vec<NetworkExportTableItem>>> ExporterFor for NetworkExportTable<T> 
 	fn exporter_for(
 		network: &NetworkId,
 		remote_location: &InteriorLocation,
-		_: &Xcm<()>,
+		_: &Xcm<OpaqueCall>,
 	) -> Option<(Location, Option<Asset>)> {
 		T::get()
 			.into_iter()
@@ -265,7 +265,7 @@ impl<Bridges: ExporterFor, Router: SendXcm, UniversalLocation: Get<InteriorLocat
 
 	fn validate(
 		dest: &mut Option<Location>,
-		msg: &mut Option<Xcm<()>>,
+		msg: &mut Option<Xcm<OpaqueCall>>,
 	) -> SendResult<Router::Ticket> {
 		// This `clone` ensures that `dest` is not consumed in any case.
 		let d = dest.clone().ok_or(MissingArgument)?;
@@ -335,7 +335,7 @@ impl<Bridges, Router, UniversalLocation> InspectMessageQueues
 
 	/// This router needs to implement `InspectMessageQueues` but doesn't have to
 	/// return any messages, since it just reuses the `XcmpQueue` router.
-	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
+	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<OpaqueCall>>)> {
 		Vec::new()
 	}
 }
@@ -365,7 +365,7 @@ impl<Bridges: ExporterFor, Router: SendXcm, UniversalLocation: Get<InteriorLocat
 
 	fn validate(
 		dest: &mut Option<Location>,
-		msg: &mut Option<Xcm<()>>,
+		msg: &mut Option<Xcm<OpaqueCall>>,
 	) -> SendResult<Router::Ticket> {
 		// This `clone` ensures that `dest` is not consumed in any case.
 		let d = dest.clone().ok_or(MissingArgument)?;
@@ -458,7 +458,7 @@ impl<Bridges, Router, UniversalLocation> InspectMessageQueues
 
 	/// This router needs to implement `InspectMessageQueues` but doesn't have to
 	/// return any messages, since it just reuses the `XcmpQueue` router.
-	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
+	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<OpaqueCall>>)> {
 		Vec::new()
 	}
 }
@@ -502,7 +502,7 @@ pub struct BridgeMessage {
 	/// `GlobalConsensus` junction describing the network under which global consensus happens.
 	/// If this does not match our global consensus then it's a fatal error.
 	pub universal_dest: VersionedInteriorLocation,
-	pub message: VersionedXcm<()>,
+	pub message: VersionedXcm<OpaqueCall>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -549,7 +549,7 @@ impl<
 				DispatchBlobError::NonUniversalDestination })?;
 		ensure!(intended_global == our_global, DispatchBlobError::WrongGlobal);
 		let dest = universal_dest.relative_to(&our_universal);
-		let mut message: Xcm<()> = message.try_into().map_err(|_| {
+		let mut message: Xcm<OpaqueCall> = message.try_into().map_err(|_| {
 			tracing::debug!(target: "xcm::universal_exports", "Failed to convert message");
 			DispatchBlobError::UnsupportedXcmVersion
 		})?;
@@ -597,7 +597,7 @@ impl<
 		_channel: u32,
 		universal_source: &mut Option<InteriorLocation>,
 		destination: &mut Option<InteriorLocation>,
-		message: &mut Option<Xcm<()>>,
+		message: &mut Option<Xcm<OpaqueCall>>,
 	) -> Result<((Vec<u8>, XcmHash), Assets), SendError> {
 		let (bridged_network, bridged_network_location_parents) = {
 			let Location { parents, interior: mut junctions } = BridgedNetwork::get();
@@ -707,7 +707,7 @@ mod tests {
 
 		fn validate(
 			destination: &mut Option<Location>,
-			_message: &mut Option<Xcm<()>>,
+			_message: &mut Option<Xcm<OpaqueCall>>,
 		) -> SendResult<Self::Ticket> {
 			if let Some(d) = destination.as_ref() {
 				if Filter::contains(&d) {
@@ -732,7 +732,7 @@ mod tests {
 			_: u32,
 			_: &mut Option<InteriorLocation>,
 			destination: &mut Option<InteriorLocation>,
-			_: &mut Option<Xcm<()>>,
+			_: &mut Option<Xcm<OpaqueCall>>,
 		) -> SendResult<Self::Ticket> {
 			if let Some(d) = destination.as_ref() {
 				if Filter::contains(&(network, d.clone())) {
@@ -754,7 +754,7 @@ mod tests {
 		assert_result: impl Fn(SendResult<S::Ticket>),
 	) {
 		let mut dest_wrapper = Some(dest.clone());
-		let msg = Xcm::<()>::new();
+		let msg = Xcm::<OpaqueCall>::new();
 		let mut msg_wrapper = Some(msg.clone());
 
 		assert_result(S::validate(&mut dest_wrapper, &mut msg_wrapper));

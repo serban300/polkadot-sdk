@@ -325,7 +325,7 @@ fn remote_transfer_xcm_paying_fees(
 	amount: u128,
 	remote_fee: Asset,
 	_: QueryId,
-) -> Result<Xcm<()>, Error> {
+) -> Result<Xcm<OpaqueCall>, Error> {
 	// Transform `from` into Location::new(1, XX([Parachain(source), from.interior }])
 	// We need this one for the refunds.
 	let from_at_target =
@@ -355,7 +355,7 @@ fn remote_transfer_xcm_free_execution(
 	asset_id: AssetId,
 	amount: u128,
 	query_id: QueryId,
-) -> Result<Xcm<()>, Error> {
+) -> Result<Xcm<OpaqueCall>, Error> {
 	let xcm = Xcm(vec![
 		DescendOrigin(from_location.interior),
 		UnpaidExecution { weight_limit: Unlimited, check_origin: None },

@@ -401,7 +401,7 @@ pub fn exploit_v2_route_with_legacy_v1_transfer_will_fail() {
 
 	let assets = vec![reserve_asset.clone(), remote_fee_asset.clone()];
 
-	let custom_xcm_on_dest = Xcm::<()>(vec![
+	let custom_xcm_on_dest = Xcm::<OpaqueCall>(vec![
 		AliasOrigin(Location::parent()),
 		DepositAsset { assets: Wild(AllCounted(2)), beneficiary: beneficiary() },
 	]);

@@ -869,7 +869,7 @@ fn transfer_relay_token() {
 			Box::new(VersionedAssetId::from(AssetId(Location::parent()))),
 			Box::new(TransferType::LocalReserve),
 			Box::new(VersionedXcm::from(
-				Xcm::<()>::builder_unsafe()
+				Xcm::<OpaqueCall>::builder_unsafe()
 					.deposit_asset(AllCounted(1), beneficiary)
 					.build()
 			)),
@@ -1207,7 +1207,7 @@ fn send_weth_from_ethereum_to_ahw_to_ahr_back_to_ahw_and_ethereum() {
 	);
 	let fee: Location = Parent.into(); // Dot
 	let fees_asset: AssetId = fee.clone().into();
-	let custom_xcm_on_dest = Xcm::<()>(vec![DepositAsset {
+	let custom_xcm_on_dest = Xcm::<OpaqueCall>(vec![DepositAsset {
 		assets: Wild(AllCounted(2)),
 		beneficiary: beneficiary.clone(),
 	}]);
@@ -1278,7 +1278,7 @@ fn send_weth_from_ethereum_to_ahw_to_ahr_back_to_ahw_and_ethereum() {
 	let fee = bridged_wnd_at_asset_hub_rococo;
 	let fees_asset: AssetId = fee.clone().into();
 	let custom_xcm_on_dest =
-		Xcm::<()>(vec![DepositAsset { assets: Wild(AllCounted(2)), beneficiary }]);
+		Xcm::<OpaqueCall>(vec![DepositAsset { assets: Wild(AllCounted(2)), beneficiary }]);
 
 	let assets: Assets =
 		vec![(weth_location.clone(), TOKEN_AMOUNT).into(), (fee, XCM_FEE).into()].into();
@@ -1494,7 +1494,7 @@ fn transfer_penpal_native_asset() {
 
 		let destination = Location::new(1, [Parachain(AssetHubWestend::para_id().into())]);
 
-		let custom_xcm_on_dest = Xcm::<()>(vec![DepositReserveAsset {
+		let custom_xcm_on_dest = Xcm::<OpaqueCall>(vec![DepositReserveAsset {
 			assets: Wild(AllOf {
 				id: AssetId(pal_at_asset_hub.clone()),
 				fun: WildFungibility::Fungible,
@@ -1703,7 +1703,7 @@ fn transfer_penpal_teleport_enabled_asset() {
 
 		let destination = Location::new(1, [Parachain(AssetHubWestend::para_id().into())]);
 
-		let custom_xcm_on_dest = Xcm::<()>(vec![DepositReserveAsset {
+		let custom_xcm_on_dest = Xcm::<OpaqueCall>(vec![DepositReserveAsset {
 			assets: Wild(AllOf {
 				id: AssetId(pal_at_asset_hub.clone()),
 				fun: WildFungibility::Fungible,
@@ -1815,7 +1815,7 @@ fn transfer_penpal_teleport_enabled_asset() {
 			Asset { id: AssetId(pal_at_asset_hub.clone()), fun: Fungible(TOKEN_AMOUNT) },
 		];
 
-		let custom_xcm_on_dest = Xcm::<()>(vec![
+		let custom_xcm_on_dest = Xcm::<OpaqueCall>(vec![
 			BuyExecution {
 				fees: Asset { id: AssetId(Location::parent()), fun: Fungible(XCM_FEE) },
 				weight_limit: Unlimited,
@@ -2080,7 +2080,7 @@ fn transfer_roc_from_ah_with_transfer_and_then() {
 			[AccountKey20 { network: None, key: ETHEREUM_DESTINATION_ADDRESS.into() }],
 		);
 
-		let custom_xcm = Xcm::<()>(vec![DepositAsset {
+		let custom_xcm = Xcm::<OpaqueCall>(vec![DepositAsset {
 			assets: Wild(AllCounted(assets.len() as u32)),
 			beneficiary,
 		}]);
@@ -2248,7 +2248,7 @@ fn register_pna_in_v5_while_transfer_in_v4_should_work() {
 			Box::new(VersionedAssetId::V4(AssetId(Location::parent()))),
 			Box::new(TransferType::LocalReserve),
 			Box::new(VersionedXcm::V4(
-				Xcm::<()>::builder_unsafe()
+				Xcm::<OpaqueCall>::builder_unsafe()
 					.deposit_asset(WildAsset::AllCounted(1), beneficiary)
 					.build()
 			)),

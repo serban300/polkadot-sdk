@@ -221,7 +221,7 @@ fn encode_decode_versioned_assets_v5() {
 
 #[test]
 fn encode_decode_versioned_xcm_v3() {
-	let xcm = VersionedXcm::V3(v3::Xcm::<()>::new());
+	let xcm = VersionedXcm::V3(v3::Xcm::<OpaqueCall>::new());
 	let encoded = xcm.encode();
 
 	assert_eq!(encoded, hex_literal::hex!("0300"), "encode format changed");
@@ -233,7 +233,7 @@ fn encode_decode_versioned_xcm_v3() {
 
 #[test]
 fn encode_decode_versioned_xcm_v4() {
-	let xcm = VersionedXcm::V4(v4::Xcm::<()>::new());
+	let xcm = VersionedXcm::V4(v4::Xcm::<OpaqueCall>::new());
 	let encoded = xcm.encode();
 
 	assert_eq!(encoded, hex_literal::hex!("0400"), "encode format changed");
@@ -245,7 +245,7 @@ fn encode_decode_versioned_xcm_v4() {
 
 #[test]
 fn encode_decode_versioned_xcm_v5() {
-	let xcm = VersionedXcm::V5(v5::Xcm::<()>::new());
+	let xcm = VersionedXcm::V5(v5::Xcm::<OpaqueCall>::new());
 	let encoded = xcm.encode();
 
 	assert_eq!(encoded, hex_literal::hex!("0500"), "encode format changed");
@@ -259,7 +259,7 @@ fn encode_decode_versioned_xcm_v5() {
 // this broke downstream users. This test ensures that the name in the metadata isn't changed.
 #[test]
 fn ensure_type_info_is_correct() {
-	let type_info = VersionedXcm::<()>::type_info();
+	let type_info = VersionedXcm::<OpaqueCall>::type_info();
 	assert_eq!(type_info.path.segments, vec!["xcm", "VersionedXcm"]);
 
 	let type_info = VersionedAssetId::type_info();

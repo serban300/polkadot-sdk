@@ -134,7 +134,7 @@ fn test_set_asset_claimer_between_the_chains() {
 	assert_eq!(balance, 0);
 
 	let pay_fees = 6_000_000_000_000u128;
-	let xcm_on_bh = Xcm::<()>::builder_unsafe()
+	let xcm_on_bh = Xcm::<OpaqueCall>::builder_unsafe()
 		.claim_asset(assets.clone(), Here)
 		.pay_fees((Parent, pay_fees))
 		.deposit_asset(All, alice_bh_sibling.clone())

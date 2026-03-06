@@ -155,13 +155,13 @@ construct_runtime!(
 );
 
 thread_local! {
-	pub static SENT_XCM: RefCell<Vec<(Location, Xcm<()>)>> = RefCell::new(Vec::new());
+	pub static SENT_XCM: RefCell<Vec<(Location, Xcm<OpaqueCall>)>> = RefCell::new(Vec::new());
 	pub static FAIL_SEND_XCM: RefCell<bool> = RefCell::new(false);
 }
-pub(crate) fn sent_xcm() -> Vec<(Location, Xcm<()>)> {
+pub(crate) fn sent_xcm() -> Vec<(Location, Xcm<OpaqueCall>)> {
 	SENT_XCM.with(|q| (*q.borrow()).clone())
 }
-pub(crate) fn take_sent_xcm() -> Vec<(Location, Xcm<()>)> {
+pub(crate) fn take_sent_xcm() -> Vec<(Location, Xcm<OpaqueCall>)> {
 	SENT_XCM.with(|q| {
 		let mut r = Vec::new();
 		std::mem::swap(&mut r, &mut *q.borrow_mut());
@@ -174,18 +174,18 @@ pub(crate) fn set_send_xcm_artificial_failure(should_fail: bool) {
 /// Sender that never returns error.
 pub struct TestSendXcm;
 impl SendXcm for TestSendXcm {
-	type Ticket = (Location, Xcm<()>);
+	type Ticket = (Location, Xcm<OpaqueCall>);
 	fn validate(
 		dest: &mut Option<Location>,
-		msg: &mut Option<Xcm<()>>,
-	) -> SendResult<(Location, Xcm<()>)> {
+		msg: &mut Option<Xcm<OpaqueCall>>,
+	) -> SendResult<(Location, Xcm<OpaqueCall>)> {
 		if FAIL_SEND_XCM.with(|q| *q.borrow()) {
 			return Err(SendError::Transport("Intentional send failure used in tests"));
 		}
 		let pair = (dest.take().unwrap(), msg.take().unwrap());
 		Ok((pair, Assets::new()))
 	}
-	fn deliver(pair: (Location, Xcm<()>)) -> Result<XcmHash, SendError> {
+	fn deliver(pair: (Location, Xcm<OpaqueCall>)) -> Result<XcmHash, SendError> {
 		let message = pair.1.clone();
 		if message
 			.iter()
@@ -201,11 +201,11 @@ impl SendXcm for TestSendXcm {
 /// Sender that returns error if `X8` junction and stops routing
 pub struct TestSendXcmErrX8;
 impl SendXcm for TestSendXcmErrX8 {
-	type Ticket = (Location, Xcm<()>);
+	type Ticket = (Location, Xcm<OpaqueCall>);
 	fn validate(
 		dest: &mut Option<Location>,
-		_: &mut Option<Xcm<()>>,
-	) -> SendResult<(Location, Xcm<()>)> {
+		_: &mut Option<Xcm<OpaqueCall>>,
+	) -> SendResult<(Location, Xcm<OpaqueCall>)> {
 		if dest.as_ref().unwrap().len() == 8 {
 			dest.take();
 			Err(SendError::Transport("Destination location full"))
@@ -213,7 +213,7 @@ impl SendXcm for TestSendXcmErrX8 {
 			Err(SendError::NotApplicable)
 		}
 	}
-	fn deliver(pair: (Location, Xcm<()>)) -> Result<XcmHash, SendError> {
+	fn deliver(pair: (Location, Xcm<OpaqueCall>)) -> Result<XcmHash, SendError> {
 		let hash = derive_topic_id(&pair.1);
 		SENT_XCM.with(|q| q.borrow_mut().push(pair));
 		Ok(hash)
@@ -229,11 +229,11 @@ parameter_types! {
 /// Sender only sends to `Parachain(3000)` destination requiring payment.
 pub struct TestPaidForPara3000SendXcm;
 impl SendXcm for TestPaidForPara3000SendXcm {
-	type Ticket = (Location, Xcm<()>);
+	type Ticket = (Location, Xcm<OpaqueCall>);
 	fn validate(
 		dest: &mut Option<Location>,
-		msg: &mut Option<Xcm<()>>,
-	) -> SendResult<(Location, Xcm<()>)> {
+		msg: &mut Option<Xcm<OpaqueCall>>,
+	) -> SendResult<(Location, Xcm<OpaqueCall>)> {
 		if let Some(dest) = dest.as_ref() {
 			if !dest.eq(&Para3000Location::get()) {
 				return Err(SendError::NotApplicable);
@@ -245,7 +245,7 @@ impl SendXcm for TestPaidForPara3000SendXcm {
 		let pair = (dest.take().unwrap(), msg.take().unwrap());
 		Ok((pair, Para3000PaymentAssets::get()))
 	}
-	fn deliver(pair: (Location, Xcm<()>)) -> Result<XcmHash, SendError> {
+	fn deliver(pair: (Location, Xcm<OpaqueCall>)) -> Result<XcmHash, SendError> {
 		let hash = derive_topic_id(&pair.1);
 		SENT_XCM.with(|q| q.borrow_mut().push(pair));
 		Ok(hash)

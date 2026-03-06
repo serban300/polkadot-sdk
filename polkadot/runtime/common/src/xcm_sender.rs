@@ -37,12 +37,12 @@ pub trait PriceForMessageDelivery {
 	/// Type used for charging different prices to different destinations
 	type Id;
 	/// Return the assets required to deliver `message` to the given `para` destination.
-	fn price_for_delivery(id: Self::Id, message: &Xcm<()>) -> Assets;
+	fn price_for_delivery(id: Self::Id, message: &Xcm<OpaqueCall>) -> Assets;
 }
 impl PriceForMessageDelivery for () {
 	type Id = ();
 
-	fn price_for_delivery(_: Self::Id, _: &Xcm<()>) -> Assets {
+	fn price_for_delivery(_: Self::Id, _: &Xcm<OpaqueCall>) -> Assets {
 		Assets::new()
 	}
 }
@@ -51,7 +51,7 @@ pub struct NoPriceForMessageDelivery<Id>(PhantomData<Id>);
 impl<Id> PriceForMessageDelivery for NoPriceForMessageDelivery<Id> {
 	type Id = Id;
 
-	fn price_for_delivery(_: Self::Id, _: &Xcm<()>) -> Assets {
+	fn price_for_delivery(_: Self::Id, _: &Xcm<OpaqueCall>) -> Assets {
 		Assets::new()
 	}
 }
@@ -61,7 +61,7 @@ pub struct ConstantPrice<T>(core::marker::PhantomData<T>);
 impl<T: Get<Assets>> PriceForMessageDelivery for ConstantPrice<T> {
 	type Id = ();
 
-	fn price_for_delivery(_: Self::Id, _: &Xcm<()>) -> Assets {
+	fn price_for_delivery(_: Self::Id, _: &Xcm<OpaqueCall>) -> Assets {
 		T::get()
 	}
 }
@@ -86,7 +86,7 @@ impl<A: Get<AssetId>, B: Get<u128>, M: Get<u128>, F: FeeTracker> PriceForMessage
 {
 	type Id = F::Id;
 
-	fn price_for_delivery(id: Self::Id, msg: &Xcm<()>) -> Assets {
+	fn price_for_delivery(id: Self::Id, msg: &Xcm<OpaqueCall>) -> Assets {
 		let msg_fee = (msg.encoded_size() as u128).saturating_mul(M::get());
 		let fee_sum = B::get().saturating_add(msg_fee);
 		let amount = F::get_fee_factor(id).saturating_mul_int(fee_sum);
@@ -106,7 +106,7 @@ where
 
 	fn validate(
 		dest: &mut Option<Location>,
-		msg: &mut Option<Xcm<()>>,
+		msg: &mut Option<Xcm<OpaqueCall>>,
 	) -> SendResult<(HostConfiguration<BlockNumberFor<T>>, ParaId, Vec<u8>)> {
 		let d = dest.take().ok_or(MissingArgument)?;
 		let id = if let (0, [Parachain(id)]) = d.unpack() {
@@ -159,13 +159,13 @@ impl<T: dmp::Config, W, P> InspectMessageQueues for ChildParachainRouter<T, W, P
 		let _ = dmp::DownwardMessageQueues::<T>::clear(u32::MAX, None);
 	}
 
-	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
+	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<OpaqueCall>>)> {
 		dmp::DownwardMessageQueues::<T>::iter()
 			.map(|(para_id, messages)| {
-				let decoded_messages: Vec<VersionedXcm<()>> = messages
+				let decoded_messages: Vec<VersionedXcm<OpaqueCall>> = messages
 					.iter()
 					.map(|downward_message| {
-						let message = VersionedXcm::<()>::decode_all_with_depth_limit(
+						let message = VersionedXcm::<OpaqueCall>::decode_all_with_depth_limit(
 							MAX_XCM_DECODE_DEPTH,
 							&mut &downward_message.msg[..],
 						)

@@ -20,7 +20,7 @@ use super::v4::{
 	Instruction as NewInstruction, PalletInfo as NewPalletInfo,
 	QueryResponseInfo as NewQueryResponseInfo, Response as NewResponse, Xcm as NewXcm,
 };
-use crate::{utils::decode_xcm_instructions, DoubleEncoded};
+use crate::{utils::decode_xcm_instructions, DoubleEncoded, OpaqueCall};
 use alloc::{vec, vec::Vec};
 use bounded_collections::{parameter_types, BoundedVec};
 use codec::{
@@ -574,7 +574,7 @@ pub enum Instruction<Call> {
 	/// Kind: *Command*.
 	///
 	/// Errors:
-	TransferReserveAsset { assets: MultiAssets, dest: MultiLocation, xcm: Xcm<()> },
+	TransferReserveAsset { assets: MultiAssets, dest: MultiLocation, xcm: Xcm<OpaqueCall> },
 
 	/// Apply the encoded transaction `call`, whose dispatch-origin should be `origin` as expressed
 	/// by the kind of origin `origin_kind`.
@@ -706,7 +706,7 @@ pub enum Instruction<Call> {
 	/// Kind: *Command*
 	///
 	/// Errors:
-	DepositReserveAsset { assets: MultiAssetFilter, dest: MultiLocation, xcm: Xcm<()> },
+	DepositReserveAsset { assets: MultiAssetFilter, dest: MultiLocation, xcm: Xcm<OpaqueCall> },
 
 	/// Remove the asset(s) (`want`) from the Holding Register and replace them with alternative
 	/// assets.
@@ -739,7 +739,11 @@ pub enum Instruction<Call> {
 	/// Kind: *Command*
 	///
 	/// Errors:
-	InitiateReserveWithdraw { assets: MultiAssetFilter, reserve: MultiLocation, xcm: Xcm<()> },
+	InitiateReserveWithdraw {
+		assets: MultiAssetFilter,
+		reserve: MultiLocation,
+		xcm: Xcm<OpaqueCall>,
+	},
 
 	/// Remove the asset(s) (`assets`) from holding and send a `ReceiveTeleportedAsset` XCM message
 	/// to a `dest` location.
@@ -755,7 +759,7 @@ pub enum Instruction<Call> {
 	/// Kind: *Command*
 	///
 	/// Errors:
-	InitiateTeleport { assets: MultiAssetFilter, dest: MultiLocation, xcm: Xcm<()> },
+	InitiateTeleport { assets: MultiAssetFilter, dest: MultiLocation, xcm: Xcm<OpaqueCall> },
 
 	/// Report to a given destination the contents of the Holding Register.
 	///
@@ -1023,7 +1027,7 @@ pub enum Instruction<Call> {
 	/// Kind: *Command*
 	///
 	/// Errors: *Fallible*.
-	ExportMessage { network: NetworkId, destination: InteriorMultiLocation, xcm: Xcm<()> },
+	ExportMessage { network: NetworkId, destination: InteriorMultiLocation, xcm: Xcm<OpaqueCall> },
 
 	/// Lock the locally held asset and prevent further transfer or withdrawal.
 	///
@@ -1305,13 +1309,15 @@ impl<Call, W: XcmWeightInfo<Call>> GetWeight<W> for Instruction<Call> {
 }
 
 pub mod opaque {
+	use crate::OpaqueCall;
+
 	/// The basic concrete type of `Xcm`, which doesn't make any assumptions about the
 	/// format of a call other than it is pre-encoded.
-	pub type Xcm = super::Xcm<()>;
+	pub type Xcm = super::Xcm<OpaqueCall>;
 
 	/// The basic concrete type of `Instruction`, which doesn't make any assumptions about the
 	/// format of a call other than it is pre-encoded.
-	pub type Instruction = super::Instruction<()>;
+	pub type Instruction = super::Instruction<OpaqueCall>;
 }
 
 // Convert from a v4 XCM to a v3 XCM.
@@ -1484,15 +1490,15 @@ mod tests {
 
 	#[test]
 	fn decoding_respects_limit() {
-		let max_xcm = Xcm::<()>(vec![ClearOrigin; MAX_INSTRUCTIONS_TO_DECODE as usize]);
+		let max_xcm = Xcm::<OpaqueCall>(vec![ClearOrigin; MAX_INSTRUCTIONS_TO_DECODE as usize]);
 		let encoded = max_xcm.encode();
-		assert!(Xcm::<()>::decode(&mut &encoded[..]).is_ok());
+		assert!(Xcm::<OpaqueCall>::decode(&mut &encoded[..]).is_ok());
 
-		let big_xcm = Xcm::<()>(vec![ClearOrigin; MAX_INSTRUCTIONS_TO_DECODE as usize + 1]);
+		let big_xcm = Xcm::<OpaqueCall>(vec![ClearOrigin; MAX_INSTRUCTIONS_TO_DECODE as usize + 1]);
 		let encoded = big_xcm.encode();
-		assert!(Xcm::<()>::decode(&mut &encoded[..]).is_err());
+		assert!(Xcm::<OpaqueCall>::decode(&mut &encoded[..]).is_err());
 
-		let nested_xcm = Xcm::<()>(vec![
+		let nested_xcm = Xcm::<OpaqueCall>(vec![
 			DepositReserveAsset {
 				assets: All.into(),
 				dest: Here.into(),
@@ -1501,13 +1507,13 @@ mod tests {
 			(MAX_INSTRUCTIONS_TO_DECODE / 2) as usize
 		]);
 		let encoded = nested_xcm.encode();
-		assert!(Xcm::<()>::decode(&mut &encoded[..]).is_err());
+		assert!(Xcm::<OpaqueCall>::decode(&mut &encoded[..]).is_err());
 
-		let even_more_nested_xcm = Xcm::<()>(vec![SetAppendix(nested_xcm); 64]);
+		let even_more_nested_xcm = Xcm::<OpaqueCall>(vec![SetAppendix(nested_xcm); 64]);
 		let encoded = even_more_nested_xcm.encode();
 		assert_eq!(encoded.len(), 342530);
 		// This should not decode since the limit is 100
 		assert_eq!(MAX_INSTRUCTIONS_TO_DECODE, 100, "precondition");
-		assert!(Xcm::<()>::decode(&mut &encoded[..]).is_err());
+		assert!(Xcm::<OpaqueCall>::decode(&mut &encoded[..]).is_err());
 	}
 }

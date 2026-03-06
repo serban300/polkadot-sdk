@@ -132,7 +132,7 @@ fn sender_on_relative_to_asset_location_works() {
 	assert_eq!(sender_on_remote, SenderLocationOnTarget::get());
 }
 
-fn assert_send_and_execute_msg(expected_message: Xcm<()>) {
+fn assert_send_and_execute_msg(expected_message: Xcm<OpaqueCall>) {
 	let expected_hash = fake_message_hash(&expected_message);
 
 	assert_eq!(

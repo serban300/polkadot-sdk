@@ -479,7 +479,7 @@ where
 				LaneIdOf<RuntimeHelper::Runtime, RuntimeHelper::MPI>,
 			>(
 				LaneIdOf::<RuntimeHelper::Runtime, RuntimeHelper::MPI>::default(),
-				vec![Instruction::<()>::ClearOrigin; 1_024].into(),
+				vec![Instruction::<OpaqueCall>::ClearOrigin; 1_024].into(),
 				1,
 				[GlobalConsensus(Polkadot), Parachain(1_000)].into(),
 				1u32.into(),
@@ -585,7 +585,7 @@ where
 				LaneIdOf<RuntimeHelper::Runtime, RuntimeHelper::MPI>,
 			>(
 				LaneIdOf::<RuntimeHelper::Runtime, RuntimeHelper::MPI>::default(),
-				vec![Instruction::<()>::ClearOrigin; 1_024].into(),
+				vec![Instruction::<OpaqueCall>::ClearOrigin; 1_024].into(),
 				1,
 				[GlobalConsensus(Polkadot), Parachain(1_000)].into(),
 				1u32.into(),

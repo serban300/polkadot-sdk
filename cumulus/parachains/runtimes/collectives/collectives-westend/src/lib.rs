@@ -1023,11 +1023,11 @@ impl_runtime_apis! {
 			PolkadotXcm::query_weight_to_asset_fee::<Trader>(weight, asset)
 		}
 
-		fn query_xcm_weight(message: VersionedXcm<()>) -> Result<Weight, XcmPaymentApiError> {
+		fn query_xcm_weight(message: VersionedXcm<OpaqueCall>) -> Result<Weight, XcmPaymentApiError> {
 			PolkadotXcm::query_xcm_weight(message)
 		}
 
-		fn query_delivery_fees(destination: VersionedLocation, message: VersionedXcm<()>, asset_id: VersionedAssetId) -> Result<VersionedAssets, XcmPaymentApiError> {
+		fn query_delivery_fees(destination: VersionedLocation, message: VersionedXcm<OpaqueCall>, asset_id: VersionedAssetId) -> Result<VersionedAssets, XcmPaymentApiError> {
 			type AssetExchanger = <XcmConfig as xcm_executor::Config>::AssetExchanger;
 			PolkadotXcm::query_delivery_fees::<AssetExchanger>(destination, message, asset_id)
 		}

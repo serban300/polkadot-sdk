@@ -229,7 +229,9 @@ pub(crate) fn send_assets_from_asset_hub_rococo(
 			bx!(remote_fee_id.into()),
 			bx!(transfer_type),
 			bx!(VersionedXcm::from(
-				Xcm::<()>::builder_unsafe().deposit_asset(AllCounted(1), beneficiary).build()
+				Xcm::<OpaqueCall>::builder_unsafe()
+					.deposit_asset(AllCounted(1), beneficiary)
+					.build()
 			)),
 			WeightLimit::Unlimited,
 		)

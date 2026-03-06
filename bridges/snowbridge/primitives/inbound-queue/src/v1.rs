@@ -140,7 +140,7 @@ pub trait ConvertMessage {
 	fn convert(
 		message_id: H256,
 		message: VersionedMessage,
-	) -> Result<(Xcm<()>, Self::Balance), ConvertMessageError>;
+	) -> Result<(Xcm<OpaqueCall>, Self::Balance), ConvertMessageError>;
 }
 
 impl<
@@ -179,7 +179,7 @@ where
 	fn convert(
 		message_id: H256,
 		message: VersionedMessage,
-	) -> Result<(Xcm<()>, Self::Balance), ConvertMessageError> {
+	) -> Result<(Xcm<OpaqueCall>, Self::Balance), ConvertMessageError> {
 		use Command::*;
 		use VersionedMessage::*;
 		match message {
@@ -239,7 +239,7 @@ where
 		chain_id: u64,
 		token: H160,
 		fee: u128,
-	) -> (Xcm<()>, Balance) {
+	) -> (Xcm<OpaqueCall>, Balance) {
 		let network = Ethereum { chain_id };
 		let xcm_fee: Asset = (Location::parent(), fee).into();
 		let deposit: Asset = (Location::parent(), CreateAssetDeposit::get()).into();
@@ -254,7 +254,7 @@ where
 		let create_call_index: [u8; 2] = CreateAssetCall::get();
 		let inbound_queue_pallet_index = InboundQueuePalletInstance::get();
 
-		let xcm: Xcm<()> = vec![
+		let xcm: Xcm<OpaqueCall> = vec![
 			// Teleport required fees.
 			ReceiveTeleportedAsset(total.into()),
 			// Pay for execution.
@@ -302,7 +302,7 @@ where
 		destination: Destination,
 		amount: u128,
 		asset_hub_fee: u128,
-	) -> (Xcm<()>, Balance) {
+	) -> (Xcm<OpaqueCall>, Balance) {
 		let network = Ethereum { chain_id };
 		let asset_hub_fee_asset: Asset = (Location::parent(), asset_hub_fee).into();
 		let asset: Asset = (Self::convert_token_address(network, token), amount).into();
@@ -411,7 +411,7 @@ where
 		destination: Destination,
 		amount: u128,
 		asset_hub_fee: u128,
-	) -> Result<(Xcm<()>, Balance), ConvertMessageError> {
+	) -> Result<(Xcm<OpaqueCall>, Balance), ConvertMessageError> {
 		let network = Ethereum { chain_id };
 		let asset_hub_fee_asset: Asset = (Location::parent(), asset_hub_fee).into();
 

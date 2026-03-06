@@ -682,8 +682,8 @@ impl Get<Location> for AssetHubLocation {
 }
 
 pub struct SessionReportToXcm;
-impl Convert<rc_client::SessionReport<AccountId>, Xcm<()>> for SessionReportToXcm {
-	fn convert(a: rc_client::SessionReport<AccountId>) -> Xcm<()> {
+impl Convert<rc_client::SessionReport<AccountId>, Xcm<OpaqueCall>> for SessionReportToXcm {
+	fn convert(a: rc_client::SessionReport<AccountId>) -> Xcm<OpaqueCall> {
 		Xcm(vec![
 			Instruction::UnpaidExecution {
 				weight_limit: WeightLimit::Unlimited,
@@ -701,8 +701,8 @@ impl Convert<rc_client::SessionReport<AccountId>, Xcm<()>> for SessionReportToXc
 }
 
 pub struct QueuedOffenceToXcm;
-impl Convert<Vec<ah_client::QueuedOffenceOf<Runtime>>, Xcm<()>> for QueuedOffenceToXcm {
-	fn convert(offences: Vec<ah_client::QueuedOffenceOf<Runtime>>) -> Xcm<()> {
+impl Convert<Vec<ah_client::QueuedOffenceOf<Runtime>>, Xcm<OpaqueCall>> for QueuedOffenceToXcm {
+	fn convert(offences: Vec<ah_client::QueuedOffenceOf<Runtime>>) -> Xcm<OpaqueCall> {
 		Xcm(vec![
 			Instruction::UnpaidExecution {
 				weight_limit: WeightLimit::Unlimited,
@@ -2647,11 +2647,11 @@ sp_api::impl_runtime_apis! {
 			}
 		}
 
-		fn query_xcm_weight(message: VersionedXcm<()>) -> Result<Weight, XcmPaymentApiError> {
+		fn query_xcm_weight(message: VersionedXcm<OpaqueCall>) -> Result<Weight, XcmPaymentApiError> {
 			XcmPallet::query_xcm_weight(message)
 		}
 
-		fn query_delivery_fees(destination: VersionedLocation, message: VersionedXcm<()>, asset_id: VersionedAssetId) -> Result<VersionedAssets, XcmPaymentApiError> {
+		fn query_delivery_fees(destination: VersionedLocation, message: VersionedXcm<OpaqueCall>, asset_id: VersionedAssetId) -> Result<VersionedAssets, XcmPaymentApiError> {
 			type AssetExchanger = <xcm_config::XcmConfig as xcm_executor::Config>::AssetExchanger;
 			XcmPallet::query_delivery_fees::<AssetExchanger>(destination, message, asset_id)
 		}

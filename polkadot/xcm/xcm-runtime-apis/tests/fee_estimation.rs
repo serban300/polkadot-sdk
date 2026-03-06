@@ -83,7 +83,7 @@ fn fee_estimation_for_teleport() {
 			)),
 		);
 		let send_destination = Location::new(1, [Parachain(1000)]);
-		let send_message = Xcm::<()>::builder_unsafe()
+		let send_message = Xcm::<OpaqueCall>::builder_unsafe()
 			.withdraw_asset((Parent, 20u128))
 			.buy_execution((Parent, 20u128), Unlimited)
 			.receive_teleported_asset(((Parent, Parachain(2000)), 100u128))
@@ -258,7 +258,7 @@ fn dry_run_reserve_asset_transfer_common(
 		// In this case, the transfer type is `DestinationReserve`, so the remote xcm just withdraws
 		// the assets.
 		let send_destination = Location::new(1, Parachain(1000));
-		let send_message = Xcm::<()>::builder_unsafe()
+		let send_message = Xcm::<OpaqueCall>::builder_unsafe()
 			.withdraw_asset((Parent, 100u128))
 			.clear_origin()
 			.buy_execution((Parent, 100u128), Unlimited)
@@ -356,7 +356,7 @@ fn dry_run_xcm_common(xcm_version: XcmVersion) {
 	let who = 1; // AccountId = u64.
 	let transfer_amount = 100u128;
 	// We need to build the XCM to weigh it and then build the real XCM that can pay for fees.
-	let inner_xcm = Xcm::<()>::builder_unsafe()
+	let inner_xcm = Xcm::<OpaqueCall>::builder_unsafe()
 		.buy_execution((Here, 1u128), Unlimited) // We'd need to query the destination chain for fees.
 		.deposit_asset(AllCounted(1), [0u8; 32])
 		.build();
@@ -407,7 +407,7 @@ fn dry_run_xcm_common(xcm_version: XcmVersion) {
 			)
 			.unwrap()
 			.unwrap();
-		let expected_xcms = Xcm::<()>::builder_unsafe()
+		let expected_xcms = Xcm::<OpaqueCall>::builder_unsafe()
 			.reserve_asset_deposited((
 				(Parent, Parachain(2000)),
 				transfer_amount + execution_fees - DeliveryFees::get(),
@@ -549,7 +549,7 @@ fn fee_estimation_for_usdt_reserve_transfer_in_usdt() {
 		let send_destination = Location::new(1, [Parachain(1000)]);
 		// For destination reserve, the remote message withdraws the assets from the sovereign
 		// account
-		let send_message = Xcm::<()>::builder_unsafe()
+		let send_message = Xcm::<OpaqueCall>::builder_unsafe()
 			.withdraw_asset((usdt_location_ah_pov.clone(), 100u128))
 			.clear_origin()
 			.buy_execution((usdt_location_ah_pov.clone(), 100u128), Unlimited)

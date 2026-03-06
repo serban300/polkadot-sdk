@@ -219,7 +219,10 @@ pub mod benchmark_helpers {
 	use snowbridge_inbound_queue_primitives::EventFixture;
 	use snowbridge_pallet_inbound_queue::BenchmarkHelper;
 	use snowbridge_pallet_inbound_queue_fixtures::register_token::make_register_token_message;
-	use xcm::latest::{Assets, Location, SendError, SendResult, SendXcm, Xcm, XcmHash};
+	use xcm::{
+		latest::{Assets, Location, SendError, SendResult, SendXcm, Xcm, XcmHash},
+		OpaqueCall,
+	};
 
 	impl<T: snowbridge_pallet_ethereum_client::Config> BenchmarkHelper<T> for Runtime {
 		fn initialize_storage() -> EventFixture {
@@ -235,15 +238,15 @@ pub mod benchmark_helpers {
 
 	pub struct DoNothingRouter;
 	impl SendXcm for DoNothingRouter {
-		type Ticket = Xcm<()>;
+		type Ticket = Xcm<OpaqueCall>;
 
 		fn validate(
 			_dest: &mut Option<Location>,
-			xcm: &mut Option<Xcm<()>>,
+			xcm: &mut Option<Xcm<OpaqueCall>>,
 		) -> SendResult<Self::Ticket> {
 			Ok((xcm.clone().unwrap(), Assets::new()))
 		}
-		fn deliver(xcm: Xcm<()>) -> Result<XcmHash, SendError> {
+		fn deliver(xcm: Xcm<OpaqueCall>) -> Result<XcmHash, SendError> {
 			let hash = xcm.using_encoded(sp_io::hashing::blake2_256);
 			Ok(hash)
 		}

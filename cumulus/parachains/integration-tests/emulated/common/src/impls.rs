@@ -300,7 +300,7 @@ macro_rules! impl_hrmp_channels_helpers_for_relay_chain {
 					recipient_para_id: $crate::impls::ParaId,
 					max_capacity: u32,
 					max_message_size: u32,
-				) -> $crate::impls::DoubleEncoded<()> {
+				) -> $crate::impls::DoubleEncoded<$crate::impls::xcm::OpaqueCall> {
 					use $crate::impls::Encode;
 
 					<Self as $crate::impls::Chain>::RuntimeCall::Hrmp($crate::impls::hrmp::Call::<
@@ -314,7 +314,7 @@ macro_rules! impl_hrmp_channels_helpers_for_relay_chain {
 					.into()
 				}
 				/// Recipient Parachain accept the open request from another Parachain
-				pub fn accept_open_channel_call(sender_para_id: $crate::impls::ParaId) -> $crate::impls::DoubleEncoded<()> {
+				pub fn accept_open_channel_call(sender_para_id: $crate::impls::ParaId) -> $crate::impls::DoubleEncoded<$crate::impls::xcm::OpaqueCall> {
 					use $crate::impls::Encode;
 
 					<Self as $crate::impls::Chain>::RuntimeCall::Hrmp($crate::impls::hrmp::Call::<
@@ -362,7 +362,7 @@ macro_rules! impl_send_transact_helpers_for_relay_chain {
 				/// A root origin (as governance) sends `xcm::Transact` with `UnpaidExecution` and encoded `call` to child parachain.
 				pub fn send_unpaid_transact_to_parachain_as_root(
 					recipient: $crate::impls::ParaId,
-					call: $crate::impls::DoubleEncoded<()>
+					call: $crate::impls::DoubleEncoded<$crate::impls::xcm::OpaqueCall>
 				) {
 					use $crate::impls::{bx, Chain, RelayChain};
 
@@ -606,7 +606,7 @@ macro_rules! impl_assets_helpers_for_system_parachain {
 					owner: $crate::impls::AccountId,
 					is_sufficient: bool,
 					min_balance: $crate::impls::Balance,
-				) -> $crate::impls::DoubleEncoded<()> {
+				) -> $crate::impls::DoubleEncoded<$crate::impls::xcm::OpaqueCall> {
 					use $crate::impls::{Chain, Encode};
 
 					<Self as Chain>::RuntimeCall::Assets($crate::impls::pallet_assets::Call::<
@@ -629,7 +629,7 @@ macro_rules! impl_assets_helpers_for_system_parachain {
 					owner: $crate::impls::AccountId,
 					is_sufficient: bool,
 					min_balance: $crate::impls::Balance,
-				) -> $crate::impls::VersionedXcm<()> {
+				) -> $crate::impls::VersionedXcm<$crate::impls::xcm::OpaqueCall> {
 					let call = Self::force_create_asset_call(asset_id, owner, is_sufficient, min_balance);
 					$crate::impls::xcm_transact_unpaid_execution(call, origin_kind)
 				}
@@ -781,7 +781,7 @@ macro_rules! impl_assets_helpers_for_parachain {
 					asset_id: u32,
 					min_balance: $crate::impls::Balance,
 					admin: $crate::impls::AccountId,
-				) -> $crate::impls::DoubleEncoded<()> {
+				) -> $crate::impls::DoubleEncoded<$crate::impls::xcm::OpaqueCall> {
 					use $crate::impls::{Chain, Encode};
 
 					<Self as Chain>::RuntimeCall::Assets($crate::impls::pallet_assets::Call::<
@@ -903,7 +903,7 @@ macro_rules! impl_foreign_assets_helpers_for_parachain {
 					asset_id: $asset_id_type,
 					min_balance: $crate::impls::Balance,
 					admin: $crate::impls::AccountId,
-				) -> $crate::impls::DoubleEncoded<()> {
+				) -> $crate::impls::DoubleEncoded<$crate::impls::xcm::OpaqueCall> {
 					use $crate::impls::{Chain, Encode};
 
 					<Self as Chain>::RuntimeCall::ForeignAssets($crate::impls::pallet_assets::Call::<
@@ -972,7 +972,7 @@ macro_rules! impl_bridge_helpers_for_chain {
 						let root_origin = <Self as Chain>::RuntimeOrigin::root();
 
 						// construct call
-						let call: $crate::impls::DoubleEncoded<()> = $runtime_call_wrapper(XcmBridgeHubCall::open_bridge {
+						let call: $crate::impls::DoubleEncoded<$crate::impls::xcm::OpaqueCall> = $runtime_call_wrapper(XcmBridgeHubCall::open_bridge {
 							bridge_destination_universal_location: bx!(
 								bridge_destination_universal_location.clone().into()
 							)

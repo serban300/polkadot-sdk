@@ -32,7 +32,7 @@ use pallet_revive::{
 };
 use pallet_xcm::{Config, WeightInfo};
 use tracing::error;
-use xcm::{v5, IdentifyVersion, VersionedLocation, VersionedXcm, MAX_XCM_DECODE_DEPTH};
+use xcm::{v5, IdentifyVersion, OpaqueCall, VersionedLocation, VersionedXcm, MAX_XCM_DECODE_DEPTH};
 use xcm_executor::traits::WeightBounds;
 
 alloy::sol!("src/interface/IXcm.sol");
@@ -95,7 +95,7 @@ where
 
 				ensure_xcm_version(&final_destination)?;
 
-				let final_message = VersionedXcm::<()>::decode_all_with_depth_limit(
+				let final_message = VersionedXcm::<OpaqueCall>::decode_all_with_depth_limit(
 					MAX_XCM_DECODE_DEPTH,
 					&mut &message[..],
 				)

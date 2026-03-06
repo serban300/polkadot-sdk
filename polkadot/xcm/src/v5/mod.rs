@@ -21,7 +21,7 @@ use super::v4::{
 	Instruction as OldInstruction, PalletInfo as OldPalletInfo,
 	QueryResponseInfo as OldQueryResponseInfo, Response as OldResponse, Xcm as OldXcm,
 };
-use crate::{utils::decode_xcm_instructions, DoubleEncoded};
+use crate::{utils::decode_xcm_instructions, DoubleEncoded, OpaqueCall};
 use alloc::{vec, vec::Vec};
 use bounded_collections::{parameter_types, BoundedVec};
 use codec::{
@@ -198,6 +198,7 @@ pub mod prelude {
 		};
 	}
 	pub use super::{Instruction, Xcm};
+	pub use crate::OpaqueCall;
 	pub use contents::*;
 	pub mod opaque {
 		pub use super::{
@@ -485,7 +486,7 @@ pub enum Instruction<Call> {
 	/// Kind: *Command*.
 	///
 	/// Errors:
-	TransferReserveAsset { assets: Assets, dest: Location, xcm: Xcm<()> },
+	TransferReserveAsset { assets: Assets, dest: Location, xcm: Xcm<OpaqueCall> },
 
 	/// Apply the encoded transaction `call`, whose dispatch-origin should be `origin` as expressed
 	/// by the kind of origin `origin_kind`.
@@ -623,7 +624,7 @@ pub enum Instruction<Call> {
 	/// Kind: *Command*
 	///
 	/// Errors:
-	DepositReserveAsset { assets: AssetFilter, dest: Location, xcm: Xcm<()> },
+	DepositReserveAsset { assets: AssetFilter, dest: Location, xcm: Xcm<OpaqueCall> },
 
 	/// Remove the asset(s) (`want`) from the Holding Register and replace them with alternative
 	/// assets.
@@ -656,7 +657,7 @@ pub enum Instruction<Call> {
 	/// Kind: *Command*
 	///
 	/// Errors:
-	InitiateReserveWithdraw { assets: AssetFilter, reserve: Location, xcm: Xcm<()> },
+	InitiateReserveWithdraw { assets: AssetFilter, reserve: Location, xcm: Xcm<OpaqueCall> },
 
 	/// Remove the asset(s) (`assets`) from holding and send a `ReceiveTeleportedAsset` XCM message
 	/// to a `dest` location.
@@ -672,7 +673,7 @@ pub enum Instruction<Call> {
 	/// Kind: *Command*
 	///
 	/// Errors:
-	InitiateTeleport { assets: AssetFilter, dest: Location, xcm: Xcm<()> },
+	InitiateTeleport { assets: AssetFilter, dest: Location, xcm: Xcm<OpaqueCall> },
 
 	/// Report to a given destination the contents of the Holding Register.
 	///
@@ -940,7 +941,7 @@ pub enum Instruction<Call> {
 	/// Kind: *Command*
 	///
 	/// Errors: *Fallible*.
-	ExportMessage { network: NetworkId, destination: InteriorLocation, xcm: Xcm<()> },
+	ExportMessage { network: NetworkId, destination: InteriorLocation, xcm: Xcm<OpaqueCall> },
 
 	/// Lock the locally held asset and prevent further transfer or withdrawal.
 	///
@@ -1108,7 +1109,7 @@ pub enum Instruction<Call> {
 		remote_fees: Option<AssetTransferFilter>,
 		preserve_origin: bool,
 		assets: BoundedVec<AssetTransferFilter, MaxAssetTransferFilters>,
-		remote_xcm: Xcm<()>,
+		remote_xcm: Xcm<OpaqueCall>,
 	},
 
 	/// Executes inner `xcm` with origin set to the provided `descendant_origin`. Once the inner
@@ -1348,13 +1349,15 @@ impl<Call, W: XcmWeightInfo<Call>> GetWeight<W> for Instruction<Call> {
 }
 
 pub mod opaque {
+	use crate::OpaqueCall;
+
 	/// The basic concrete type of `Xcm`, which doesn't make any assumptions about the
 	/// format of a call other than it is pre-encoded.
-	pub type Xcm = super::Xcm<()>;
+	pub type Xcm = super::Xcm<OpaqueCall>;
 
 	/// The basic concrete type of `Instruction`, which doesn't make any assumptions about the
 	/// format of a call other than it is pre-encoded.
-	pub type Instruction = super::Instruction<()>;
+	pub type Instruction = super::Instruction<OpaqueCall>;
 }
 
 // Convert from a v4 XCM to a v5 XCM
@@ -1548,27 +1551,27 @@ mod tests {
 
 	#[test]
 	fn basic_roundtrip_works() {
-		let xcm = Xcm::<()>(vec![TransferAsset {
+		let xcm = Xcm::<OpaqueCall>(vec![TransferAsset {
 			assets: (Here, 1u128).into(),
 			beneficiary: Here.into(),
 		}]);
-		let old_xcm = OldXcm::<()>(vec![OldInstruction::TransferAsset {
+		let old_xcm = OldXcm::<OpaqueCall>(vec![OldInstruction::TransferAsset {
 			assets: (OldHere, 1u128).into(),
 			beneficiary: OldHere.into(),
 		}]);
-		assert_eq!(old_xcm, OldXcm::<()>::try_from(xcm.clone()).unwrap());
-		let new_xcm: Xcm<()> = old_xcm.try_into().unwrap();
+		assert_eq!(old_xcm, OldXcm::<OpaqueCall>::try_from(xcm.clone()).unwrap());
+		let new_xcm: Xcm<OpaqueCall> = old_xcm.try_into().unwrap();
 		assert_eq!(new_xcm, xcm);
 	}
 
 	#[test]
 	fn teleport_roundtrip_works() {
-		let xcm = Xcm::<()>(vec![
+		let xcm = Xcm::<OpaqueCall>(vec![
 			ReceiveTeleportedAsset((Here, 1u128).into()),
 			ClearOrigin,
 			DepositAsset { assets: Wild(AllCounted(1)), beneficiary: Here.into() },
 		]);
-		let old_xcm: OldXcm<()> = OldXcm::<()>(vec![
+		let old_xcm: OldXcm<OpaqueCall> = OldXcm::<OpaqueCall>(vec![
 			OldInstruction::ReceiveTeleportedAsset((OldHere, 1u128).into()),
 			OldInstruction::ClearOrigin,
 			OldInstruction::DepositAsset {
@@ -1576,14 +1579,14 @@ mod tests {
 				beneficiary: OldHere.into(),
 			},
 		]);
-		assert_eq!(old_xcm, OldXcm::<()>::try_from(xcm.clone()).unwrap());
-		let new_xcm: Xcm<()> = old_xcm.try_into().unwrap();
+		assert_eq!(old_xcm, OldXcm::<OpaqueCall>::try_from(xcm.clone()).unwrap());
+		let new_xcm: Xcm<OpaqueCall> = old_xcm.try_into().unwrap();
 		assert_eq!(new_xcm, xcm);
 	}
 
 	#[test]
 	fn reserve_deposit_roundtrip_works() {
-		let xcm = Xcm::<()>(vec![
+		let xcm = Xcm::<OpaqueCall>(vec![
 			ReserveAssetDeposited((Here, 1u128).into()),
 			ClearOrigin,
 			BuyExecution {
@@ -1592,7 +1595,7 @@ mod tests {
 			},
 			DepositAsset { assets: Wild(AllCounted(1)), beneficiary: Here.into() },
 		]);
-		let old_xcm = OldXcm::<()>(vec![
+		let old_xcm = OldXcm::<OpaqueCall>(vec![
 			OldInstruction::ReserveAssetDeposited((OldHere, 1u128).into()),
 			OldInstruction::ClearOrigin,
 			OldInstruction::BuyExecution {
@@ -1604,56 +1607,56 @@ mod tests {
 				beneficiary: OldHere.into(),
 			},
 		]);
-		assert_eq!(old_xcm, OldXcm::<()>::try_from(xcm.clone()).unwrap());
-		let new_xcm: Xcm<()> = old_xcm.try_into().unwrap();
+		assert_eq!(old_xcm, OldXcm::<OpaqueCall>::try_from(xcm.clone()).unwrap());
+		let new_xcm: Xcm<OpaqueCall> = old_xcm.try_into().unwrap();
 		assert_eq!(new_xcm, xcm);
 	}
 
 	#[test]
 	fn deposit_asset_roundtrip_works() {
-		let xcm = Xcm::<()>(vec![
+		let xcm = Xcm::<OpaqueCall>(vec![
 			WithdrawAsset((Here, 1u128).into()),
 			DepositAsset { assets: Wild(AllCounted(1)), beneficiary: Here.into() },
 		]);
-		let old_xcm = OldXcm::<()>(vec![
+		let old_xcm = OldXcm::<OpaqueCall>(vec![
 			OldInstruction::WithdrawAsset((OldHere, 1u128).into()),
 			OldInstruction::DepositAsset {
 				assets: OldAssetFilter::Wild(OldWildAsset::AllCounted(1)),
 				beneficiary: OldHere.into(),
 			},
 		]);
-		assert_eq!(old_xcm, OldXcm::<()>::try_from(xcm.clone()).unwrap());
-		let new_xcm: Xcm<()> = old_xcm.try_into().unwrap();
+		assert_eq!(old_xcm, OldXcm::<OpaqueCall>::try_from(xcm.clone()).unwrap());
+		let new_xcm: Xcm<OpaqueCall> = old_xcm.try_into().unwrap();
 		assert_eq!(new_xcm, xcm);
 	}
 
 	#[test]
 	fn deposit_reserve_asset_roundtrip_works() {
-		let xcm = Xcm::<()>(vec![
+		let xcm = Xcm::<OpaqueCall>(vec![
 			WithdrawAsset((Here, 1u128).into()),
 			DepositReserveAsset {
 				assets: Wild(AllCounted(1)),
 				dest: Here.into(),
-				xcm: Xcm::<()>(vec![]),
+				xcm: Xcm::<OpaqueCall>(vec![]),
 			},
 		]);
-		let old_xcm = OldXcm::<()>(vec![
+		let old_xcm = OldXcm::<OpaqueCall>(vec![
 			OldInstruction::WithdrawAsset((OldHere, 1u128).into()),
 			OldInstruction::DepositReserveAsset {
 				assets: OldAssetFilter::Wild(OldWildAsset::AllCounted(1)),
 				dest: OldHere.into(),
-				xcm: OldXcm::<()>(vec![]),
+				xcm: OldXcm::<OpaqueCall>(vec![]),
 			},
 		]);
-		assert_eq!(old_xcm, OldXcm::<()>::try_from(xcm.clone()).unwrap());
-		let new_xcm: Xcm<()> = old_xcm.try_into().unwrap();
+		assert_eq!(old_xcm, OldXcm::<OpaqueCall>::try_from(xcm.clone()).unwrap());
+		let new_xcm: Xcm<OpaqueCall> = old_xcm.try_into().unwrap();
 		assert_eq!(new_xcm, xcm);
 	}
 
 	#[test]
 	fn transact_roundtrip_works() {
 		// We can convert as long as there's a fallback.
-		let xcm = Xcm::<()>(vec![
+		let xcm = Xcm::<OpaqueCall>(vec![
 			WithdrawAsset((Here, 1u128).into()),
 			Transact {
 				origin_kind: OriginKind::SovereignAccount,
@@ -1661,7 +1664,7 @@ mod tests {
 				fallback_max_weight: Some(Weight::from_parts(1_000_000, 1_024)),
 			},
 		]);
-		let old_xcm = OldXcm::<()>(vec![
+		let old_xcm = OldXcm::<OpaqueCall>(vec![
 			OldInstruction::WithdrawAsset((OldHere, 1u128).into()),
 			OldInstruction::Transact {
 				origin_kind: OriginKind::SovereignAccount,
@@ -1669,12 +1672,12 @@ mod tests {
 				require_weight_at_most: Weight::from_parts(1_000_000, 1_024),
 			},
 		]);
-		assert_eq!(old_xcm, OldXcm::<()>::try_from(xcm.clone()).unwrap());
-		let new_xcm: Xcm<()> = old_xcm.try_into().unwrap();
+		assert_eq!(old_xcm, OldXcm::<OpaqueCall>::try_from(xcm.clone()).unwrap());
+		let new_xcm: Xcm<OpaqueCall> = old_xcm.try_into().unwrap();
 		assert_eq!(new_xcm, xcm);
 
 		// If we have no fallback the resulting message won't know the weight.
-		let xcm_without_fallback = Xcm::<()>(vec![
+		let xcm_without_fallback = Xcm::<OpaqueCall>(vec![
 			WithdrawAsset((Here, 1u128).into()),
 			Transact {
 				origin_kind: OriginKind::SovereignAccount,
@@ -1682,7 +1685,7 @@ mod tests {
 				fallback_max_weight: None,
 			},
 		]);
-		let old_xcm = OldXcm::<()>(vec![
+		let old_xcm = OldXcm::<OpaqueCall>(vec![
 			OldInstruction::WithdrawAsset((OldHere, 1u128).into()),
 			OldInstruction::Transact {
 				origin_kind: OriginKind::SovereignAccount,
@@ -1690,9 +1693,9 @@ mod tests {
 				require_weight_at_most: Weight::MAX,
 			},
 		]);
-		assert_eq!(old_xcm, OldXcm::<()>::try_from(xcm_without_fallback.clone()).unwrap());
-		let new_xcm: Xcm<()> = old_xcm.try_into().unwrap();
-		let xcm_with_max_weight_fallback = Xcm::<()>(vec![
+		assert_eq!(old_xcm, OldXcm::<OpaqueCall>::try_from(xcm_without_fallback.clone()).unwrap());
+		let new_xcm: Xcm<OpaqueCall> = old_xcm.try_into().unwrap();
+		let xcm_with_max_weight_fallback = Xcm::<OpaqueCall>(vec![
 			WithdrawAsset((Here, 1u128).into()),
 			Transact {
 				origin_kind: OriginKind::SovereignAccount,
@@ -1705,15 +1708,15 @@ mod tests {
 
 	#[test]
 	fn decoding_respects_limit() {
-		let max_xcm = Xcm::<()>(vec![ClearOrigin; MAX_INSTRUCTIONS_TO_DECODE as usize]);
+		let max_xcm = Xcm::<OpaqueCall>(vec![ClearOrigin; MAX_INSTRUCTIONS_TO_DECODE as usize]);
 		let encoded = max_xcm.encode();
-		assert!(Xcm::<()>::decode(&mut &encoded[..]).is_ok());
+		assert!(Xcm::<OpaqueCall>::decode(&mut &encoded[..]).is_ok());
 
-		let big_xcm = Xcm::<()>(vec![ClearOrigin; MAX_INSTRUCTIONS_TO_DECODE as usize + 1]);
+		let big_xcm = Xcm::<OpaqueCall>(vec![ClearOrigin; MAX_INSTRUCTIONS_TO_DECODE as usize + 1]);
 		let encoded = big_xcm.encode();
-		assert!(Xcm::<()>::decode(&mut &encoded[..]).is_err());
+		assert!(Xcm::<OpaqueCall>::decode(&mut &encoded[..]).is_err());
 
-		let nested_xcm = Xcm::<()>(vec![
+		let nested_xcm = Xcm::<OpaqueCall>(vec![
 			DepositReserveAsset {
 				assets: All.into(),
 				dest: Here.into(),
@@ -1722,13 +1725,13 @@ mod tests {
 			(MAX_INSTRUCTIONS_TO_DECODE / 2) as usize
 		]);
 		let encoded = nested_xcm.encode();
-		assert!(Xcm::<()>::decode(&mut &encoded[..]).is_err());
+		assert!(Xcm::<OpaqueCall>::decode(&mut &encoded[..]).is_err());
 
-		let even_more_nested_xcm = Xcm::<()>(vec![SetAppendix(nested_xcm); 64]);
+		let even_more_nested_xcm = Xcm::<OpaqueCall>(vec![SetAppendix(nested_xcm); 64]);
 		let encoded = even_more_nested_xcm.encode();
 		assert_eq!(encoded.len(), 342530);
 		// This should not decode since the limit is 100
 		assert_eq!(MAX_INSTRUCTIONS_TO_DECODE, 100, "precondition");
-		assert!(Xcm::<()>::decode(&mut &encoded[..]).is_err());
+		assert!(Xcm::<OpaqueCall>::decode(&mut &encoded[..]).is_err());
 	}
 }

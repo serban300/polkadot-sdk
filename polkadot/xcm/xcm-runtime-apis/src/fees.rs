@@ -20,7 +20,9 @@ use alloc::vec::Vec;
 use codec::{Decode, Encode};
 use frame_support::pallet_prelude::TypeInfo;
 use sp_weights::Weight;
-use xcm::{Version, VersionedAssetId, VersionedAssets, VersionedLocation, VersionedXcm};
+use xcm::{
+	OpaqueCall, Version, VersionedAssetId, VersionedAssets, VersionedLocation, VersionedXcm,
+};
 
 sp_api::decl_runtime_apis! {
 	/// A trait of XCM payment API.
@@ -48,7 +50,7 @@ sp_api::decl_runtime_apis! {
 		/// # Arguments
 		///
 		/// * `message`: `VersionedXcm`.
-		fn query_xcm_weight(message: VersionedXcm<()>) -> Result<Weight, Error>;
+		fn query_xcm_weight(message: VersionedXcm<OpaqueCall>) -> Result<Weight, Error>;
 
 		/// Converts a weight into a fee for the specified `AssetId`.
 		///
@@ -69,7 +71,7 @@ sp_api::decl_runtime_apis! {
 		/// * `destination`: The destination to send the message to. Different destinations may use
 		///   different senders that charge different fees.
 		#[changed_in(2)]
-		fn query_delivery_fees(destination: VersionedLocation, message: VersionedXcm<()>) -> Result<VersionedAssets, Error>;
+		fn query_delivery_fees(destination: VersionedLocation, message: VersionedXcm<OpaqueCall>) -> Result<VersionedAssets, Error>;
 
 		/// Query delivery fees V2.
 		///
@@ -81,7 +83,7 @@ sp_api::decl_runtime_apis! {
 		///   size of the message.
 		/// * `destination`: The destination to send the message to. Different destinations may use
 		///   different senders that charge different fees.
-		fn query_delivery_fees(destination: VersionedLocation, message: VersionedXcm<()>, asset_id: VersionedAssetId) -> Result<VersionedAssets, Error>;
+		fn query_delivery_fees(destination: VersionedLocation, message: VersionedXcm<OpaqueCall>, asset_id: VersionedAssetId) -> Result<VersionedAssets, Error>;
 	}
 }
 

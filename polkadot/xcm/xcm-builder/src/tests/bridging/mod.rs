@@ -94,7 +94,7 @@ impl<R: SendXcm> SendXcm for TestTopic<R> {
 	}
 	fn validate(
 		destination: &mut Option<Location>,
-		message: &mut Option<Xcm<()>>,
+		message: &mut Option<Xcm<OpaqueCall>>,
 	) -> SendResult<Self::Ticket> {
 		Ok(if UsingTopic::get() {
 			let (t, a) = WithTopicSource::<R, ()>::validate(destination, message)?;
@@ -121,26 +121,26 @@ impl<D: DispatchBlob> HaulBlob for TestBridge<D> {
 }
 
 std::thread_local! {
-	static REMOTE_INCOMING_XCM: RefCell<Vec<(Location, Xcm<()>)>> = RefCell::new(Vec::new());
+	static REMOTE_INCOMING_XCM: RefCell<Vec<(Location, Xcm<OpaqueCall>)>> = RefCell::new(Vec::new());
 }
 struct TestRemoteIncomingRouter;
 impl SendXcm for TestRemoteIncomingRouter {
-	type Ticket = (Location, Xcm<()>);
+	type Ticket = (Location, Xcm<OpaqueCall>);
 	fn validate(
 		dest: &mut Option<Location>,
-		msg: &mut Option<Xcm<()>>,
-	) -> SendResult<(Location, Xcm<()>)> {
+		msg: &mut Option<Xcm<OpaqueCall>>,
+	) -> SendResult<(Location, Xcm<OpaqueCall>)> {
 		let pair = (dest.take().unwrap(), msg.take().unwrap());
 		Ok((pair, Assets::new()))
 	}
-	fn deliver(pair: (Location, Xcm<()>)) -> Result<XcmHash, SendError> {
+	fn deliver(pair: (Location, Xcm<OpaqueCall>)) -> Result<XcmHash, SendError> {
 		let hash = fake_id();
 		REMOTE_INCOMING_XCM.with(|q| q.borrow_mut().push(pair));
 		Ok(hash)
 	}
 }
 
-fn take_received_remote_messages() -> Vec<(Location, Xcm<()>)> {
+fn take_received_remote_messages() -> Vec<(Location, Xcm<OpaqueCall>)> {
 	REMOTE_INCOMING_XCM.with(|r| r.replace(vec![]))
 }
 
@@ -155,7 +155,7 @@ fn price<RemoteExporter: ExportXcm>(
 	c: u32,
 	s: &InteriorLocation,
 	d: &InteriorLocation,
-	m: &Xcm<()>,
+	m: &Xcm<OpaqueCall>,
 ) -> Result<Assets, SendError> {
 	Ok(validate_export::<RemoteExporter>(n, c, s.clone(), d.clone(), m.clone())?.1)
 }
@@ -165,7 +165,7 @@ fn deliver<RemoteExporter: ExportXcm>(
 	c: u32,
 	s: InteriorLocation,
 	d: InteriorLocation,
-	m: Xcm<()>,
+	m: Xcm<OpaqueCall>,
 ) -> Result<XcmHash, SendError> {
 	export_xcm::<RemoteExporter>(n, c, s, d, m).map(|(hash, _)| hash)
 }
@@ -175,7 +175,7 @@ pub struct LogEntry {
 	local: Junctions,
 	remote: Junctions,
 	id: XcmHash,
-	message: Xcm<()>,
+	message: Xcm<OpaqueCall>,
 	outcome: Outcome,
 	paid: bool,
 }
@@ -187,12 +187,12 @@ parameter_types! {
 impl<Local: Get<Junctions>, Remote: Get<Junctions>, RemoteExporter: ExportXcm> SendXcm
 	for UnpaidExecutingRouter<Local, Remote, RemoteExporter>
 {
-	type Ticket = Xcm<()>;
+	type Ticket = Xcm<OpaqueCall>;
 
 	fn validate(
 		destination: &mut Option<Location>,
-		message: &mut Option<Xcm<()>>,
-	) -> SendResult<Xcm<()>> {
+		message: &mut Option<Xcm<OpaqueCall>>,
+	) -> SendResult<Xcm<OpaqueCall>> {
 		let expect_dest = Remote::get().relative_to(&Local::get());
 		if destination.as_ref().ok_or(MissingArgument)? != &expect_dest {
 			return Err(NotApplicable);
@@ -201,7 +201,7 @@ impl<Local: Get<Junctions>, Remote: Get<Junctions>, RemoteExporter: ExportXcm> S
 		Ok((message, Assets::new()))
 	}
 
-	fn deliver(message: Xcm<()>) -> Result<XcmHash, SendError> {
+	fn deliver(message: Xcm<OpaqueCall>) -> Result<XcmHash, SendError> {
 		// We now pretend that the message was delivered from `Local` to `Remote`, and execute
 		// so we need to ensure that the `TestConfig` is set up properly for executing as
 		// though it is `Remote`.
@@ -237,12 +237,12 @@ struct ExecutingRouter<Local, Remote, RemoteExporter>(PhantomData<(Local, Remote
 impl<Local: Get<Junctions>, Remote: Get<Junctions>, RemoteExporter: ExportXcm> SendXcm
 	for ExecutingRouter<Local, Remote, RemoteExporter>
 {
-	type Ticket = Xcm<()>;
+	type Ticket = Xcm<OpaqueCall>;
 
 	fn validate(
 		destination: &mut Option<Location>,
-		message: &mut Option<Xcm<()>>,
-	) -> SendResult<Xcm<()>> {
+		message: &mut Option<Xcm<OpaqueCall>>,
+	) -> SendResult<Xcm<OpaqueCall>> {
 		let expect_dest = Remote::get().relative_to(&Local::get());
 		if destination.as_ref().ok_or(MissingArgument)? != &expect_dest {
 			return Err(NotApplicable);
@@ -251,7 +251,7 @@ impl<Local: Get<Junctions>, Remote: Get<Junctions>, RemoteExporter: ExportXcm> S
 		Ok((message, Assets::new()))
 	}
 
-	fn deliver(message: Xcm<()>) -> Result<XcmHash, SendError> {
+	fn deliver(message: Xcm<OpaqueCall>) -> Result<XcmHash, SendError> {
 		// We now pretend that the message was delivered from `Local` to `Remote`, and execute
 		// so we need to ensure that the `TestConfig` is set up properly for executing as
 		// though it is `Remote`.

@@ -806,7 +806,7 @@ fn basic_subscription_works() {
 		);
 
 		let weight = BaseXcmWeight::get();
-		let mut message = Xcm::<()>(vec![
+		let mut message = Xcm::<OpaqueCall>(vec![
 			// Remote supports XCM v3
 			QueryResponse {
 				query_id: 0,
@@ -1081,7 +1081,7 @@ fn subscriber_side_subscription_works() {
 			assert_eq!(XcmPallet::get_version_for(&remote), Some(3));
 
 			// This message will be sent as v3.
-			let v4_msg = xcm::v4::Xcm::<()>(vec![xcm::v4::Instruction::Trap(0)]);
+			let v4_msg = xcm::v4::Xcm::<OpaqueCall>(vec![xcm::v4::Instruction::Trap(0)]);
 			assert_eq!(
 				XcmPallet::wrap_version(&remote, v4_msg.clone()),
 				Ok(VersionedXcm::V3(xcm::v3::Xcm(vec![xcm::v3::Instruction::Trap(0)])))
@@ -1127,8 +1127,8 @@ fn auto_subscription_works() {
 		assert_ok!(XcmPallet::force_default_xcm_version(RuntimeOrigin::root(), Some(3)));
 
 		// Wrapping a version for a destination we don't know elicits a subscription.
-		let msg_v3 = xcm::v3::Xcm::<()>(vec![xcm::v3::Instruction::Trap(0)]);
-		let msg_v4 = xcm::v4::Xcm::<()>(vec![xcm::v4::Instruction::ClearTopic]);
+		let msg_v3 = xcm::v3::Xcm::<OpaqueCall>(vec![xcm::v3::Instruction::Trap(0)]);
+		let msg_v4 = xcm::v4::Xcm::<OpaqueCall>(vec![xcm::v4::Instruction::ClearTopic]);
 		assert_eq!(
 			XcmPallet::wrap_version(&remote_v3, msg_v3.clone()),
 			Ok(VersionedXcm::from(msg_v3.clone())),
@@ -1349,7 +1349,7 @@ fn get_and_wrap_version_works() {
 			assert_eq!(XcmPallet::get_version_for(&remote_d), Some(XCM_VERSION));
 			assert_eq!(VersionDiscoveryQueue::<Test>::get().into_inner(), vec![]);
 
-			let xcm = Xcm::<()>::default();
+			let xcm = Xcm::<OpaqueCall>::default();
 
 			// wrap version - works because remote_a has `XCM_VERSION`
 			assert_eq!(
@@ -1708,7 +1708,7 @@ fn execute_initiate_transfer_and_check_sent_event() {
 			assert_ok!(result);
 
 			let sent_msg_id = find_xcm_sent_message_id::<Test>(all_events()).unwrap();
-			let sent_message: Xcm<()> = Xcm(vec![
+			let sent_message: Xcm<OpaqueCall> = Xcm(vec![
 				WithdrawAsset(Assets::new()),
 				ClearOrigin,
 				BuyExecution { fees: fee_asset.clone(), weight_limit: Unlimited },

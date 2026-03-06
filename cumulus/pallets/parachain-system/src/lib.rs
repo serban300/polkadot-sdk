@@ -59,7 +59,7 @@ use sp_runtime::{
 	traits::{BlockNumberProvider, Hash},
 	Debug, FixedU128, SaturatedConversion,
 };
-use xcm::{latest::XcmHash, VersionedLocation, VersionedXcm, MAX_XCM_DECODE_DEPTH};
+use xcm::{latest::XcmHash, OpaqueCall, VersionedLocation, VersionedXcm, MAX_XCM_DECODE_DEPTH};
 use xcm_builder::InspectMessageQueues;
 
 mod benchmarking;
@@ -1778,13 +1778,13 @@ impl<T: Config> InspectMessageQueues for Pallet<T> {
 		PendingUpwardMessages::<T>::kill();
 	}
 
-	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
+	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<OpaqueCall>>)> {
 		use xcm::prelude::*;
 
-		let messages: Vec<VersionedXcm<()>> = PendingUpwardMessages::<T>::get()
+		let messages: Vec<VersionedXcm<OpaqueCall>> = PendingUpwardMessages::<T>::get()
 			.iter()
 			.map(|encoded_message| {
-				VersionedXcm::<()>::decode_all_with_depth_limit(
+				VersionedXcm::<OpaqueCall>::decode_all_with_depth_limit(
 					MAX_XCM_DECODE_DEPTH,
 					&mut &encoded_message[..],
 				)

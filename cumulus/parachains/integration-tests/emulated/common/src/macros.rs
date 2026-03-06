@@ -701,13 +701,13 @@ macro_rules! test_can_estimate_and_pay_exact_fees {
 				type RuntimeCall = <$sender_para as $crate::macros::Chain>::RuntimeCall;
 
 				let beneficiary = [<$receiver_para Receiver>]::get();
-				let xcm_in_destination = $crate::macros::Xcm::<()>::builder_unsafe()
+				let xcm_in_destination = $crate::macros::Xcm::<OpaqueCall>::builder_unsafe()
 					.pay_fees(estimated_remote_fees)
 					.deposit_asset($crate::macros::AllCounted(1), beneficiary)
 					.build();
 				let ah_to_receiver = <$asset_hub as $crate::macros::Para>::sibling_location_of(
 					<$receiver_para as $crate::macros::Para>::para_id());
-				let xcm_in_reserve = $crate::macros::Xcm::<()>::builder_unsafe()
+				let xcm_in_reserve = $crate::macros::Xcm::<OpaqueCall>::builder_unsafe()
 					.pay_fees(estimated_intermediate_fees)
 					.deposit_reserve_asset(
 						$crate::macros::AllCounted(1),
@@ -769,7 +769,7 @@ macro_rules! test_can_estimate_and_pay_exact_fees {
 			// We get these from the closure.
 			let mut local_execution_fees = 0;
 			let mut local_delivery_fees = 0;
-			let mut remote_message = $crate::macros::VersionedXcm::from($crate::macros::Xcm::<()>(Vec::new()));
+			let mut remote_message = $crate::macros::VersionedXcm::from($crate::macros::Xcm::<OpaqueCall>(Vec::new()));
 			<$sender_para as $crate::macros::TestExt>::execute_with(|| {
 				type Runtime = <$sender_para as $crate::macros::Chain>::Runtime;
 				type OriginCaller = <$sender_para as $crate::macros::Chain>::OriginCaller;
@@ -813,7 +813,7 @@ macro_rules! test_can_estimate_and_pay_exact_fees {
 			// These are set in the AssetHub closure.
 			let mut intermediate_execution_fees = 0;
 			let mut intermediate_delivery_fees = 0;
-			let mut intermediate_remote_message = $crate::macros::VersionedXcm::from($crate::macros::Xcm::<()>(Vec::new()));
+			let mut intermediate_remote_message = $crate::macros::VersionedXcm::from($crate::macros::Xcm::<OpaqueCall>(Vec::new()));
 			<$asset_hub as $crate::macros::TestExt>::execute_with(|| {
 				type Runtime = <$asset_hub as $crate::macros::Chain>::Runtime;
 				type RuntimeCall = <$asset_hub as $crate::macros::Chain>::RuntimeCall;
@@ -826,7 +826,7 @@ macro_rules! test_can_estimate_and_pay_exact_fees {
 				)
 				.unwrap();
 
-				// We have to do this to turn `VersionedXcm<()>` into `VersionedXcm<RuntimeCall>`.
+				// We have to do this to turn `VersionedXcm<OpaqueCall>` into `VersionedXcm<RuntimeCall>`.
 				let xcm_program =
 					$crate::macros::VersionedXcm::from($crate::macros::Xcm::<RuntimeCall>::from(
 						remote_message.clone().try_into().unwrap()));
@@ -964,7 +964,7 @@ macro_rules! test_dry_run_transfer_across_pk_bridge {
 					assets_transfer_type: Box::new($crate::macros::TransferType::LocalReserve),
 					remote_fees_id: Box::new($crate::macros::VersionedAssetId::from($crate::macros::Parent)),
 					fees_transfer_type: Box::new($crate::macros::TransferType::LocalReserve),
-					custom_xcm_on_dest: Box::new($crate::macros::VersionedXcm::<()>::from($crate::macros::Xcm::<()>::builder_unsafe().deposit_asset(AllCounted(1), beneficiary).build())),
+					custom_xcm_on_dest: Box::new($crate::macros::VersionedXcm::<OpaqueCall>::from($crate::macros::Xcm::<OpaqueCall>::builder_unsafe().deposit_asset(AllCounted(1), beneficiary).build())),
 					weight_limit: $crate::macros::Unlimited,
 				});
 				let origin = OriginCaller::system($crate::macros::RawOrigin::Signed(who));
@@ -1010,7 +1010,7 @@ macro_rules! test_xcm_fee_querying_apis_work_for_asset_hub {
 					$crate::macros::VersionedAssetId::from($crate::macros::AssetId(usdt.clone())),
 				]);
 
-				let program = $crate::macros::Xcm::<()>::builder()
+				let program = $crate::macros::Xcm::<OpaqueCall>::builder()
 					.withdraw_asset(($crate::macros::Parent, 100u128))
 					.buy_execution(($crate::macros::Parent, 10u128), $crate::macros::Unlimited)
 					.deposit_asset($crate::macros::All, [0u8; 32])
@@ -1088,7 +1088,7 @@ macro_rules! test_cross_chain_alias {
 					};
 					<$sender_para as $crate::macros::TestExt>::execute_with(|| {
 						type RuntimeEvent = <$sender_para as $crate::macros::Chain>::RuntimeEvent;
-						let xcm_message = $crate::macros::Xcm::<()>(vec![
+						let xcm_message = $crate::macros::Xcm::<OpaqueCall>(vec![
 							$crate::macros::WithdrawAsset(total_fees.into()),
 							$crate::macros::PayFees { asset: fees.clone() },
 							$crate::macros::InitiateTransfer {

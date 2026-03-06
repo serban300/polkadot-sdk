@@ -152,7 +152,7 @@ use sp_staking::SessionIndex;
 #[cfg(feature = "xcm-sender")]
 use xcm::latest::{
 	send_xcm, validate_send, ExecuteXcm, Fungibility::Fungible, Instruction, Junction, Location,
-	OriginKind, SendError, SendXcm, WeightLimit, Xcm,
+	OpaqueCall, OriginKind, SendError, SendXcm, WeightLimit, Xcm,
 };
 
 /// Builds an XCM message with `UnpaidExecution` + `Transact` from an encoded call.
@@ -160,7 +160,7 @@ use xcm::latest::{
 /// This is the standard pattern for system parachain → relay chain messages where
 /// the relay chain trusts the parachain origin and doesn't charge fees.
 #[cfg(feature = "xcm-sender")]
-pub fn build_transact_xcm(encoded_call: Vec<u8>) -> Xcm<()> {
+pub fn build_transact_xcm(encoded_call: Vec<u8>) -> Xcm<OpaqueCall> {
 	Xcm(vec![
 		Instruction::UnpaidExecution { weight_limit: WeightLimit::Unlimited, check_origin: None },
 		Instruction::Transact {
@@ -604,8 +604,8 @@ impl<AccountId: Clone> SplittableMessage for ValidatorSetReport<AccountId> {
 /// Common utility to send XCM messages that can use [`SplittableMessage`].
 ///
 /// It can be used both in the RC and AH. `Message` is the splittable message type, and `ToXcm`
-/// should be configured by the user, converting `message` to a valida `Xcm<()>`. It should utilize
-/// the correct call indices, which we only know at the runtime level.
+/// should be configured by the user, converting `message` to a valida `Xcm<OpaqueCall>`. It should
+/// utilize the correct call indices, which we only know at the runtime level.
 // NOTE: to have the pallet fully XCM-agnostic, XCMSender should be moved out (to a new or existing
 // XCM helper crate or to runtimes crates directly)
 #[cfg(feature = "xcm-sender")]
@@ -619,7 +619,7 @@ where
 	Sender: SendXcm,
 	Destination: Get<Location>,
 	Message: Clone + Encode,
-	ToXcm: Convert<Message, Xcm<()>>,
+	ToXcm: Convert<Message, Xcm<OpaqueCall>>,
 {
 	/// Send the message single-shot; no splitting.
 	///
@@ -739,7 +739,7 @@ where
 	Sender: SendXcm,
 	Destination: Get<Location>,
 	Message: SplittableMessage + Display + Clone + Encode,
-	ToXcm: Convert<Message, Xcm<()>>,
+	ToXcm: Convert<Message, Xcm<OpaqueCall>>,
 {
 	/// Safe send method to send a `message`, while validating it and using [`SplittableMessage`] to
 	/// split it into smaller pieces if XCM validation fails with `ExceedsMaxMessageSize`. It will
@@ -780,7 +780,10 @@ where
 		}
 	}
 
-	fn prepare(message: Message, maybe_max_steps: Option<u32>) -> Result<Vec<Xcm<()>>, SendError> {
+	fn prepare(
+		message: Message,
+		maybe_max_steps: Option<u32>,
+	) -> Result<Vec<Xcm<OpaqueCall>>, SendError> {
 		// initial chunk size is the entire thing, so it will be a vector of 1 item.
 		let mut chunk_size = message.len();
 		let mut steps = 0;

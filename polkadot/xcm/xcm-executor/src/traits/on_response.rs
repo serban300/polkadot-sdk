@@ -20,8 +20,8 @@ use core::{fmt::Debug, result};
 use frame_support::{pallet_prelude::Get, parameter_types};
 use sp_arithmetic::traits::Zero;
 use xcm::latest::{
-	Error as XcmError, InteriorLocation, Location, QueryId, Response, Result as XcmResult, Weight,
-	XcmContext,
+	Error as XcmError, InteriorLocation, Location, OpaqueCall, QueryId, Response,
+	Result as XcmResult, Weight, XcmContext,
 };
 
 /// Define what needs to be done upon receiving a query response.
@@ -135,7 +135,7 @@ pub trait QueryHandler {
 	/// It is assumed that the querier of the response will be `Here`.
 	/// The response can be queried with `take_response`.
 	fn report_outcome(
-		message: &mut Xcm<()>,
+		message: &mut Xcm<OpaqueCall>,
 		responder: impl Into<Location>,
 		timeout: Self::BlockNumber,
 	) -> result::Result<QueryId, Self::Error>;
@@ -169,7 +169,7 @@ impl QueryHandler for () {
 	}
 
 	fn report_outcome(
-		_message: &mut Xcm<()>,
+		_message: &mut Xcm<OpaqueCall>,
 		_responder: impl Into<Location>,
 		_timeout: Self::BlockNumber,
 	) -> Result<QueryId, Self::Error> {

@@ -762,13 +762,13 @@ pub fn mock_open_hrmp_channel<
 impl<HrmpChannelSource: cumulus_primitives_core::XcmpMessageSource, AllPalletsWithoutSystem>
 	RuntimeHelper<HrmpChannelSource, AllPalletsWithoutSystem>
 {
-	pub fn take_xcm(sent_to_para_id: ParaId) -> Option<VersionedXcm<()>> {
+	pub fn take_xcm(sent_to_para_id: ParaId) -> Option<VersionedXcm<OpaqueCall>> {
 		match HrmpChannelSource::take_outbound_messages(10)[..] {
 			[(para_id, ref mut xcm_message_data)] if para_id.eq(&sent_to_para_id.into()) => {
 				let mut xcm_message_data = &xcm_message_data[..];
 				// decode
 				let _ = XcmpMessageFormat::decode(&mut xcm_message_data).expect("valid format");
-				VersionedXcm::<()>::decode_with_depth_limit(
+				VersionedXcm::<OpaqueCall>::decode_with_depth_limit(
 					MAX_XCM_DECODE_DEPTH,
 					&mut xcm_message_data,
 				)

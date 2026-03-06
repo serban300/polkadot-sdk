@@ -175,7 +175,7 @@ fn reserve_transfer_should_work() {
 	let message = Xcm(vec![TransferReserveAsset {
 		assets: (Here, 100u128).into(),
 		dest: Parachain(2).into(),
-		xcm: Xcm::<()>(vec![DepositAsset {
+		xcm: Xcm::<OpaqueCall>(vec![DepositAsset {
 			assets: AllCounted(1).into(),
 			beneficiary: three.clone(),
 		}]),
@@ -190,7 +190,7 @@ fn reserve_transfer_should_work() {
 	);
 	assert_eq!(r, Outcome::Complete { used: Weight::from_parts(10, 10) });
 
-	let expected_msg = Xcm::<()>(vec![
+	let expected_msg = Xcm::<OpaqueCall>(vec![
 		ReserveAssetDeposited((Parent, 100u128).into()),
 		ClearOrigin,
 		DepositAsset { assets: AllCounted(1).into(), beneficiary: three },

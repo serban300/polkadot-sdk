@@ -68,7 +68,10 @@ where
 {
 	type Ticket = Vec<u8>;
 
-	fn validate(dest: &mut Option<Location>, msg: &mut Option<Xcm<()>>) -> SendResult<Vec<u8>> {
+	fn validate(
+		dest: &mut Option<Location>,
+		msg: &mut Option<Xcm<OpaqueCall>>,
+	) -> SendResult<Vec<u8>> {
 		let d = dest.take().ok_or(SendError::MissingArgument)?;
 
 		if d.contains_parents_only(1) {
@@ -123,7 +126,7 @@ impl<T: UpwardMessageSender + InspectMessageQueues, W, P> InspectMessageQueues
 		T::clear_messages();
 	}
 
-	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
+	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<OpaqueCall>>)> {
 		T::get_messages()
 	}
 }
@@ -659,7 +662,7 @@ mod test_xcm_router {
 
 		fn validate(
 			destination: &mut Option<Location>,
-			message: &mut Option<Xcm<()>>,
+			message: &mut Option<Xcm<OpaqueCall>>,
 		) -> SendResult<Self::Ticket> {
 			assert!(destination.is_some());
 			assert!(message.is_some());

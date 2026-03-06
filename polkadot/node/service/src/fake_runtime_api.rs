@@ -42,7 +42,8 @@ use sp_version::RuntimeVersion;
 use sp_weights::Weight;
 use std::collections::BTreeMap;
 use xcm::{
-	Version as XcmVersion, VersionedAssetId, VersionedAssets, VersionedLocation, VersionedXcm,
+	OpaqueCall, Version as XcmVersion, VersionedAssetId, VersionedAssets, VersionedLocation,
+	VersionedXcm,
 };
 sp_api::decl_runtime_apis! {
 	/// This runtime API is only implemented for the test runtime!
@@ -436,21 +437,11 @@ sp_api::impl_runtime_apis! {
 			unimplemented!()
 		}
 
-		fn query_xcm_weight(_: VersionedXcm<()>) -> Result<Weight, xcm_runtime_apis::fees::Error> {
+		fn query_xcm_weight(_: VersionedXcm<OpaqueCall>) -> Result<Weight, xcm_runtime_apis::fees::Error> {
 			unimplemented!()
 		}
 
-		fn query_delivery_fees(_: VersionedLocation, _: VersionedXcm<()>, _: VersionedAssetId) -> Result<VersionedAssets, xcm_runtime_apis::fees::Error> {
-			unimplemented!()
-		}
-	}
-
-	impl xcm_runtime_apis::dry_run::DryRunApi<Block, (), (), ()> for Runtime {
-		fn dry_run_call(_: (), _: (), _: XcmVersion) -> Result<xcm_runtime_apis::dry_run::CallDryRunEffects<()>, xcm_runtime_apis::dry_run::Error> {
-			unimplemented!()
-		}
-
-		fn dry_run_xcm(_: VersionedLocation, _: VersionedXcm<()>) -> Result<xcm_runtime_apis::dry_run::XcmDryRunEffects<()>, xcm_runtime_apis::dry_run::Error> {
+		fn query_delivery_fees(_: VersionedLocation, _: VersionedXcm<OpaqueCall>, _: VersionedAssetId) -> Result<VersionedAssets, xcm_runtime_apis::fees::Error> {
 			unimplemented!()
 		}
 	}

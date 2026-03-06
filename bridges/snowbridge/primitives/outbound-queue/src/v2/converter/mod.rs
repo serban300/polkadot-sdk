@@ -63,7 +63,7 @@ where
 		_channel: u32,
 		universal_source: &mut Option<InteriorLocation>,
 		destination: &mut Option<InteriorLocation>,
-		message: &mut Option<Xcm<()>>,
+		message: &mut Option<Xcm<OpaqueCall>>,
 	) -> SendResult<Self::Ticket> {
 		tracing::debug!(target: TARGET, ?message, "message route through bridge.");
 
@@ -135,7 +135,8 @@ where
 		);
 		ensure!(result.is_err(), SendError::NotApplicable);
 
-		let mut converter = XcmConverter::<ConvertAssetId, ()>::new(&message, expected_network);
+		let mut converter =
+			XcmConverter::<ConvertAssetId, OpaqueCall>::new(&message, expected_network);
 		let message = converter.convert().map_err(|err| {
 			tracing::error!(target: TARGET, error=?err, "unroutable due to pattern matching.");
 			SendError::Unroutable
@@ -171,11 +172,11 @@ where
 /// `(bridge_location, payment)` for the requested `network` and `remote_location` and `xcm`
 /// in the provided `T` table containing various exporters.
 pub struct XcmFilterExporter<T, M>(core::marker::PhantomData<(T, M)>);
-impl<T: ExporterFor, M: Contains<Xcm<()>>> ExporterFor for XcmFilterExporter<T, M> {
+impl<T: ExporterFor, M: Contains<Xcm<OpaqueCall>>> ExporterFor for XcmFilterExporter<T, M> {
 	fn exporter_for(
 		network: &NetworkId,
 		remote_location: &InteriorLocation,
-		xcm: &Xcm<()>,
+		xcm: &Xcm<OpaqueCall>,
 	) -> Option<(Location, Option<Asset>)> {
 		// check the XCM
 		if !M::contains(xcm) {
@@ -188,8 +189,8 @@ impl<T: ExporterFor, M: Contains<Xcm<()>>> ExporterFor for XcmFilterExporter<T, 
 
 /// Xcm for SnowbridgeV2 which requires XCMV5
 pub struct XcmForSnowbridgeV2;
-impl Contains<Xcm<()>> for XcmForSnowbridgeV2 {
-	fn contains(xcm: &Xcm<()>) -> bool {
+impl Contains<Xcm<OpaqueCall>> for XcmForSnowbridgeV2 {
+	fn contains(xcm: &Xcm<OpaqueCall>) -> bool {
 		let mut instructions = xcm.clone().0;
 		let result = instructions.matcher().match_next_inst_while(
 			|_| true,

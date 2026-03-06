@@ -24,7 +24,7 @@ fn transfer_and_transact_in_same_xcm(
 	destination: Location,
 	usdt: Asset,
 	beneficiary: Location,
-	call: xcm::DoubleEncoded<()>,
+	call: xcm::DoubleEncoded<OpaqueCall>,
 ) {
 	let signed_origin = <PenpalA as Chain>::RuntimeOrigin::signed(PenpalASender::get().into());
 	let context = PenpalUniversalLocation::get();
@@ -59,7 +59,7 @@ fn transfer_and_transact_in_same_xcm(
 		assets: BoundedVec::new(),
 		remote_xcm: xcm_on_dest,
 	}]);
-	let xcm = Xcm::<()>(vec![
+	let xcm = Xcm::<OpaqueCall>(vec![
 		WithdrawAsset(usdt.into()),
 		PayFees { asset: local_fees },
 		InitiateTransfer {
@@ -337,7 +337,7 @@ fn transact_using_authorized_alias_from_para_to_asset_hub_and_back_to_para() {
 			DepositAsset { assets: Wild(All), beneficiary: sender.clone().into() },
 		]);
 		// xcm to be executed locally on penpal as starting point
-		let xcm = Xcm::<()>(vec![
+		let xcm = Xcm::<OpaqueCall>(vec![
 			WithdrawAsset(wnd_to_withdraw.into()),
 			PayFees { asset: penpal_local_fees },
 			InitiateTransfer {
@@ -547,7 +547,7 @@ fn transact_using_sov_account_from_para_to_asset_hub_and_back_to_para() {
 			},
 		]);
 		// xcm to be executed locally on penpal as starting point
-		let xcm = Xcm::<()>(vec![
+		let xcm = Xcm::<OpaqueCall>(vec![
 			WithdrawAsset(wnd_to_withdraw.into()),
 			PayFees { asset: penpal_local_fees },
 			InitiateTransfer {

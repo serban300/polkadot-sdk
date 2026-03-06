@@ -5,7 +5,7 @@ use snowbridge_core::operating_mode::ExportPausedQuery;
 use sp_std::vec::Vec;
 use xcm::{
 	prelude::{Location, SendError, SendResult, SendXcm, Xcm, XcmHash},
-	VersionedLocation, VersionedXcm,
+	OpaqueCall, VersionedLocation, VersionedXcm,
 };
 use xcm_builder::InspectMessageQueues;
 
@@ -18,7 +18,7 @@ impl<PausedQuery: ExportPausedQuery, InnerExporter: SendXcm> SendXcm
 
 	fn validate(
 		destination: &mut Option<Location>,
-		message: &mut Option<Xcm<()>>,
+		message: &mut Option<Xcm<OpaqueCall>>,
 	) -> SendResult<Self::Ticket> {
 		match PausedQuery::is_paused() {
 			true => Err(SendError::NotApplicable),
@@ -41,7 +41,7 @@ impl<Halted: ExportPausedQuery, InnerExporter: SendXcm> InspectMessageQueues
 
 	/// This router needs to implement `InspectMessageQueues` but doesn't have to
 	/// return any messages, since it just reuses the inner router.
-	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
+	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<OpaqueCall>>)> {
 		Vec::new()
 	}
 }

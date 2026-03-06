@@ -86,7 +86,7 @@ where
 	fn send_xcm(
 		dest: Location,
 		fee_payer: &T::AccountId,
-		xcm: Xcm<()>,
+		xcm: Xcm<OpaqueCall>,
 	) -> Result<XcmHash, SendError> {
 		let fee_payer = AccountToLocation::try_convert(fee_payer).map_err(|err| {
 			tracing::error!(

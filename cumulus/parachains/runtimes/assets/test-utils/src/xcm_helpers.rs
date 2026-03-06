@@ -85,7 +85,7 @@ fn teleport_assets_dummy_message(
 	fee_asset_item: u32,
 	weight_limit: WeightLimit,
 	beneficiary: Location,
-) -> Xcm<()> {
+) -> Xcm<OpaqueCall> {
 	Xcm(vec![
 		ReceiveTeleportedAsset(assets.clone()), // Same encoded size as `ReserveAssetDeposited`
 		ClearOrigin,
@@ -96,7 +96,7 @@ fn teleport_assets_dummy_message(
 }
 
 /// Given a message, a sender, and a destination, it returns the delivery fees
-fn get_fungible_delivery_fees<S: SendXcm>(destination: Location, message: Xcm<()>) -> u128 {
+fn get_fungible_delivery_fees<S: SendXcm>(destination: Location, message: Xcm<OpaqueCall>) -> u128 {
 	let delivery_fees = match validate_send::<S>(destination, message) {
 		Ok((_, delivery_fees)) => delivery_fees,
 		Err(e) => unreachable!("message can be sent - {:?}; qed", e),

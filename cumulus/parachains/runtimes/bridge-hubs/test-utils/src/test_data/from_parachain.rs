@@ -200,7 +200,7 @@ pub fn make_complex_relayer_delivery_proofs<
 	LaneId,
 >(
 	lane_id: LaneId,
-	xcm_message: Xcm<()>,
+	xcm_message: Xcm<OpaqueCall>,
 	message_nonce: MessageNonce,
 	message_destination: Junctions,
 	para_header_number: u32,

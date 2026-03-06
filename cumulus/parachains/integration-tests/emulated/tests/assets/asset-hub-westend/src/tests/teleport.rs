@@ -175,7 +175,7 @@ fn para_to_system_para_transfer_assets(t: ParaToSystemParaTest) -> DispatchResul
 		bx!(remote_fee_id.into()),
 		bx!(TransferType::DestinationReserve),
 		bx!(VersionedXcm::from(
-			Xcm::<()>::builder_unsafe()
+			Xcm::<OpaqueCall>::builder_unsafe()
 				.deposit_asset(AllCounted(2), t.args.beneficiary)
 				.build()
 		)),
@@ -203,7 +203,7 @@ fn system_para_to_para_transfer_assets(t: SystemParaToParaTest) -> DispatchResul
 		bx!(remote_fee_id.into()),
 		bx!(TransferType::LocalReserve),
 		bx!(VersionedXcm::from(
-			Xcm::<()>::builder_unsafe()
+			Xcm::<OpaqueCall>::builder_unsafe()
 				.deposit_asset(AllCounted(2), t.args.beneficiary)
 				.build()
 		)),
@@ -783,7 +783,7 @@ fn teleport_to_untrusted_chain_fails() {
 			bx!(TransferType::Teleport),
 			bx!(fee_id.into()),
 			bx!(TransferType::Teleport),
-			bx!(VersionedXcm::from(Xcm::<()>::new())),
+			bx!(VersionedXcm::from(Xcm::<OpaqueCall>::new())),
 			Unlimited,
 		);
 		assert_err!(
@@ -800,7 +800,11 @@ fn teleport_to_untrusted_chain_fails() {
 	AssetHubWestend::execute_with(|| {
 		let xcm: Xcm<asset_hub_westend_runtime::RuntimeCall> = Xcm(vec![
 			WithdrawAsset(assets.into()),
-			InitiateTeleport { assets: Wild(All), dest: destination, xcm: Xcm::<()>::new() },
+			InitiateTeleport {
+				assets: Wild(All),
+				dest: destination,
+				xcm: Xcm::<OpaqueCall>::new(),
+			},
 		]);
 		let result = <AssetHubWestend as AssetHubWestendPallet>::PolkadotXcm::execute(
 			signed_origin,

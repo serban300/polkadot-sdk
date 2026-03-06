@@ -338,7 +338,7 @@ impl<T: Config> Pallet<T> {
 	}
 }
 
-fn mk_coretime_call<T: Config>(call: crate::coretime::CoretimeCalls) -> Instruction<()> {
+fn mk_coretime_call<T: Config>(call: crate::coretime::CoretimeCalls) -> Instruction<OpaqueCall> {
 	Instruction::Transact {
 		origin_kind: OriginKind::Superuser,
 		fallback_max_weight: Some(T::MaxXcmTransactWeight::get()),

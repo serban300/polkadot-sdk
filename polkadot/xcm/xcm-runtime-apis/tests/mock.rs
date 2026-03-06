@@ -110,15 +110,15 @@ impl pallet_assets::Config for TestRuntime {
 }
 
 thread_local! {
-	pub static SENT_XCM: RefCell<Vec<(Location, Xcm<()>)>> = const { RefCell::new(Vec::new()) };
+	pub static SENT_XCM: RefCell<Vec<(Location, Xcm<OpaqueCall>)>> = const { RefCell::new(Vec::new()) };
 }
 
 pub struct TestXcmSender;
 impl SendXcm for TestXcmSender {
-	type Ticket = (Location, Xcm<()>);
+	type Ticket = (Location, Xcm<OpaqueCall>);
 	fn validate(
 		dest: &mut Option<Location>,
-		msg: &mut Option<Xcm<()>>,
+		msg: &mut Option<Xcm<OpaqueCall>>,
 	) -> SendResult<Self::Ticket> {
 		let ticket = (dest.take().unwrap(), msg.take().unwrap());
 		let fees: Assets = (HereLocation::get(), DeliveryFees::get()).into();
@@ -135,7 +135,7 @@ impl InspectMessageQueues for TestXcmSender {
 		SENT_XCM.with(|q| q.borrow_mut().clear());
 	}
 
-	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<()>>)> {
+	fn get_messages() -> Vec<(VersionedLocation, Vec<VersionedXcm<OpaqueCall>>)> {
 		SENT_XCM.with(|q| {
 			(*q.borrow())
 				.clone()
@@ -564,7 +564,7 @@ sp_api::mock_impl_runtime_apis! {
 			])
 		}
 
-		fn query_xcm_weight(message: VersionedXcm<()>) -> Result<Weight, XcmPaymentApiError> {
+		fn query_xcm_weight(message: VersionedXcm<OpaqueCall>) -> Result<Weight, XcmPaymentApiError> {
 			XcmPallet::query_xcm_weight(message)
 		}
 
@@ -593,7 +593,7 @@ sp_api::mock_impl_runtime_apis! {
 			}
 		}
 
-		fn query_delivery_fees(destination: VersionedLocation, message: VersionedXcm<()>, asset_id: VersionedAssetId) -> Result<VersionedAssets, XcmPaymentApiError> {
+		fn query_delivery_fees(destination: VersionedLocation, message: VersionedXcm<OpaqueCall>, asset_id: VersionedAssetId) -> Result<VersionedAssets, XcmPaymentApiError> {
 			XcmPallet::query_delivery_fees::<<XcmConfig as xcm_executor::Config>::AssetExchanger>(destination, message, asset_id)
 		}
 	}

@@ -28,7 +28,7 @@ use codec::{
 	Decode, DecodeLimit, DecodeWithMemTracking, Encode, Error as CodecError, Input, MaxEncodedLen,
 };
 use derive_where::derive_where;
-use frame_support::dispatch::GetDispatchInfo;
+use frame_support::dispatch::{DispatchInfo, GetDispatchInfo};
 use scale_info::TypeInfo;
 
 pub mod v3;
@@ -41,6 +41,7 @@ pub mod lts {
 
 pub mod latest {
 	pub use super::v5::*;
+	pub use crate::OpaqueCall;
 }
 
 mod double_encoded;
@@ -57,6 +58,16 @@ pub const MAX_XCM_DECODE_DEPTH: u32 = 8;
 ///
 /// This is a deliberate limit - not a technical one.
 pub const MAX_INSTRUCTIONS_TO_DECODE: u8 = 100;
+
+#[derive(Clone, Eq, PartialEq, Debug, Default, Encode, Decode, DecodeWithMemTracking, TypeInfo)]
+#[cfg_attr(feature = "json-schema", derive(schemars::JsonSchema))]
+pub struct OpaqueCall;
+
+impl GetDispatchInfo for OpaqueCall {
+	fn get_dispatch_info(&self) -> DispatchInfo {
+		DispatchInfo::default()
+	}
+}
 
 /// A version of XCM.
 pub type Version = u32;
@@ -524,9 +535,9 @@ pub type AlwaysLts = AlwaysV4;
 pub mod prelude {
 	pub use super::{
 		latest::prelude::*, AlwaysLatest, AlwaysLts, AlwaysV3, AlwaysV4, AlwaysV5, GetVersion,
-		IdentifyVersion, IntoVersion, Unsupported, Version as XcmVersion, VersionedAsset,
-		VersionedAssetId, VersionedAssets, VersionedInteriorLocation, VersionedLocation,
-		VersionedResponse, VersionedXcm, WrapVersion,
+		IdentifyVersion, IntoVersion, OpaqueCall, Unsupported, Version as XcmVersion,
+		VersionedAsset, VersionedAssetId, VersionedAssets, VersionedInteriorLocation,
+		VersionedLocation, VersionedResponse, VersionedXcm, WrapVersion,
 	};
 
 	/// The minimal supported XCM version
@@ -562,7 +573,7 @@ pub mod opaque {
 	}
 
 	/// The basic `VersionedXcm` type which just uses the `Vec<u8>` as an encoded call.
-	pub type VersionedXcm = super::VersionedXcm<()>;
+	pub type VersionedXcm = super::VersionedXcm<super::OpaqueCall>;
 }
 
 #[test]
@@ -606,7 +617,7 @@ fn size_limits() {
     }
 
 	check_sizes! {
-		(crate::latest::Instruction<()>, 128),
+		(crate::latest::Instruction<OpaqueCall>, 128),
 		(crate::latest::Asset, 80),
 		(crate::latest::Location, 24),
 		(crate::latest::AssetId, 40),
@@ -643,27 +654,27 @@ fn check_is_decodable_works() {
 
 	// closer generates `Xcm` with nested instructions of `depth`
 	let with_instr = |depth| {
-		let mut xcm = Xcm::<()>(vec![]);
+		let mut xcm = Xcm::<OpaqueCall>(vec![]);
 		for _ in 0..depth - 1 {
-			xcm = Xcm::<()>(vec![SetAppendix(xcm)]);
+			xcm = Xcm::<OpaqueCall>(vec![SetAppendix(xcm)]);
 		}
 		xcm
 	};
 
 	// `MAX_INSTRUCTIONS_TO_DECODE` check
-	assert!(VersionedXcm::<()>::from(Xcm(vec![
+	assert!(VersionedXcm::<OpaqueCall>::from(Xcm(vec![
 		ReserveAssetDeposited(assets(1));
 		(MAX_INSTRUCTIONS_TO_DECODE - 1) as usize
 	]))
 	.check_is_decodable()
 	.is_ok());
-	assert!(VersionedXcm::<()>::from(Xcm(vec![
+	assert!(VersionedXcm::<OpaqueCall>::from(Xcm(vec![
 		ReserveAssetDeposited(assets(1));
 		MAX_INSTRUCTIONS_TO_DECODE as usize
 	]))
 	.check_is_decodable()
 	.is_ok());
-	assert!(VersionedXcm::<()>::from(Xcm(vec![
+	assert!(VersionedXcm::<OpaqueCall>::from(Xcm(vec![
 		ReserveAssetDeposited(assets(1));
 		(MAX_INSTRUCTIONS_TO_DECODE + 1) as usize
 	]))
@@ -671,28 +682,28 @@ fn check_is_decodable_works() {
 	.is_err());
 
 	// `MAX_XCM_DECODE_DEPTH` check
-	assert!(VersionedXcm::<()>::from(with_instr(MAX_XCM_DECODE_DEPTH - 1))
+	assert!(VersionedXcm::<OpaqueCall>::from(with_instr(MAX_XCM_DECODE_DEPTH - 1))
 		.check_is_decodable()
 		.is_ok());
-	assert!(VersionedXcm::<()>::from(with_instr(MAX_XCM_DECODE_DEPTH))
+	assert!(VersionedXcm::<OpaqueCall>::from(with_instr(MAX_XCM_DECODE_DEPTH))
 		.check_is_decodable()
 		.is_ok());
-	assert!(VersionedXcm::<()>::from(with_instr(MAX_XCM_DECODE_DEPTH + 1))
+	assert!(VersionedXcm::<OpaqueCall>::from(with_instr(MAX_XCM_DECODE_DEPTH + 1))
 		.check_is_decodable()
 		.is_err());
 
 	// `MAX_ITEMS_IN_ASSETS` check
-	assert!(VersionedXcm::<()>::from(Xcm(vec![ReserveAssetDeposited(assets(
+	assert!(VersionedXcm::<OpaqueCall>::from(Xcm(vec![ReserveAssetDeposited(assets(
 		MAX_ITEMS_IN_ASSETS
 	))]))
 	.check_is_decodable()
 	.is_ok());
-	assert!(VersionedXcm::<()>::from(Xcm(vec![ReserveAssetDeposited(assets(
+	assert!(VersionedXcm::<OpaqueCall>::from(Xcm(vec![ReserveAssetDeposited(assets(
 		MAX_ITEMS_IN_ASSETS - 1
 	))]))
 	.check_is_decodable()
 	.is_ok());
-	assert!(VersionedXcm::<()>::from(Xcm(vec![ReserveAssetDeposited(assets(
+	assert!(VersionedXcm::<OpaqueCall>::from(Xcm(vec![ReserveAssetDeposited(assets(
 		MAX_ITEMS_IN_ASSETS + 1
 	))]))
 	.check_is_decodable()

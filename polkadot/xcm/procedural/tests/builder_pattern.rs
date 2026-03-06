@@ -24,7 +24,7 @@ use xcm::latest::prelude::*;
 fn builder_pattern_works() {
 	let asset: Asset = (Here, 100u128).into();
 	let beneficiary: Location = [0u8; 32].into();
-	let message: Xcm<()> = Xcm::builder()
+	let message: Xcm<OpaqueCall> = Xcm::builder()
 		.receive_teleported_asset(asset.clone())
 		.buy_execution(asset.clone(), Unlimited)
 		.deposit_asset(asset.clone(), beneficiary.clone())
@@ -46,13 +46,13 @@ fn default_builder_requires_buy_execution() {
 	// This is invalid, since it doesn't pay for fees.
 	// This is enforced by the runtime, because the build() method doesn't exist
 	// on the resulting type.
-	// let message: Xcm<()> = Xcm::builder()
+	// let message: Xcm<OpaqueCall> = Xcm::builder()
 	//     .withdraw_asset(asset.clone().into())
 	//     .deposit_asset(asset.into(), beneficiary)
 	//     .build();
 
 	// To be able to do that, we need to use the explicitly unpaid variant
-	let message: Xcm<()> = Xcm::builder_unpaid()
+	let message: Xcm<OpaqueCall> = Xcm::builder_unpaid()
 		.unpaid_execution(Unlimited, None)
 		.withdraw_asset(asset.clone())
 		.deposit_asset(asset.clone(), beneficiary.clone())
@@ -68,7 +68,7 @@ fn default_builder_requires_buy_execution() {
 
 	// The other option doesn't have any limits whatsoever, so it should
 	// only be used when you really know what you're doing.
-	let message: Xcm<()> = Xcm::builder_unsafe()
+	let message: Xcm<OpaqueCall> = Xcm::builder_unsafe()
 		.withdraw_asset(asset.clone())
 		.deposit_asset(asset.clone(), beneficiary.clone())
 		.build();
@@ -85,7 +85,7 @@ fn default_builder_requires_buy_execution() {
 fn default_builder_allows_clear_origin_before_buy_execution() {
 	let asset: Asset = (Here, 100u128).into();
 	let beneficiary: Location = [0u8; 32].into();
-	let message: Xcm<()> = Xcm::builder()
+	let message: Xcm<OpaqueCall> = Xcm::builder()
 		.receive_teleported_asset(asset.clone())
 		.clear_origin()
 		.buy_execution(asset.clone(), Unlimited)
@@ -106,7 +106,7 @@ fn default_builder_allows_clear_origin_before_buy_execution() {
 fn bounded_vecs_use_vecs_and_truncate_them() {
 	let claimer = Location::parent();
 	// We can use a vec instead of a bounded vec for specifying hints.
-	let xcm: Xcm<()> = Xcm::builder_unsafe()
+	let xcm: Xcm<OpaqueCall> = Xcm::builder_unsafe()
 		.set_hints(vec![AssetClaimer { location: claimer.clone() }])
 		.build();
 	assert_eq!(
@@ -119,7 +119,7 @@ fn bounded_vecs_use_vecs_and_truncate_them() {
 	);
 
 	// If we include more than the limit they'll get truncated.
-	let xcm: Xcm<()> = Xcm::builder_unsafe()
+	let xcm: Xcm<OpaqueCall> = Xcm::builder_unsafe()
 		.set_hints(vec![
 			AssetClaimer { location: claimer.clone() },
 			AssetClaimer { location: Location::here() },
@@ -134,7 +134,7 @@ fn bounded_vecs_use_vecs_and_truncate_them() {
 		},])
 	);
 
-	let xcm: Xcm<()> = Xcm::builder()
+	let xcm: Xcm<OpaqueCall> = Xcm::builder()
 		.withdraw_asset((Here, 100u128))
 		.set_hints(vec![AssetClaimer { location: claimer }])
 		.clear_origin()

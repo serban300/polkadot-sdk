@@ -28,11 +28,11 @@ use xcm::{VersionedLocation, VersionedXcm};
 
 /// Helper method to build a XCM with a `Transact` instruction and paying for its execution
 pub fn xcm_transact_paid_execution(
-	call: DoubleEncoded<()>,
+	call: DoubleEncoded<OpaqueCall>,
 	origin_kind: OriginKind,
 	fees: Asset,
 	beneficiary: AccountId,
-) -> VersionedXcm<()> {
+) -> VersionedXcm<OpaqueCall> {
 	let weight_limit = WeightLimit::Unlimited;
 
 	VersionedXcm::from(Xcm(vec![
@@ -53,9 +53,9 @@ pub fn xcm_transact_paid_execution(
 
 /// Helper method to build a XCM with a `Transact` instruction without paying for its execution
 pub fn xcm_transact_unpaid_execution(
-	call: DoubleEncoded<()>,
+	call: DoubleEncoded<OpaqueCall>,
 	origin_kind: OriginKind,
-) -> VersionedXcm<()> {
+) -> VersionedXcm<OpaqueCall> {
 	let weight_limit = WeightLimit::Unlimited;
 	let check_origin = None;
 

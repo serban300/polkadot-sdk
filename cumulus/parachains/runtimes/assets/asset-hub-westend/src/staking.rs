@@ -374,10 +374,10 @@ pub enum AhClientCalls {
 }
 
 pub struct ValidatorSetToXcm;
-impl sp_runtime::traits::Convert<rc_client::ValidatorSetReport<AccountId>, Xcm<()>>
+impl sp_runtime::traits::Convert<rc_client::ValidatorSetReport<AccountId>, Xcm<OpaqueCall>>
 	for ValidatorSetToXcm
 {
-	fn convert(report: rc_client::ValidatorSetReport<AccountId>) -> Xcm<()> {
+	fn convert(report: rc_client::ValidatorSetReport<AccountId>) -> Xcm<OpaqueCall> {
 		rc_client::build_transact_xcm(
 			RelayChainRuntimePallets::AhClient(AhClientCalls::ValidatorSet(report)).encode(),
 		)
@@ -385,8 +385,10 @@ impl sp_runtime::traits::Convert<rc_client::ValidatorSetReport<AccountId>, Xcm<(
 }
 
 pub struct KeysMessageToXcm;
-impl sp_runtime::traits::Convert<rc_client::KeysMessage<AccountId>, Xcm<()>> for KeysMessageToXcm {
-	fn convert(msg: rc_client::KeysMessage<AccountId>) -> Xcm<()> {
+impl sp_runtime::traits::Convert<rc_client::KeysMessage<AccountId>, Xcm<OpaqueCall>>
+	for KeysMessageToXcm
+{
+	fn convert(msg: rc_client::KeysMessage<AccountId>) -> Xcm<OpaqueCall> {
 		let encoded_call = match msg {
 			rc_client::KeysMessage::SetKeys { stash, keys } => {
 				RelayChainRuntimePallets::AhClient(AhClientCalls::SetKeys { stash, keys }).encode()

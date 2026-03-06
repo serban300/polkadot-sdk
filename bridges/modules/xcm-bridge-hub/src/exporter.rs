@@ -71,7 +71,7 @@ where
 		channel: u32,
 		universal_source: &mut Option<InteriorLocation>,
 		destination: &mut Option<InteriorLocation>,
-		message: &mut Option<Xcm<()>>,
+		message: &mut Option<Xcm<OpaqueCall>>,
 	) -> Result<(Self::Ticket, Assets), SendError> {
 		tracing::trace!(
 			target: LOG_TARGET,
@@ -680,7 +680,7 @@ mod tests {
 					ExecuteXcmOverSendXcm,
 					UniversalLocation,
 				>,
-			>(dest.clone(), Xcm::<()>::default()));
+			>(dest.clone(), Xcm::<OpaqueCall>::default()));
 
 			// we need to set `UniversalLocation` for `sibling_parachain_origin` for
 			// `XcmOverBridgeWrappedWithExportMessageRouterInstance`.
@@ -689,7 +689,7 @@ mod tests {
 			ExecuteXcmOverSendXcm::set_origin_for_execute(SiblingLocation::get());
 			assert_ok!(send_xcm::<XcmOverBridgeWrappedWithExportMessageRouter>(
 				dest.clone(),
-				Xcm::<()>::default()
+				Xcm::<OpaqueCall>::default()
 			));
 
 			// check after - a message ready to be relayed
@@ -708,7 +708,7 @@ mod tests {
 	#[test]
 	fn validate_works() {
 		run_test(|| {
-			let xcm: Xcm<()> = vec![ClearOrigin].into();
+			let xcm: Xcm<OpaqueCall> = vec![ClearOrigin].into();
 
 			// check that router does not consume when `NotApplicable`
 			let mut xcm_wrapper = Some(xcm.clone());
@@ -839,7 +839,7 @@ mod tests {
 				ExecuteXcmOverSendXcm::set_origin_for_execute(origin_as_location.clone());
 				assert_ok!(send_xcm::<XcmOverBridgeWrappedWithExportMessageRouter>(
 					dest.clone(),
-					Xcm::<()>::default()
+					Xcm::<OpaqueCall>::default()
 				));
 			}
 

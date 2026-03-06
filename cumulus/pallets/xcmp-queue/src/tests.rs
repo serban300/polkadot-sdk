@@ -614,7 +614,7 @@ impl SendXcm for OkFixedXcmHashWithAssertingRequiredInputsSender {
 
 	fn validate(
 		destination: &mut Option<Location>,
-		message: &mut Option<Xcm<()>>,
+		message: &mut Option<Xcm<OpaqueCall>>,
 	) -> SendResult<Self::Ticket> {
 		assert!(destination.is_some());
 		assert!(message.is_some());
@@ -804,9 +804,9 @@ fn hrmp_signals_are_prioritized() {
 #[test]
 fn maybe_double_encoded_versioned_xcm_works() {
 	// pre conditions
-	assert_eq!(VersionedXcm::<()>::V3(Default::default()).encode(), &[3, 0]);
-	assert_eq!(VersionedXcm::<()>::V4(Default::default()).encode(), &[4, 0]);
-	assert_eq!(VersionedXcm::<()>::V5(Default::default()).encode(), &[5, 0]);
+	assert_eq!(VersionedXcm::<OpaqueCall>::V3(Default::default()).encode(), &[3, 0]);
+	assert_eq!(VersionedXcm::<OpaqueCall>::V4(Default::default()).encode(), &[4, 0]);
+	assert_eq!(VersionedXcm::<OpaqueCall>::V5(Default::default()).encode(), &[5, 0]);
 }
 
 // Now also testing a page instead of just concat messages.
@@ -820,7 +820,7 @@ fn maybe_double_encoded_versioned_xcm_decode_page_works() {
 	// Now try to decode the page.
 	let input = &mut &page[..];
 	for i in 0..100 {
-		match (i % 2, VersionedXcm::<()>::decode(input)) {
+		match (i % 2, VersionedXcm::<OpaqueCall>::decode(input)) {
 			(0, Ok(xcm)) => {
 				assert_eq!(xcm, versioned_xcm(older_xcm_version));
 			},
@@ -861,7 +861,7 @@ fn take_first_concatenated_xcm_works() {
 /// A message that is not too deeply nested will be accepted by `take_first_concatenated_xcm`.
 #[test]
 fn take_first_concatenated_xcm_good_recursion_depth_works() {
-	let mut good = Xcm::<()>(vec![ClearOrigin]);
+	let mut good = Xcm::<OpaqueCall>(vec![ClearOrigin]);
 	for _ in 0..MAX_XCM_DECODE_DEPTH - 1 {
 		good = Xcm(vec![SetAppendix(good)]);
 	}
@@ -874,7 +874,7 @@ fn take_first_concatenated_xcm_good_recursion_depth_works() {
 /// A message that is too deeply nested will be rejected by `take_first_concatenated_xcm`.
 #[test]
 fn take_first_concatenated_xcm_good_bad_depth_errors() {
-	let mut bad = Xcm::<()>(vec![ClearOrigin]);
+	let mut bad = Xcm::<OpaqueCall>(vec![ClearOrigin]);
 	for _ in 0..MAX_XCM_DECODE_DEPTH {
 		bad = Xcm(vec![SetAppendix(bad)]);
 	}

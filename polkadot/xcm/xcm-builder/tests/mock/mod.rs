@@ -51,17 +51,17 @@ pub fn sent_xcm() -> Vec<(Location, opaque::Xcm, XcmHash)> {
 }
 pub struct TestSendXcm;
 impl SendXcm for TestSendXcm {
-	type Ticket = (Location, Xcm<()>, XcmHash);
+	type Ticket = (Location, Xcm<OpaqueCall>, XcmHash);
 	fn validate(
 		dest: &mut Option<Location>,
-		msg: &mut Option<Xcm<()>>,
-	) -> SendResult<(Location, Xcm<()>, XcmHash)> {
+		msg: &mut Option<Xcm<OpaqueCall>>,
+	) -> SendResult<(Location, Xcm<OpaqueCall>, XcmHash)> {
 		let msg = msg.take().unwrap();
 		let hash = derive_topic_id(&msg);
 		let triplet = (dest.take().unwrap(), msg, hash);
 		Ok((triplet, Assets::new()))
 	}
-	fn deliver(triplet: (Location, Xcm<()>, XcmHash)) -> Result<XcmHash, SendError> {
+	fn deliver(triplet: (Location, Xcm<OpaqueCall>, XcmHash)) -> Result<XcmHash, SendError> {
 		let hash = triplet.2;
 		SENT_XCM.with(|q| q.borrow_mut().push(triplet));
 		Ok(hash)

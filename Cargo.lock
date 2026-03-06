@@ -17256,41 +17256,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "polkadot-zombienet-sdk-tests"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "asset-hub-westend-runtime",
- "cumulus-test-runtime",
- "cumulus-zombienet-sdk-helpers",
- "env_logger 0.11.3",
- "ethabi-decode",
- "futures",
- "hex",
- "hex-literal",
- "log",
- "pallet-revive",
- "parity-scale-codec",
- "polkadot-primitives",
- "rand 0.8.5",
- "regex",
- "sc-executor 0.32.0",
- "sc-runtime-utilities",
- "serde",
- "serde_json",
- "sp-core 28.0.0",
- "sp-crypto-hashing 0.1.0",
- "sp-io 30.0.0",
- "sp-maybe-compressed-blob 11.0.0",
- "substrate-build-script-utils",
- "subxt 0.44.2",
- "tokio",
- "tokio-util",
- "zombienet-orchestrator",
- "zombienet-sdk",
-]
-
-[[package]]
 name = "polkavm"
 version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

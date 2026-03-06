@@ -27,7 +27,7 @@ fn trailing_set_topic_as_id_with_unique_topic_should_work() {
 	type AllowSubscriptions = AllowSubscriptionsFrom<Everything>;
 
 	// check the validity of XCM for the `AllowSubscriptions` barrier
-	let valid_xcm = Xcm::<()>(vec![SubscribeVersion {
+	let valid_xcm = Xcm::<OpaqueCall>(vec![SubscribeVersion {
 		query_id: 42,
 		max_response_weight: Weight::from_parts(5000, 5000),
 	}]);
