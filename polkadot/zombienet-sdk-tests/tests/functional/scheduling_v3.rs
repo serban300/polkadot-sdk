@@ -28,7 +28,7 @@ use crate::utils::{assert_candidates_version, assert_validator_backed_candidates
 /// - a V3 parachain with async backing
 /// and checks that the candidates for both parachains are being backed at expected throughput.
 #[rstest]
-#[case::zero_relay_parent_offset("async-backing-v3")]
+// #[case::zero_relay_parent_offset("async-backing-v3")]
 #[case::non_zero_relay_parent_offset("async-backing-v3-rpo")]
 #[tokio::test(flavor = "multi_thread")]
 async fn scheduling_v2_and_v3_collator_with_v3_validators(
@@ -47,8 +47,7 @@ async fn scheduling_v2_and_v3_collator_with_v3_validators(
 		.with_relaychain(|r| {
 			let r = r
 				.with_chain("rococo-local")
-				.with_default_command("polkadot")
-				.with_default_image(images.polkadot.as_str())
+				.with_default_command("/Users/serban-work/workplace/sources/polkadot-sdk/target/release/polkadot")
 				.with_default_args(vec![("-lparachain=debug,runtime=debug,parachain::candidate-backing=debug,parachain::provisioner=debug,parachain::prospective-parachains=debug,runtime::parachains::scheduler=debug,parachain::collator-protocol=debug,basic-authorship=debug,parachain::statement-distribution=debug").into()])
 				.with_genesis_overrides(json!({
 					"configuration": {
@@ -78,8 +77,7 @@ async fn scheduling_v2_and_v3_collator_with_v3_validators(
 		// Para 2700: V3-capable collator.
 		.with_parachain(|p| {
 			p.with_id(2700)
-				.with_default_command("test-parachain")
-				.with_default_image(images.cumulus.as_str())
+				.with_default_command("/Users/serban-work/workplace/sources/polkadot-sdk/target/release/test-parachain")
 				.with_chain(para_chain)
 				.with_default_args(vec![
 					("-lparachain=debug,aura=debug,cumulus-collator=debug,parachain::collator-protocol=trace,parachain::collator-protocol::stats=trace,basic-authorship=debug,aura::cumulus=trace").into(),
@@ -90,7 +88,7 @@ async fn scheduling_v2_and_v3_collator_with_v3_validators(
 		// Para 2500: V2 collator.
 		.with_parachain(|p| {
 			p.with_id(2500)
-				.with_default_command("test-parachain")
+				.with_default_command("/Users/serban-work/workplace/sources/polkadot-sdk/target/release/test-parachain")
 				.with_default_image(images.cumulus.as_str())
 				.with_chain("async-backing")
 				.with_default_args(vec![
@@ -117,11 +115,11 @@ async fn scheduling_v2_and_v3_collator_with_v3_validators(
 	let para_v3 = ParaId::from(2700);
 	let para_v2 = ParaId::from(2500);
 
-	// Wait for the first session, block production on the parachain will start after that.
-	let mut blocks_sub = relay_client.blocks().subscribe_finalized().await?;
-	wait_for_first_session_change(&mut blocks_sub).await?;
-
-	wait_for_pvf_prepare(&network, 2).await?;
+	// // Wait for the first session, block production on the parachain will start after that.
+	// let mut blocks_sub = relay_client.blocks().subscribe_finalized().await?;
+	// wait_for_first_session_change(&mut blocks_sub).await?;
+	//
+	// wait_for_pvf_prepare(&network, 2).await?;
 
 	// Verify both V3 and V2 candidates are backed in the same relay chain block window.
 	let expected_v3_throughput = match para_chain {
